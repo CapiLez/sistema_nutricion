@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <title>Historial Nutricional</title>
+    <link rel="stylesheet" href="{% static 'nutricion/css/style.css' %}">
+</head>
+<body>
+    <h1>Historial de Evaluaciones Nutricionales</h1>
+
+    <!-- Botón para exportar a Excel -->
+    <a href="{% url 'exportar_historial' %}" class="btn btn-success">Exportar a Excel</a>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th>CURP</th>
+                <th>Nombre</th>
+                <th>Grado</th>
+                <th>Grupo</th>
+                <th>Sexo</th>
+                <th>Fecha de Nacimiento</th>
+                <th>Edad</th>
+                <th>Peso (kg)</th>
+                <th>Talla (cm)</th>
+                <th>IMC</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for paciente in pacientes %}
+            <tr>
+                <td>{{ paciente.id }}</td>
+                <td>{{ paciente.curp }}</td>
+                <td>{{ paciente.nombre }}</td>
+                <td>{{ paciente.grado }}</td>
+                <td>{{ paciente.grupo }}</td>
+                <td>{{ paciente.sexo }}</td>
+                <td>{{ paciente.fecha_nacimiento }}</td>
+                <td>{{ paciente.edad }}</td>
+                <td>{{ paciente.peso }}</td>
+                <td>{{ paciente.talla }}</td>
+                <td>{{ paciente.imc }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

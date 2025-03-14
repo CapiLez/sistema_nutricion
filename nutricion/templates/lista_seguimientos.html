@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Seguimientos Trimestrales</title>
+</head>
+<body>
+    <h1>Lista de Seguimientos Trimestrales</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Paciente</th>
+                <th>Fecha de Valoración</th>
+                <th>Edad</th>
+                <th>Peso (kg)</th>
+                <th>Talla (cm)</th>
+                <th>IMC</th>
+                <th>Diagnóstico</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for seguimiento in seguimientos %}
+            <tr>
+                <td>{{ seguimiento.paciente.nombre }}</td>
+                <td>{{ seguimiento.fecha_valoracion }}</td>
+                <td>{{ seguimiento.edad }}</td>
+                <td>{{ seguimiento.peso }}</td>
+                <td>{{ seguimiento.talla }}</td>
+                <td>{{ seguimiento.imc }}</td>
+                <td>{{ seguimiento.dx }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'registrar_seguimiento' %}">Registrar Nuevo Seguimiento</a>
+</body>
+</html>
