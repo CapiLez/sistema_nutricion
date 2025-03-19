@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Lista de Seguimientos Trimestrales</title>
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}Lista de Seguimientos{% endblock %}
+
+{% block content %}
     <h1>Lista de Seguimientos Trimestrales</h1>
     <table border="1">
         <thead>
@@ -32,6 +30,8 @@
             {% endfor %}
         </tbody>
     </table>
-    <a href="{% url 'registrar_seguimiento' %}">Registrar Nuevo Seguimiento</a>
-</body>
-</html>
+    <a href="{% url 'registrar_seguimiento' %}" class="btn btn-success">Registrar Nuevo Seguimiento</a>
+    <a href="{% url 'home' %}" class="btn btn-primary">
+        <i class="fas fa-arrow-left"></i> Regresar al Inicio
+    </a>
+{% endblock %}

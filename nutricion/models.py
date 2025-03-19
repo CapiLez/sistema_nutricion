@@ -3,8 +3,10 @@ from django.contrib.auth.models import AbstractUser
 
 class Usuario(AbstractUser):
     telefono = models.CharField(max_length=15, blank=True, null=True)
+    es_administrador = models.BooleanField(default=False)
 
-from django.db import models
+    def is_admin(self):
+        return self.is_superuser or self.es_administrador
 
 class Paciente(models.Model):
     nombre = models.CharField(max_length=255)

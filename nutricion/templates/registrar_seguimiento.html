@@ -1,16 +1,16 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Registrar Seguimiento Trimestral</title>
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}Registrar Seguimiento{% endblock %}
+
+{% block content %}
     <h1>Registrar Seguimiento Trimestral</h1>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Guardar</button>
     </form>
-    <a href="{% url 'lista_seguimientos' %}">Ver Lista de Seguimientos</a>
-</body>
-</html>
+    <a href="{% url 'lista_seguimientos' %}" class="btn btn-secondary">Ver Lista de Seguimientos</a>
+    <a href="{% url 'home' %}" class="btn btn-primary">
+        <i class="fas fa-arrow-left"></i> Regresar al Inicio
+    </a>
+{% endblock %}

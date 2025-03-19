@@ -1,14 +1,22 @@
 from django.urls import path
-from django.contrib.auth.views import LogoutView
-from .views import home, lista_seguimientos, registrar_seguimiento, registro_ninos, registro_trabajadores, historial, exportar_historial_excel
+from .views import (
+    cerrar_sesion, home, gestionar_usuarios, agregar_usuario, eliminar_usuario, iniciar_sesion,
+    registro_ninos, registro_trabajadores, historial, exportar_historial_excel,
+    registrar_seguimiento, lista_seguimientos
+)
 
 urlpatterns = [
     path('', home, name='home'),
+    path('login/', iniciar_sesion, name='login'),
+    path('logout/', cerrar_sesion, name='logout'),
+    path('gestionar_usuarios/', gestionar_usuarios, name='gestionar_usuarios'),
+    path('agregar_usuario/', agregar_usuario, name='agregar_usuario'),
+    path('eliminar_usuario/<int:user_id>/', eliminar_usuario, name='eliminar_usuario'),
     path('registro_ninos/', registro_ninos, name='registro_ninos'),
     path('registro_trabajadores/', registro_trabajadores, name='registro_trabajadores'),
     path('historial/', historial, name='historial'),
-    path('exportar_historial/', exportar_historial_excel, name='exportar_historial'),
+    path('historial/exportar/', exportar_historial_excel, name='exportar_historial'),
     path('registrar_seguimiento/', registrar_seguimiento, name='registrar_seguimiento'),
     path('lista_seguimientos/', lista_seguimientos, name='lista_seguimientos'),
-    path('logout/', LogoutView.as_view(next_page='home'), name='logout'),
+    
 ]

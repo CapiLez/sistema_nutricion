@@ -1,17 +1,10 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    {% load static %}
-    <meta charset="UTF-8">
-    <title>Historial Nutricional</title>
-    <link rel="stylesheet" href="{% static 'nutricion/css/style.css' %}">
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}Historial Nutricional{% endblock %}
+
+{% block content %}
     <h1>Historial de Evaluaciones Nutricionales</h1>
-
-    <!-- Botón para exportar a Excel -->
     <a href="{% url 'exportar_historial' %}" class="btn btn-success">Exportar a Excel</a>
-
     <table border="1">
         <thead>
             <tr>
@@ -46,5 +39,7 @@
             {% endfor %}
         </tbody>
     </table>
-</body>
-</html>
+    <a href="{% url 'home' %}" class="btn btn-primary">
+        <i class="fas fa-arrow-left"></i> Regresar al Inicio
+    </a>
+{% endblock %}

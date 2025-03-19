@@ -1,15 +1,28 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Registro de Niños</title>
-</head>
-<body>
-    <h2>Registro de Evaluación Nutricional - Niños</h2>
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Guardar</button>
-    </form>
-</body>
-</html>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'nutricion/css/registro_nino.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="registro-ninos-page">
+    <div class="registro-ninos-container">
+        <h2>Registro de Evaluación Nutricional - Niños</h2>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Guardar</button>
+        </form>
+        
+        <div class="btn-container">
+            <a href="{% url 'home' %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Regresar al Inicio
+            </a>
+            <a href="{% url 'lista_seguimientos' %}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> Ver Seguimientos
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

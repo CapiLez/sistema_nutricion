@@ -1,0 +1,100 @@
+/* Estilos para el registro de niños en el sector salud */
+.registro-ninos-page {
+    font-family: 'Arial', sans-serif;
+    background-color: #e3f2fd; /* Azul claro para dar sensación de frescura y limpieza */
+    margin: 0;
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.registro-ninos-container {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    width: 100%;
+    margin-left: -500px;
+}
+
+.registro-ninos-container h2 {
+    color: #00796b; /* Verde azulado para representar salud */
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.registro-ninos-container form {
+    display: flex;
+    flex-direction: column;
+}
+
+.registro-ninos-container form label {
+    font-weight: bold;
+    margin-top: 10px;
+    color: #333;
+}
+
+.registro-ninos-container form input[type="text"],
+.registro-ninos-container form input[type="number"],
+.registro-ninos-container form input[type="date"],
+.registro-ninos-container form select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-top: 5px;
+    font-size: 14px;
+}
+
+.registro-ninos-container form button {
+    background-color: #00796b; /* Verde azulado */
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 15px;
+    transition: background 0.3s ease;
+}
+
+.registro-ninos-container form button:hover {
+    background-color: #004d40; /* Verde más oscuro */
+}
+
+/* Estilos para botones de navegación */
+.registro-ninos-container .btn-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.registro-ninos-container a.btn {
+    padding: 10px 20px;
+    text-decoration: none;
+    color: white;
+    border-radius: 6px;
+    font-size: 16px;
+    text-align: center;
+    transition: background 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #0288d1; /* Azul profesional */
+}
+
+.btn-primary:hover {
+    background-color: #01579b;
+}
+
+.btn-secondary {
+    background-color: #ff9800; /* Naranja para contrastar */
+}
+
+.btn-secondary:hover {
+    background-color: #e65100;
+}

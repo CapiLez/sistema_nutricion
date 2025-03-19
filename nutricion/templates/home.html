@@ -1,36 +1,15 @@
-<!DOCTYPE html>
-{% load static %}
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Interfaz Nutriólogos</title>
-    <link href="{% static 'nutricion/css/style.css' %}" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-</head>
-<body class="home-page">
-    <div class="navbar">
-        <nav>
-            <a href="{% url 'home' %}"><i class="fas fa-home"></i> Inicio</a>
-            <a href="{% url 'registro_ninos' %}"><i class="fas fa-child"></i> Niños</a>
-            <a href="{% url 'registro_trabajadores' %}"><i class="fas fa-user-md"></i> Trabajadores</a>
-            <a href="{% url 'historial' %}"><i class="fas fa-file-medical"></i> Historial</a>
-            <a href="{% url 'lista_seguimientos' %}"><i class="fas fa-chart-line"></i> Seguimiento</a>
-            <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
-        </nav>
-    </div>
+{% extends "base.html" %}
 
-    <div class="main-content">
-        <h1>Bienvenido, Nutriólogo</h1>
-        
-        <!-- Botones de Acceso Rápido -->
-        <div class="button-container">
-            <a href="{% url 'registrar_seguimiento' %}" class="btn btn-primary">
-                <i class="fas fa-plus-circle"></i> Registrar Seguimiento
-            </a>
-            <a href="{% url 'lista_seguimientos' %}" class="btn btn-secondary">
-                <i class="fas fa-list"></i> Ver Seguimientos
-            </a>
-        </div>
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+    <h1>Bienvenido, Nutriólogo</h1>
+    <div class="button-container">
+        <a href="{% url 'registrar_seguimiento' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i> Registrar Seguimiento
+        </a>
+        <a href="{% url 'lista_seguimientos' %}" class="btn btn-secondary">
+            <i class="fas fa-list"></i> Ver Seguimientos
+        </a>
     </div>
-</body>
-</html>
+{% endblock %}

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Agregar Usuario</title>
+    <link href="{% static 'nutricion/css/style.css' %}" rel="stylesheet">
+</head>
+<body>
+    <h1>Agregar Usuario</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-save"></i> Guardar Usuario
+        </button>
+    </form>
+
+    <a href="{% url 'gestionar_usuarios' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Regresar
+    </a>
+</body>
+</html>
