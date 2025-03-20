@@ -33,7 +33,7 @@ def cerrar_sesion(request):
     logout(request)
     return redirect('login')
 
-@login_required
+@login_required(login_url='login')
 def home(request):
     return render(request, 'home.html', {'usuario': request.user})
 
@@ -101,10 +101,18 @@ def registro_trabajadores(request):
         form = TrabajadorForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('historial')
+            return redirect('registro_trabajadores')  # Redirige para actualizar la tabla
+
     else:
         form = TrabajadorForm()
-    return render(request, 'registro_trabajadores.html', {'form': form})
+
+    # ✅ Obtener los últimos 5 trabajadores agregados
+    ultimos_trabajadores = Trabajador.objects.order_by('-id')[:5]
+
+    return render(request, 'registro_trabajadores.html', {
+        'form': form,
+        'ultimos_trabajadores': ultimos_trabajadores  # Pasar la variable a la plantilla
+    })
 
 @login_required
 def historial(request):
