@@ -10,8 +10,88 @@
 {% block content %}
     <div class="historial-page">
         <h1>Historial de Evaluaciones Nutricionales</h1>
-        <a href="{% url 'exportar_historial' %}" class="btn btn-success">Exportar a Excel</a>
-        <table>
+
+        <!-- ✅ Búsqueda Separada para Niños y Trabajadores -->
+        <div class="search-container">
+            <div class="search-box">
+                <h3>Buscar Niño</h3>
+                <form method="GET" class="search-form" id="form-busqueda-nino">
+                    <input type="text" id="buscar-nino" name="q_nino" placeholder="Buscar niño..." value="{{ q_nino }}" required>
+                    <button type="submit"><i class="fas fa-search"></i></button>
+                </form>
+            </div>
+
+            <div class="search-box">
+                <h3>Buscar Trabajador</h3>
+                <form method="GET" class="search-form" id="form-busqueda-trabajador">
+                    <input type="text" id="buscar-trabajador" name="q_trabajador" placeholder="Buscar trabajador..." value="{{ q_trabajador }}" required>
+                    <button type="submit"><i class="fas fa-search"></i></button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ✅ Resultados de Búsqueda -->
+        <div id="resultados-container">
+            <!-- ✅ Resultados de Niños -->
+            {% if resultados_ninos %}
+                <h4>Resultados de Niños:</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Edad</th>
+                            <th>CURP</th>
+                            <th>Grado</th>
+                            <th>Grupo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for nino in resultados_ninos %}
+                            <tr>
+                                <td>{{ nino.nombre }}</td>
+                                <td>{{ nino.edad }} años</td>
+                                <td>{{ nino.curp }}</td>
+                                <td>{{ nino.grado }}</td>
+                                <td>{{ nino.grupo }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% elif q_nino %}
+                <p class="no-resultados">⚠ No hay registros de niños con esa información.</p>
+            {% endif %}
+
+            <!-- ✅ Resultados de Trabajadores -->
+            {% if resultados_trabajadores %}
+                <h4>Resultados de Trabajadores:</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>CURP</th>
+                            <th>Cargo</th>
+                            <th>Departamento</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trabajador in resultados_trabajadores %}
+                            <tr>
+                                <td>{{ trabajador.nombre }}</td>
+                                <td>{{ trabajador.curp }}</td>
+                                <td>{{ trabajador.cargo }}</td>
+                                <td>{{ trabajador.departamento }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% elif q_trabajador %}
+                <p class="no-resultados">⚠ No hay registros de trabajadores con esa información.</p>
+            {% endif %}
+        </div>
+
+        <!-- ✅ Tabla de Niños -->
+        <h2>Niños Registrados</h2>
+        <table class="table">
             <thead>
                 <tr>
                     <th>No.</th>
@@ -45,8 +125,58 @@
                 {% endfor %}
             </tbody>
         </table>
+
+        <!-- ✅ Tabla de Trabajadores -->
+        <h2>Trabajadores Registrados</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>CURP</th>
+                    <th>Nombre</th>
+                    <th>Cargo</th>
+                    <th>Departamento</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trabajador in trabajadores %}
+                <tr>
+                    <td>{{ trabajador.id }}</td>
+                    <td>{{ trabajador.curp }}</td>
+                    <td>{{ trabajador.nombre }}</td>
+                    <td>{{ trabajador.cargo }}</td>
+                    <td>{{ trabajador.departamento }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- ✅ Botón de Regreso -->
         <a href="{% url 'home' %}" class="btn btn-primary">
             <i class="fas fa-arrow-left"></i> Regresar al Inicio
         </a>
     </div>
+
+<!-- ✅ Scripts para Búsqueda -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // ✅ Vaciar campo de búsqueda después de enviar
+        $("#form-busqueda-nino, #form-busqueda-trabajador").on("submit", function() {
+            setTimeout(function() {
+                $("#buscar-nino, #buscar-trabajador").val(""); // Limpiar campo después de buscar
+            }, 100);
+        });
+
+        // ✅ Mostrar/ocultar resultados en tiempo real
+        $("#buscar-nino, #buscar-trabajador").on("input", function() {
+            let query = $(this).val().trim();
+            if (query.length > 0) {
+                $("#resultados-container").removeClass("hidden").addClass("visible");
+            } else {
+                $("#resultados-container").removeClass("visible").addClass("hidden");
+            }
+        });
+    });
+</script>
 {% endblock %}

@@ -1,11 +1,11 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib import messages
 import pandas as pd
-from .models import Paciente, SeguimientoTrimestral, Usuario
+from .models import Paciente, SeguimientoTrimestral, Trabajador, Usuario
 from .forms import PacienteForm, SeguimientoTrimestralForm, TrabajadorForm, UserCreationForm
 from .forms import LoginForm 
 
@@ -82,10 +82,18 @@ def registro_ninos(request):
         form = PacienteForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('historial')
+            return redirect('registro_ninos')  # Redirigir para actualizar la lista
+
     else:
         form = PacienteForm()
-    return render(request, 'registro_ninos.html', {'form': form})
+
+    # Obtener los últimos 5 niños agregados ordenados por ID
+    ultimos_ninos = Paciente.objects.order_by('-id')[:5]
+
+    return render(request, 'registro_ninos.html', {
+        'form': form,
+        'ultimos_ninos': ultimos_ninos  # Pasar la variable al template
+    })
 
 @login_required
 def registro_trabajadores(request):
@@ -100,8 +108,29 @@ def registro_trabajadores(request):
 
 @login_required
 def historial(request):
+    q_nino = request.GET.get('q_nino', '')  # Buscar niños
+    q_trabajador = request.GET.get('q_trabajador', '')  # Buscar trabajadores
+
+    resultados_ninos = []
+    resultados_trabajadores = []
+
+    if q_nino:
+        resultados_ninos = Paciente.objects.filter(nombre__icontains=q_nino)
+
+    if q_trabajador:
+        resultados_trabajadores = Trabajador.objects.filter(nombre__icontains=q_trabajador)
+
     pacientes = Paciente.objects.all()
-    return render(request, 'historial.html', {'pacientes': pacientes})
+    trabajadores = Trabajador.objects.all()
+
+    return render(request, 'historial.html', {
+        'pacientes': pacientes,
+        'trabajadores': trabajadores,
+        'q_nino': q_nino,
+        'q_trabajador': q_trabajador,
+        'resultados_ninos': resultados_ninos,
+        'resultados_trabajadores': resultados_trabajadores,
+    })
 
 @login_required
 def exportar_historial_excel(request):
@@ -141,3 +170,26 @@ def registrar_seguimiento(request):
 def lista_seguimientos(request):
     seguimientos = SeguimientoTrimestral.objects.all()
     return render(request, 'lista_seguimientos.html', {'seguimientos': seguimientos})
+
+@login_required
+def ultimos_ninos(request):
+    ultimos = Paciente.objects.order_by('-id')[:5]  # Últimos 5 niños agregados
+    return render(request, 'ultimos_ninos.html', {'ultimos': ultimos})
+
+@login_required
+def buscar_nino(request):
+    query = request.GET.get('q')
+    resultados = []
+    
+    if query:
+        resultados = Paciente.objects.filter(nombre__icontains=query)
+    
+    return render(request, 'buscar_nino.html', {'resultados': resultados, 'query': query})
+
+@login_required
+def autocomplete_ninos(request):
+    if 'term' in request.GET:
+        nombres = Paciente.objects.filter(nombre__icontains=request.GET.get('term'))[:10]
+        nombres_lista = list(nombres.values_list('nombre', flat=True))
+        return JsonResponse(nombres_lista, safe=False)
+    return JsonResponse([], safe=False)

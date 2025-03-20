@@ -23,10 +23,11 @@ class Paciente(models.Model):
     def __str__(self):
         return self.nombre
 
-
 class Trabajador(models.Model):
     nombre = models.CharField(max_length=255)
-    puesto = models.CharField(max_length=255)
+    curp = models.CharField(max_length=18, unique=True, blank=True, null=True)  # Agregado
+    cargo = models.CharField(max_length=255)  # Cambio de "puesto" a "cargo"
+    departamento = models.CharField(max_length=255, blank=True, null=True)  # Agregado
     peso = models.FloatField()
     talla = models.FloatField()
     imc = models.FloatField()
@@ -35,7 +36,7 @@ class Trabajador(models.Model):
 
     def __str__(self):
         return self.nombre
-    
+
 class SeguimientoTrimestral(models.Model):
     paciente = models.ForeignKey('Paciente', on_delete=models.CASCADE)
     indicador_peso_edad = models.FloatField()

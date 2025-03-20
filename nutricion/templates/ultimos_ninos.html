@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Últimos Niños Agregados</h2>
+<ul>
+    {% for nino in ultimos %}
+        <li>{{ nino.nombre }} - {{ nino.edad }} años</li>
+    {% empty %}
+        <p>No hay niños registrados recientemente.</p>
+    {% endfor %}
+</ul>
+<a href="{% url 'registro_ninos' %}" class="btn btn-primary">Regresar</a>
+{% endblock %}

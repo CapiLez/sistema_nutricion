@@ -9,12 +9,65 @@
 <div class="registro-ninos-page">
     <div class="registro-ninos-container">
         <h2>Registro de Evaluación Nutricional - Niños</h2>
-        <form method="POST">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Guardar</button>
-        </form>
-        
+
+        <!-- ✅ Botón para mostrar el formulario -->
+        <div class="acciones-container">
+            <button id="mostrar-formulario" class="btn btn-success">
+                <i class="fas fa-user-plus"></i> Agregar Niño
+            </button>
+        </div>
+
+        <!-- ✅ Formulario (Oculto por defecto) -->
+        <div id="formulario-nino" class="hidden">
+            <h3>Agregar Nuevo Niño</h3>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ form.as_p }}
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                    <button type="button" id="cancelar-formulario" class="btn btn-danger">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ✅ Tabla de Últimos Niños Agregados -->
+        <div class="ultimos-ninos">
+            <h3>Últimos Niños Agregados</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Edad</th>
+                        <th>CURP</th>
+                        <th>Grado</th>
+                        <th>Grupo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nino in ultimos_ninos %}
+                        <tr>
+                            <td>{{ nino.nombre }}</td>
+                            <td>{{ nino.edad }} años</td>
+                            <td>{{ nino.curp }}</td>
+                            <td>{{ nino.grado }}</td>
+                            <td>{{ nino.grupo }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5">No hay niños registrados recientemente.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ✅ Botones de Navegación -->
         <div class="btn-container">
             <a href="{% url 'home' %}" class="btn btn-primary">
                 <i class="fas fa-arrow-left"></i> Regresar al Inicio
@@ -25,4 +78,20 @@
         </div>
     </div>
 </div>
+
+<!-- ✅ Scripts para Mostrar/Ocultar el Formulario -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("#mostrar-formulario").on("click", function() {
+            $("#formulario-nino").slideDown(); // Animación de apertura
+            $(this).hide(); // Oculta el botón de agregar
+        });
+
+        $("#cancelar-formulario").on("click", function() {
+            $("#formulario-nino").slideUp(); // Animación de cierre
+            $("#mostrar-formulario").show(); // Muestra el botón de agregar
+        });
+    });
+</script>
 {% endblock %}

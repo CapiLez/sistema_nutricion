@@ -9,12 +9,63 @@
 <div class="registro-trabajadores-page">
     <div class="registro-trabajadores-container">
         <h2>Registro de Evaluación Nutricional - Trabajadores</h2>
-        <form method="POST">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Guardar</button>
-        </form>
-        
+
+        <!-- ✅ Botón para mostrar el formulario -->
+        <div class="acciones-container">
+            <button id="mostrar-formulario" class="btn btn-success">
+                <i class="fas fa-user-plus"></i> Agregar Trabajador
+            </button>
+        </div>
+
+        <!-- ✅ Formulario (Oculto por defecto) -->
+        <div id="formulario-trabajador" class="hidden">
+            <h3>Agregar Nuevo Trabajador</h3>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ form.as_p }}
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                    <button type="button" id="cancelar-formulario" class="btn btn-danger">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ✅ Tabla de Últimos Trabajadores Agregados -->
+        <div class="ultimos-trabajadores">
+            <h3>Últimos Trabajadores Agregados</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>CURP</th>
+                        <th>Cargo</th>
+                        <th>Departamento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trabajador in ultimos_trabajadores %}
+                        <tr>
+                            <td>{{ trabajador.nombre }}</td>
+                            <td>{{ trabajador.curp }}</td>
+                            <td>{{ trabajador.cargo }}</td>
+                            <td>{{ trabajador.departamento }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">No hay trabajadores registrados recientemente.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ✅ Botones de Navegación -->
         <div class="btn-container">
             <a href="{% url 'home' %}" class="btn btn-primary">
                 <i class="fas fa-arrow-left"></i> Regresar al Inicio
@@ -25,4 +76,23 @@
         </div>
     </div>
 </div>
+
+<!-- ✅ Scripts para Mostrar/Ocultar el Formulario -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // ✅ Ocultar formulario al cargar la página
+        $("#formulario-trabajador").hide();
+
+        $("#mostrar-formulario").on("click", function() {
+            $("#formulario-trabajador").slideDown(); // Animación de apertura
+            $(this).hide(); // Oculta el botón de agregar
+        });
+
+        $("#cancelar-formulario").on("click", function() {
+            $("#formulario-trabajador").slideUp(); // Animación de cierre
+            $("#mostrar-formulario").show(); // Muestra el botón de agregar
+        });
+    });
+</script>
 {% endblock %}

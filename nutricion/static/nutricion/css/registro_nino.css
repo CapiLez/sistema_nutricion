@@ -1,15 +1,15 @@
-/* Estilos para el registro de niños en el sector salud */
+/* ✅ Configuración general */
 .registro-ninos-page {
     font-family: 'Arial', sans-serif;
-    background-color: #e3f2fd; /* Azul claro para dar sensación de frescura y limpieza */
-    margin: 0;
-    padding: 40px;
+    background-color: #e3f2fd;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    padding: 40px;
 }
 
+/* ✅ Contenedor principal */
 .registro-ninos-container {
     background: #ffffff;
     padding: 30px;
@@ -17,63 +17,92 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     max-width: 600px;
     width: 100%;
-    margin-left: -500px;
+    text-align: center;
 }
 
+/* ✅ Estilos generales */
 .registro-ninos-container h2 {
-    color: #00796b; /* Verde azulado para representar salud */
-    text-align: center;
+    color: #00796b;
     font-size: 24px;
     margin-bottom: 20px;
 }
 
-.registro-ninos-container form {
-    display: flex;
-    flex-direction: column;
+.acciones-container {
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-.registro-ninos-container form label {
-    font-weight: bold;
-    margin-top: 10px;
-    color: #333;
-}
-
-.registro-ninos-container form input[type="text"],
-.registro-ninos-container form input[type="number"],
-.registro-ninos-container form input[type="date"],
-.registro-ninos-container form select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    margin-top: 5px;
-    font-size: 14px;
-}
-
-.registro-ninos-container form button {
-    background-color: #00796b; /* Verde azulado */
+.btn-success {
+    background-color: #00796b;
     color: white;
-    padding: 12px;
-    border: none;
+    padding: 10px 15px;
     border-radius: 6px;
-    cursor: pointer;
     font-size: 16px;
-    margin-top: 15px;
     transition: background 0.3s ease;
 }
 
-.registro-ninos-container form button:hover {
-    background-color: #004d40; /* Verde más oscuro */
+.btn-success:hover {
+    background-color: #004d40;
 }
 
-/* Estilos para botones de navegación */
-.registro-ninos-container .btn-container {
+/* ✅ Formulario oculto */
+.hidden {
+    display: none;
+}
+
+/* ✅ Formulario de registro */
+#formulario-nino {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.form-group {
+    text-align: left;
+}
+
+.form-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+/* ✅ Tabla de Últimos Niños Agregados */
+.ultimos-ninos {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.table th, .table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+.table th {
+    background-color: #00796b;
+    color: white;
+}
+
+/* ✅ Botones de navegación */
+.btn-container {
     display: flex;
     justify-content: space-between;
     margin-top: 20px;
 }
 
-.registro-ninos-container a.btn {
+.btn-container a.btn {
     padding: 10px 20px;
     text-decoration: none;
     color: white;
@@ -84,7 +113,7 @@
 }
 
 .btn-primary {
-    background-color: #0288d1; /* Azul profesional */
+    background-color: #0288d1;
 }
 
 .btn-primary:hover {
@@ -92,7 +121,7 @@
 }
 
 .btn-secondary {
-    background-color: #ff9800; /* Naranja para contrastar */
+    background-color: #ff9800;
 }
 
 .btn-secondary:hover {

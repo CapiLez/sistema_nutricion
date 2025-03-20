@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Resultados de Búsqueda</h2>
+<p>Resultados para "{{ query }}":</p>
+<ul>
+    {% for nino in resultados %}
+        <li>{{ nino.nombre }} - {{ nino.edad }} años</li>
+    {% empty %}
+        <p>No se encontraron niños con ese nombre.</p>
+    {% endfor %}
+</ul>
+<a href="{% url 'registro_ninos' %}" class="btn btn-primary">Regresar</a>
+{% endblock %}
