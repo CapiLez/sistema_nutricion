@@ -2,15 +2,28 @@
 
 {% block title %}Registrar Seguimiento{% endblock %}
 
+{% load static %}  <!-- Aquí se carga el tag static -->
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'nutricion/css/registrar_seguimiento.css' %}">
+{% endblock %}
+
 {% block content %}
-    <h1>Registrar Seguimiento Trimestral</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Guardar</button>
-    </form>
-    <a href="{% url 'lista_seguimientos' %}" class="btn btn-secondary">Ver Lista de Seguimientos</a>
-    <a href="{% url 'home' %}" class="btn btn-primary">
-        <i class="fas fa-arrow-left"></i> Regresar al Inicio
-    </a>
+<div class="registrar-seguimiento-page">
+    <div class="registrar-seguimiento-container">
+        <h1>Registrar Seguimiento Trimestral</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Guardar</button>
+        </form>
+        
+        <div class="btn-container">
+            <a href="{% url 'lista_seguimientos' %}" class="btn btn-secondary">Ver Lista de Seguimientos</a>
+            <a href="{% url 'home' %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Regresar al Inicio
+            </a>
+        </div>
+    </div>
+</div>
 {% endblock %}

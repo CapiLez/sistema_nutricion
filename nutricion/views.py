@@ -82,7 +82,7 @@ def registro_ninos(request):
         form = PacienteForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('home')
+            return redirect('historial')
     else:
         form = PacienteForm()
     return render(request, 'registro_ninos.html', {'form': form})
@@ -93,7 +93,7 @@ def registro_trabajadores(request):
         form = TrabajadorForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('home')
+            return redirect('historial')
     else:
         form = TrabajadorForm()
     return render(request, 'registro_trabajadores.html', {'form': form})

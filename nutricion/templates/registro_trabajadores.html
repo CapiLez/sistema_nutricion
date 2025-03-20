@@ -1,15 +1,28 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Registro de Trabajadores{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'nutricion/css/registro_trabajadores.css' %}">
+{% endblock %}
 
 {% block content %}
-    <h2>Registro de Evaluación Nutricional - Trabajadores</h2>
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Guardar</button>
-    </form>
-    <a href="{% url 'home' %}" class="btn btn-primary">
-        <i class="fas fa-arrow-left"></i> Regresar al Inicio
-    </a>
+<div class="registro-trabajadores-page">
+    <div class="registro-trabajadores-container">
+        <h2>Registro de Evaluación Nutricional - Trabajadores</h2>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Guardar</button>
+        </form>
+        
+        <div class="btn-container">
+            <a href="{% url 'home' %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Regresar al Inicio
+            </a>
+            <a href="{% url 'lista_seguimientos' %}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> Ver Seguimientos
+            </a>
+        </div>
+    </div>
+</div>
 {% endblock %}

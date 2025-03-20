@@ -1,0 +1,86 @@
+/* Estilos para la página de Lista de Seguimientos */
+.seguimientos-page {
+    font-family: 'Arial', sans-serif;
+    background-color: #e3f2fd; /* Azul claro */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.seguimientos-page h1 {
+    color: #00796b; /* Verde azulado */
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+/* Estilos para la tabla */
+.seguimientos-page table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.seguimientos-page table th,
+.seguimientos-page table td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #00796b;
+}
+
+.seguimientos-page table th {
+    background-color: #00796b; /* Verde azulado */
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.seguimientos-page table td {
+    background-color: #f1f8e9; /* Fondo suave */
+    font-size: 14px;
+}
+
+.seguimientos-page table tr:nth-child(even) {
+    background-color: #e0f2f1; /* Azul muy suave para filas alternadas */
+}
+
+/* Estilos para los botones */
+/* Estilos para los botones */
+.seguimientos-page .btn-container {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 500px; /* Aumentamos el espacio disponible */
+    gap: 20px; /* Espacio entre los botones */
+}
+
+.seguimientos-page a.btn {
+    padding: 8px 18px; /* Tamaño más pequeño */
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 15px; /* Tamaño de texto más pequeño */
+    text-align: center;
+    transition: background 0.3s ease;
+    width: 50%; /* Asegura que los botones se distribuyan bien */
+}
+
+.btn-success {
+    background-color: #28a745; /* Verde para acción positiva */
+}
+
+.btn-success:hover {
+    background-color: #218838;
+}
+
+.btn-primary {
+    background-color: #0288d1; /* Azul profesional */
+}
+
+.btn-primary:hover {
+    background-color: #01579b;
+}

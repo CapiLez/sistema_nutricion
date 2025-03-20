@@ -1,37 +1,46 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Lista de Seguimientos{% endblock %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'nutricion/css/lista_seguimientos.css' %}">
+{% endblock %}
+
 {% block content %}
-    <h1>Lista de Seguimientos Trimestrales</h1>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Paciente</th>
-                <th>Fecha de Valoración</th>
-                <th>Edad</th>
-                <th>Peso (kg)</th>
-                <th>Talla (cm)</th>
-                <th>IMC</th>
-                <th>Diagnóstico</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for seguimiento in seguimientos %}
-            <tr>
-                <td>{{ seguimiento.paciente.nombre }}</td>
-                <td>{{ seguimiento.fecha_valoracion }}</td>
-                <td>{{ seguimiento.edad }}</td>
-                <td>{{ seguimiento.peso }}</td>
-                <td>{{ seguimiento.talla }}</td>
-                <td>{{ seguimiento.imc }}</td>
-                <td>{{ seguimiento.dx }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <a href="{% url 'registrar_seguimiento' %}" class="btn btn-success">Registrar Nuevo Seguimiento</a>
-    <a href="{% url 'home' %}" class="btn btn-primary">
-        <i class="fas fa-arrow-left"></i> Regresar al Inicio
-    </a>
+    <div class="seguimientos-page">
+        <h1>Lista de Seguimientos Trimestrales</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Paciente</th>
+                    <th>Fecha de Valoración</th>
+                    <th>Edad</th>
+                    <th>Peso (kg)</th>
+                    <th>Talla (cm)</th>
+                    <th>IMC</th>
+                    <th>Diagnóstico</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for seguimiento in seguimientos %}
+                <tr>
+                    <td>{{ seguimiento.paciente.nombre }}</td>
+                    <td>{{ seguimiento.fecha_valoracion }}</td>
+                    <td>{{ seguimiento.edad }}</td>
+                    <td>{{ seguimiento.peso }}</td>
+                    <td>{{ seguimiento.talla }}</td>
+                    <td>{{ seguimiento.imc }}</td>
+                    <td>{{ seguimiento.dx }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="btn-container">
+            <a href="{% url 'registrar_seguimiento' %}" class="btn btn-success">Registrar Nuevo Seguimiento</a>
+            <a href="{% url 'home' %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Regresar al Inicio
+            </a>
+        </div>
+    </div>
 {% endblock %}

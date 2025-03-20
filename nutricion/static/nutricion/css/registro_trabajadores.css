@@ -1,0 +1,131 @@
+/* Estilos para el registro de trabajadores en el sector salud */
+.registro-trabajadores-page {
+    font-family: 'Arial', sans-serif;
+    background-color: #e1f5fe; /* Azul muy suave, que transmite tranquilidad y profesionalismo */
+    margin: 0;
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.registro-trabajadores-container {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 100%;
+}
+
+.registro-trabajadores-container h2 {
+    color: #0288d1; /* Azul profesional */
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.registro-trabajadores-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.registro-trabajadores-container form label {
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
+}
+
+.registro-trabajadores-container form input[type="text"],
+.registro-trabajadores-container form input[type="number"],
+.registro-trabajadores-container form input[type="date"],
+.registro-trabajadores-container form select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #0288d1; /* Azul de la marca */
+    border-radius: 6px;
+    background-color: #f1f8e9; /* Fondo suave */
+    font-size: 15px;
+    color: #333;
+    transition: border-color 0.3s ease;
+    box-sizing: border-box; /* Asegura que el padding no altere el ancho */
+}
+
+.registro-trabajadores-container form input[type="text"]:focus,
+.registro-trabajadores-container form input[type="number"]:focus,
+.registro-trabajadores-container form input[type="date"]:focus,
+.registro-trabajadores-container form select:focus {
+    border-color: #01579b; /* Azul más oscuro en foco */
+    outline: none;
+}
+
+.registro-trabajadores-container form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #0288d1; /* Azul de la marca */
+    border-radius: 6px;
+    background-color: #f1f8e9; /* Fondo suave */
+    font-size: 15px;
+    color: #333;
+    resize: vertical; /* Permite el redimensionamiento vertical */
+    min-height: 120px; /* Altura mínima para los campos grandes */
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+.registro-trabajadores-container form textarea:focus {
+    border-color: #01579b; /* Azul más oscuro en foco */
+    outline: none;
+}
+
+.registro-trabajadores-container form button {
+    background-color: #0288d1; /* Azul profesional */
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s ease;
+    width: 100%; /* Asegura que el botón ocupe el 100% del ancho */
+}
+
+.registro-trabajadores-container form button:hover {
+    background-color: #01579b; /* Azul más oscuro */
+}
+
+/* Estilos para botones de navegación */
+.registro-trabajadores-container .btn-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.registro-trabajadores-container a.btn {
+    padding: 8px 15px;
+    text-decoration: none;
+    color: white;
+    border-radius: 6px;
+    font-size: 14px;
+    text-align: center;
+    transition: background 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #0288d1; /* Azul profesional */
+}
+
+.btn-primary:hover {
+    background-color: #01579b;
+}
+
+.btn-secondary {
+    background-color: #ff9800; /* Naranja para contrastar */
+}
+
+.btn-secondary:hover {
+    background-color: #e65100;
+}

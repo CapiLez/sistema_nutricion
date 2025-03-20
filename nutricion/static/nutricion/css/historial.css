@@ -1,0 +1,94 @@
+/* Estilos generales para la página de historial */
+.historial-page {
+    font-family: 'Arial', sans-serif;
+    background-color: #f1f8e9; /* Fondo suave */
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.historial-page h1 {
+    color: #0288d1; /* Azul profesional */
+    font-size: 28px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.historial-page .btn {
+    background-color: #0288d1;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    margin-bottom: 20px;
+    transition: background-color 0.3s ease;
+    margin-top: 60px;
+    
+}
+
+.historial-page .btn:hover {
+    background-color: #01579b;
+}
+
+.historial-page .btn-success {
+    background-color: #4caf50; /* Verde para el botón de exportar */
+}
+
+.historial-page .btn-success:hover {
+    background-color: #388e3c;
+}
+
+/* Estilos para la tabla */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 12px 20px;
+    text-align: center;
+}
+
+th {
+    background-color: #0288d1; /* Azul de cabecera */
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+td {
+    background-color: #ffffff; /* Fondo blanco para las celdas */
+    color: #333;
+    font-size: 14px;
+}
+
+tr:nth-child(even) td {
+    background-color: #f1f8e9; /* Fila alternada para mejor legibilidad */
+}
+
+tr:hover {
+    background-color: #e1f5fe; /* Color suave al pasar el mouse por encima */
+    cursor: pointer;
+}
+
+/* Agregar un pequeño estilo para las celdas de los datos */
+td:hover {
+    background-color: #e1f5fe;
+}
+
+@media screen and (max-width: 768px) {
+    /* Ajustes para pantallas pequeñas */
+    table, th, td {
+        font-size: 12px;
+        padding: 8px;
+    }
+    .btn {
+        font-size: 14px;
+    }
+}

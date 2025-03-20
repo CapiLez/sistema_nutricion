@@ -1,0 +1,112 @@
+/* Estilos para la página de registrar seguimiento */
+.registrar-seguimiento-page {
+    font-family: 'Arial', sans-serif;
+    background-color: #f5f5f5; /* Gris suave para el fondo */
+    margin: 0;
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.registrar-seguimiento-container {
+    width: 100%;
+    max-width: 600px;
+    padding: 30px;
+    background-color: #ffffff; /* Fondo blanco para la caja del formulario */
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.registrar-seguimiento-container h1 {
+    color: #004d40; /* Verde oscuro para el título */
+    font-size: 24px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.registrar-seguimiento-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.registrar-seguimiento-container form label {
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
+}
+
+.registrar-seguimiento-container form input[type="text"],
+.registrar-seguimiento-container form input[type="number"],
+.registrar-seguimiento-container form input[type="date"],
+.registrar-seguimiento-container form select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #f9f9f9; /* Fondo muy suave para los campos */
+    font-size: 15px;
+    color: #333;
+    transition: border-color 0.3s ease;
+}
+
+.registrar-seguimiento-container form input[type="text"]:focus,
+.registrar-seguimiento-container form input[type="number"]:focus,
+.registrar-seguimiento-container form input[type="date"]:focus,
+.registrar-seguimiento-container form select:focus {
+    border-color: #00796b; /* Verde oscuro cuando se hace foco */
+    outline: none;
+}
+
+.registrar-seguimiento-container form button {
+    background-color: #00796b; /* Verde azulado */
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s ease;
+}
+
+.registrar-seguimiento-container form button:hover {
+    background-color: #004d40; /* Verde más oscuro al pasar el mouse */
+}
+
+/* Estilos para los botones de navegación */
+.registrar-seguimiento-container .btn-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.registrar-seguimiento-container a.btn {
+    padding: 8px 15px;
+    text-decoration: none;
+    color: white;
+    border-radius: 6px;
+    font-size: 14px;
+    text-align: center;
+    transition: background 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #0288d1; /* Azul profesional */
+}
+
+.btn-primary:hover {
+    background-color: #01579b;
+}
+
+.btn-secondary {
+    background-color: #ff9800; /* Naranja para contrastar */
+}
+
+.btn-secondary:hover {
+    background-color: #e65100;
+}
