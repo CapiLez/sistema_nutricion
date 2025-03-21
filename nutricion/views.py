@@ -46,7 +46,38 @@ def es_admin(user):
 @user_passes_test(es_admin)
 def gestionar_usuarios(request):
     usuarios = Usuario.objects.all()
-    return render(request, 'gestionar_usuarios.html', {'usuarios': usuarios})
+    user_id = request.GET.get('edit')
+    editar = False
+    usuario_a_editar = None
+
+    if user_id:
+        usuario_a_editar = get_object_or_404(Usuario, id=user_id)
+        editar = True
+        form = UserCreationForm(request.POST or None, instance=usuario_a_editar)
+    else:
+        form = UserCreationForm(request.POST or None)
+
+    if request.method == 'POST':
+        if editar:
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Usuario actualizado exitosamente.')
+                return redirect('gestionar_usuarios')
+        else:
+            if form.is_valid():
+                user = form.save(commit=False)
+                user.set_password(form.cleaned_data['password'])
+                user.save()
+                messages.success(request, 'Usuario agregado exitosamente.')
+                return redirect('gestionar_usuarios')
+
+    return render(request, 'gestionar_usuarios.html', {
+        'usuarios': usuarios,
+        'form': form,
+        'editar': editar,
+        'usuario': usuario_a_editar
+    })
+
 
 # Vista para agregar usuarios
 @login_required
@@ -64,16 +95,32 @@ def agregar_usuario(request):
         form = UserCreationForm()
     return render(request, 'agregar_usuario.html', {'form': form})
 
+@login_required
+@user_passes_test(es_admin)
+def editar_usuario(request, user_id):
+    usuario = get_object_or_404(Usuario, id=user_id)
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST, instance=usuario)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Usuario actualizado exitosamente.')
+            return redirect('gestionar_usuarios')
+    else:
+        form = UserCreationForm(instance=usuario)
+    return render(request, 'editar_usuario.html', {'form': form, 'usuario': usuario})
+
+
 # Vista para eliminar usuarios
 @login_required
 @user_passes_test(es_admin)
 def eliminar_usuario(request, user_id):
-    usuario = get_object_or_404(User, id=user_id)
-    if usuario.is_superuser:
-        messages.error(request, 'No puedes eliminar a un administrador.')
-    else:
-        usuario.delete()
-        messages.success(request, 'Usuario eliminado exitosamente.')
+    if request.method == 'POST':
+        usuario = get_object_or_404(Usuario, id=user_id)
+        if usuario.is_superuser:
+            messages.error(request, 'No puedes eliminar a un superusuario.')
+        else:
+            usuario.delete()
+            messages.success(request, 'Usuario eliminado correctamente.')
     return redirect('gestionar_usuarios')
 
 @login_required
@@ -106,7 +153,7 @@ def registro_trabajadores(request):
     else:
         form = TrabajadorForm()
 
-    # ✅ Obtener los últimos 5 trabajadores agregados
+    # Obtener los últimos 5 trabajadores agregados
     ultimos_trabajadores = Trabajador.objects.order_by('-id')[:5]
 
     return render(request, 'registro_trabajadores.html', {

@@ -1,49 +1,82 @@
-<!DOCTYPE html>
+{% extends 'base.html' %}
 {% load static %}
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Gestión de Usuarios</title>
-    <link href="{% static 'nutricion/css/style.css' %}" rel="stylesheet">
-</head>
-<body>
-    <h1>Gestión de Usuarios</h1>
 
-    <a href="{% url 'agregar_usuario' %}" class="btn btn-success">
-        <i class="fas fa-user-plus"></i> Agregar Usuario
-    </a>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'nutricion/css/gestionar_usuarios.css' %}">
+{% endblock %}
 
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nombre de Usuario</th>
-                <th>Email</th>
-                <th>Administrador</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for usuario in usuarios %}
-            <tr>
-                <td>{{ usuario.id }}</td>
-                <td>{{ usuario.username }}</td>
-                <td>{{ usuario.email }}</td>
-                <td>{% if usuario.es_administrador %} Sí {% else %} No {% endif %}</td>
-                <td>
-                    {% if not usuario.is_superuser %}
-                        <a href="{% url 'eliminar_usuario' usuario.id %}" class="btn btn-danger">
-                            <i class="fas fa-trash"></i> Eliminar
-                        </a>
-                    {% endif %}
-                </td>
-            </tr>
+{% block content %}
+<div class="gestionar-usuarios-page">
+    <h2>Gestión de Usuarios</h2>
+
+    <!-- ✅ Mostrar mensaje de éxito o error -->
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li class="alert {{ message.tags }}">{{ message }}</li>
             {% endfor %}
-        </tbody>
-    </table>
+        </ul>
+    {% endif %}
 
-    <a href="{% url 'home' %}" class="btn btn-primary">
-        <i class="fas fa-arrow-left"></i> Regresar al Inicio
-    </a>
-</body>
-</html>
+    <!-- ✅ Formulario de Agregar / Editar -->
+    <div class="form-usuario">
+        {% if editar %}
+            <h3>Editar Usuario: {{ usuario.username }}</h3>
+            <form method="POST">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-edit"></i> Guardar Cambios
+                </button>
+                <a href="{% url 'gestionar_usuarios' %}" class="btn btn-secondary">
+                    Cancelar
+                </a>
+            </form>
+        {% else %}
+            <h3>Agregar Nuevo Usuario</h3>
+            <form method="POST">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-plus-circle"></i> Crear Usuario
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    <!-- ✅ Tabla de Usuarios -->
+    <div class="tabla-usuarios">
+        <h3>Usuarios Registrados</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Usuario</th>
+                    <th>Administrador</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in usuarios %}
+                <tr>
+                    <td>{{ usuario.get_full_name }}</td>
+                    <td>{{ usuario.username }}</td>
+                    <td>{{ usuario.es_administrador|yesno:"Sí,No" }}</td>
+                    <td>
+                        <a href="{% url 'gestionar_usuarios' %}?edit={{ usuario.id }}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <form action="{% url 'eliminar_usuario' usuario.id %}" method="POST" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar este usuario?');">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
