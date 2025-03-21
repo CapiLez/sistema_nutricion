@@ -1,0 +1,85 @@
+.registro-ninos-page {
+    font-family: 'Arial', sans-serif;
+    background-color: #e3f2fd;
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.registro-ninos-container {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 600px;
+}
+
+.registro-ninos-container h2 {
+    text-align: center;
+    color: #00796b;
+    margin-bottom: 20px;
+}
+
+.registro-ninos-container form {
+    display: flex;
+    flex-direction: column;
+}
+
+.registro-ninos-container form label {
+    font-weight: bold;
+    margin-top: 10px;
+    color: #333;
+}
+
+.registro-ninos-container form input[type="text"],
+.registro-ninos-container form input[type="number"],
+.registro-ninos-container form input[type="date"],
+.registro-ninos-container form select,
+.registro-ninos-container form textarea {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-top: 5px;
+    font-size: 14px;
+}
+
+.registro-ninos-container form button,
+.registro-ninos-container a.btn {
+    padding: 10px 20px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: center;
+    color: white;
+    transition: background 0.3s ease;
+}
+
+.btn-success {
+    background-color: #00796b;
+}
+
+.btn-success:hover {
+    background-color: #004d40;
+}
+
+.btn-danger {
+    background-color: #d32f2f;
+}
+
+.btn-danger:hover {
+    background-color: #b71c1c;
+}
+
+.btn-secondary {
+    background-color: #9e9e9e;
+}
+
+.btn-secondary:hover {
+    background-color: #757575;
+}

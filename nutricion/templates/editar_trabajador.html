@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'nutricion/css/editar_eliminar_nino.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="registro-ninos-page">
+    <div class="registro-ninos-container">
+        <h2>Editar Trabajador: {{ trabajador.nombre }}</h2>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-success">Guardar Cambios</button>
+            <a href="{% url 'registro_trabajadores' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

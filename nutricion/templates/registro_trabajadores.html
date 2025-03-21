@@ -10,14 +10,14 @@
     <div class="registro-trabajadores-container">
         <h2>Registro de Evaluación Nutricional - Trabajadores</h2>
 
-        <!-- ✅ Botón para mostrar el formulario -->
+        <!-- Botón para mostrar el formulario -->
         <div class="acciones-container">
             <button id="mostrar-formulario" class="btn btn-success">
                 <i class="fas fa-user-plus"></i> Agregar Trabajador
             </button>
         </div>
 
-        <!-- ✅ Formulario (Oculto por defecto) -->
+        <!-- Formulario (Oculto por defecto) -->
         <div id="formulario-trabajador" class="hidden">
             <h3>Agregar Nuevo Trabajador</h3>
             <form method="POST">
@@ -36,7 +36,7 @@
             </form>
         </div>
 
-        <!-- ✅ Tabla de Últimos Trabajadores Agregados -->
+        <!-- Tabla de Últimos Trabajadores Agregados -->
         <div class="ultimos-trabajadores">
             <h3>Últimos Trabajadores Agregados</h3>
             <table class="table">
@@ -46,26 +46,35 @@
                         <th>CURP</th>
                         <th>Cargo</th>
                         <th>Departamento</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for trabajador in ultimos_trabajadores %}
                         <tr>
                             <td>{{ trabajador.nombre }}</td>
-                            <td>{{ trabajador.curp }}</td>
+                            <td>{{ trabajador.curp|upper }}</td>
                             <td>{{ trabajador.cargo }}</td>
                             <td>{{ trabajador.departamento }}</td>
+                            <td>
+                                <a href="{% url 'editar_trabajador' trabajador.id %}" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'eliminar_trabajador' trabajador.id %}" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="4">No hay trabajadores registrados recientemente.</td>
+                            <td colspan="5">No hay trabajadores registrados recientemente.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <!-- ✅ Botones de Navegación -->
+        <!-- Botones de Navegación -->
         <div class="btn-container">
             <a href="{% url 'home' %}" class="btn btn-primary">
                 <i class="fas fa-arrow-left"></i> Regresar al Inicio
@@ -77,21 +86,26 @@
     </div>
 </div>
 
-<!-- ✅ Scripts para Mostrar/Ocultar el Formulario -->
+<!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
-        // ✅ Ocultar formulario al cargar la página
+        // Ocultar formulario al inicio
         $("#formulario-trabajador").hide();
 
         $("#mostrar-formulario").on("click", function() {
-            $("#formulario-trabajador").slideDown(); // Animación de apertura
-            $(this).hide(); // Oculta el botón de agregar
+            $("#formulario-trabajador").slideDown();
+            $(this).hide();
         });
 
         $("#cancelar-formulario").on("click", function() {
-            $("#formulario-trabajador").slideUp(); // Animación de cierre
-            $("#mostrar-formulario").show(); // Muestra el botón de agregar
+            $("#formulario-trabajador").slideUp();
+            $("#mostrar-formulario").show();
+        });
+
+        // CURP en mayúsculas automáticamente
+        $('input[name="curp"]').on('input', function () {
+            this.value = this.value.toUpperCase();
         });
     });
 </script>

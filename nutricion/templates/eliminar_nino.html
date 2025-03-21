@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="registro-ninos-page">
+    <div class="registro-ninos-container">
+        <h2>¿Eliminar a {{ nino.nombre }}?</h2>
+        <p>Esta acción no se puede deshacer.</p>
+        <form method="POST">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Eliminar</button>
+            <a href="{% url 'registro_ninos' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

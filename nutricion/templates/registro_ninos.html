@@ -3,6 +3,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'nutricion/css/registro_nino.css' %}">
+
 {% endblock %}
 
 {% block content %}
@@ -10,14 +11,14 @@
     <div class="registro-ninos-container">
         <h2>Registro de Evaluación Nutricional - Niños</h2>
 
-        <!-- ✅ Botón para mostrar el formulario -->
+        <!-- Botón para mostrar el formulario -->
         <div class="acciones-container">
             <button id="mostrar-formulario" class="btn btn-success">
                 <i class="fas fa-user-plus"></i> Agregar Niño
             </button>
         </div>
 
-        <!-- ✅ Formulario (Oculto por defecto) -->
+        <!-- Formulario (Oculto por defecto) -->
         <div id="formulario-nino" class="hidden">
             <h3>Agregar Nuevo Niño</h3>
             <form method="POST">
@@ -36,7 +37,7 @@
             </form>
         </div>
 
-        <!-- ✅ Tabla de Últimos Niños Agregados -->
+        <!-- Tabla de Últimos Niños Agregados -->
         <div class="ultimos-ninos">
             <h3>Últimos Niños Agregados</h3>
             <table class="table">
@@ -47,6 +48,7 @@
                         <th>CURP</th>
                         <th>Grado</th>
                         <th>Grupo</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -54,20 +56,28 @@
                         <tr>
                             <td>{{ nino.nombre }}</td>
                             <td>{{ nino.edad }} años</td>
-                            <td>{{ nino.curp }}</td>
+                            <td>{{ nino.curp|upper }}</td>
                             <td>{{ nino.grado }}</td>
                             <td>{{ nino.grupo }}</td>
+                            <td>
+                                <a href="{% url 'editar_nino' nino.id %}" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'eliminar_nino' nino.id %}" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="5">No hay niños registrados recientemente.</td>
+                            <td colspan="6">No hay niños registrados recientemente.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <!-- ✅ Botones de Navegación -->
+        <!-- Botones de Navegación -->
         <div class="btn-container">
             <a href="{% url 'home' %}" class="btn btn-primary">
                 <i class="fas fa-arrow-left"></i> Regresar al Inicio
@@ -79,18 +89,26 @@
     </div>
 </div>
 
-<!-- ✅ Scripts para Mostrar/Ocultar el Formulario -->
+<!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
+        // Ocultar formulario al inicio
+        $("#formulario-nino").hide();
+
         $("#mostrar-formulario").on("click", function() {
-            $("#formulario-nino").slideDown(); // Animación de apertura
-            $(this).hide(); // Oculta el botón de agregar
+            $("#formulario-nino").slideDown();
+            $(this).hide();
         });
 
         $("#cancelar-formulario").on("click", function() {
-            $("#formulario-nino").slideUp(); // Animación de cierre
-            $("#mostrar-formulario").show(); // Muestra el botón de agregar
+            $("#formulario-nino").slideUp();
+            $("#mostrar-formulario").show();
+        });
+
+        // Forzar CURP a mayúsculas automáticamente al escribir
+        $('input[name="curp"]').on('input', function () {
+            this.value = this.value.toUpperCase();
         });
     });
 </script>

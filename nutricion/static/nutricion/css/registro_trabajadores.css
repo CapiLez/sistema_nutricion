@@ -3,8 +3,8 @@
     font-family: 'Arial', sans-serif;
     background-color: #e3f2fd;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: left;
+    align-items: flex-start;
     min-height: 100vh;
     padding: 40px;
 }
@@ -18,6 +18,7 @@
     max-width: 600px;
     width: 100%;
     text-align: center;
+    margin-right: -50px;
 }
 
 /* ✅ Estilos generales */
@@ -45,29 +46,19 @@
     background-color: #004d40;
 }
 
-/* ✅ Formulario oculto */
+/* ✅ Formulario oculto y transición más suave */
 .hidden {
     display: none;
 }
 
-/* ✅ Formulario de registro */
 #formulario-trabajador {
     background: #f8f9fa;
     padding: 15px;
     border-radius: 5px;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
-    display: none; /* Se asegura de que esté oculto al cargar la página */
-}
-
-.form-group {
-    text-align: left;
-}
-
-.form-buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 15px;
+    transition: all 0.3s ease; /* Transición suave */
+    overflow: hidden; /* Evita movimiento brusco */
 }
 
 /* ✅ Tabla de Últimos Trabajadores Agregados */
@@ -127,4 +118,93 @@
 
 .btn-secondary:hover {
     background-color: #e65100;
+}
+
+/* ✅ Campos de Texto y Selección */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+    width: 95%;
+    padding: 8px 10px;
+    margin-bottom: 15px;
+    border: 1.5px solid #00796b;
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #333;
+    background-color: #ffffff;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s, box-shadow 0.3s;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #004d40;
+    box-shadow: 0 0 6px rgba(0, 77, 64, 0.3);
+    outline: none;
+}
+
+/* ✅ Etiquetas de los campos */
+label {
+    font-weight: bold;
+    color: #00796b;
+    margin-bottom: 5px;
+    display: block;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ✅ Ajustes de los botones del formulario */
+.form-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+button[type="submit"],
+button[type="button"] {
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button[type="submit"] {
+    background-color: #00796b;
+    color: white;
+}
+
+button[type="submit"]:hover {
+    background-color: #004d40;
+}
+
+button[type="button"] {
+    background-color: #d32f2f;
+    color: white;
+}
+
+button[type="button"]:hover {
+    background-color: #b71c1c;
+}
+/* ✅ Etiquetas de los campos */
+label {
+    font-weight: bold;
+    color: #00796b;
+    margin-bottom: 5px;
+    display: block;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left; /* Cambiado de center a left */
 }

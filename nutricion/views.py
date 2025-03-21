@@ -2,7 +2,6 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.models import User
 from django.contrib import messages
 import pandas as pd
 from .models import Paciente, SeguimientoTrimestral, Trabajador, Usuario
@@ -143,6 +142,28 @@ def registro_ninos(request):
     })
 
 @login_required
+def editar_nino(request, nino_id):
+    nino = get_object_or_404(Paciente, id=nino_id)
+    if request.method == 'POST':
+        form = PacienteForm(request.POST, instance=nino)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Niño actualizado correctamente.")
+            return redirect('registro_ninos')
+    else:
+        form = PacienteForm(instance=nino)
+    return render(request, 'editar_nino.html', {'form': form, 'nino': nino})
+
+@login_required
+def eliminar_nino(request, nino_id):
+    nino = get_object_or_404(Paciente, id=nino_id)
+    if request.method == 'POST':
+        nino.delete()
+        messages.success(request, "Niño eliminado correctamente.")
+        return redirect('registro_ninos')
+    return render(request, 'eliminar_nino.html', {'nino': nino})
+
+@login_required
 def registro_trabajadores(request):
     if request.method == 'POST':
         form = TrabajadorForm(request.POST)
@@ -160,6 +181,30 @@ def registro_trabajadores(request):
         'form': form,
         'ultimos_trabajadores': ultimos_trabajadores  # Pasar la variable a la plantilla
     })
+
+@login_required
+def editar_trabajador(request, trabajador_id):
+    trabajador = get_object_or_404(Trabajador, id=trabajador_id)
+    if request.method == 'POST':
+        form = TrabajadorForm(request.POST, instance=trabajador)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Trabajador actualizado correctamente.")
+            return redirect('registro_trabajadores')
+    else:
+        form = TrabajadorForm(instance=trabajador)
+    return render(request, 'editar_trabajador.html', {'form': form, 'trabajador': trabajador})
+
+
+@login_required
+def eliminar_trabajador(request, trabajador_id):
+    trabajador = get_object_or_404(Trabajador, id=trabajador_id)
+    if request.method == 'POST':
+        trabajador.delete()
+        messages.success(request, "Trabajador eliminado correctamente.")
+        return redirect('registro_trabajadores')
+    return render(request, 'eliminar_trabajador.html', {'trabajador': trabajador})
+
 
 @login_required
 def historial(request):

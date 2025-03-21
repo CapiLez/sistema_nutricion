@@ -18,10 +18,18 @@ class PacienteForm(forms.ModelForm):
         model = Paciente
         fields = '__all__'
 
+    def clean_curp(self):
+        curp = self.cleaned_data.get('curp')
+        return curp.upper() if curp else curp
+
 class TrabajadorForm(forms.ModelForm):
     class Meta:
         model = Trabajador
         fields = '__all__'
+
+    def clean_curp(self):
+        curp = self.cleaned_data.get('curp')
+        return curp.upper() if curp else curp
 
 class SeguimientoTrimestralForm(forms.ModelForm):
     class Meta:
