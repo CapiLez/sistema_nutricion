@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Paciente, Trabajador, SeguimientoTrimestral, Usuario
+from .models import Paciente, SeguimientoTrabajador, Trabajador, SeguimientoTrimestral, Usuario
 import datetime
 from django import forms
 from .models import Usuario
@@ -95,3 +95,15 @@ class SeguimientoTrimestralForm(forms.ModelForm):
     class Meta:
         model = SeguimientoTrimestral
         fields = '__all__'
+        widgets = {
+            'fecha_valoracion': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+class SeguimientoTrabajadorForm(forms.ModelForm):
+    class Meta:
+        model = SeguimientoTrabajador
+        fields = '__all__'
+        widgets = {
+            'fecha_valoracion': forms.DateInput(attrs={'type': 'date'}),
+        }
+

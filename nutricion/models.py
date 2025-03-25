@@ -65,3 +65,19 @@ class SeguimientoTrimestral(models.Model):
 
     def __str__(self):
         return f"{self.paciente.nombre} - {self.fecha_valoracion}"
+    
+class SeguimientoTrabajador(models.Model):
+    trabajador = models.ForeignKey('Trabajador', on_delete=models.CASCADE)
+    indicador_peso_edad = models.FloatField()
+    indicador_peso_talla = models.FloatField()
+    indicador_talla_edad = models.FloatField()
+    imc = models.FloatField()
+    dx = models.CharField(max_length=255)  # Diagnóstico nutricional
+    edad = models.IntegerField()
+    peso = models.FloatField()
+    talla = models.FloatField()
+    fecha_valoracion = models.DateField()
+
+    def __str__(self):
+        return f"{self.trabajador.nombre} - {self.fecha_valoracion}"
+

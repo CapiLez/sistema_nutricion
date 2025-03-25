@@ -40,10 +40,10 @@ function validarFormulario() {
 
 <style>
     body {
-        font-family: Arial, sans-serif;
+        font-family: 'Georgia', serif;
         background-image: url('/static/nutricion/images/salud.jpg');
         background-size: cover;
-        background-position: center center;
+        background-position: center;
         background-repeat: no-repeat;
         background-attachment: fixed;
         display: flex;
@@ -52,6 +52,7 @@ function validarFormulario() {
         height: 100vh;
         margin: 0;
         overflow: hidden;
+        color: #2c3e50;
     }
     
     .login-wrapper {
@@ -60,72 +61,75 @@ function validarFormulario() {
         align-items: center;
         width: 100%;
         height: 100vh;
-        position: relative;
+        backdrop-filter: blur(5px);
+        background-color: rgba(0, 0, 0, 0.4);
     }
 
     .login-container {
-        background:white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        width: 350px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        width: 400px;
         text-align: center;
-        position: relative;
-        z-index: 1;
-        margin-top: -40px;
     }
 
     .logo-container {
-        text-align: center;
         margin-bottom: 20px;
     }
 
     .dif-logo {
-        max-width: 150px;
+        max-width: 130px;
     }
 
     .login-title {
         margin-top: 10px;
-    }
-
-    .error-messages {
-        color: red;
+        font-size: 24px;
         font-weight: bold;
-        margin-bottom: 10px;
+        color: #00695c;
     }
 
     .input-group {
+        margin-bottom: 15px;
         text-align: left;
-        margin-bottom: 10px;
     }
 
     label {
         display: block;
         font-weight: bold;
-        margin-bottom: 3px;
+        margin-bottom: 5px;
+        color: #2c3e50;
     }
 
     input {
         width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
+        padding: 10px;
+        border: 1px solid #00796b;
+        border-radius: 8px;
+        outline: none;
+        transition: border-color 0.3s;
+        font-family: 'Georgia', serif;
+    }
+
+    input:focus {
+        border-color: #004d40;
     }
 
     button {
-        background: #00796b;
+        background-color: #004d40;
         color: white;
-        padding: 8px;
+        padding: 10px;
         border: none;
-        border-radius: 5px;
+        border-radius: 8px;
         cursor: pointer;
         width: 100%;
-        font-size: 14px;
+        font-size: 16px;
         font-weight: bold;
+        transition: background-color 0.3s;
     }
 
     button:hover {
-        background: #00796b;
+        background-color: #00251a;
     }
 </style>
 

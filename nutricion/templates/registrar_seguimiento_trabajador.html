@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Registrar Seguimiento - Trabajador{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'nutricion/css/registrar_seguimiento.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="registrar-seguimiento-page">
+    <div class="registrar-seguimiento-container">
+        <h1>Registrar Seguimiento Trimestral (Trabajador)</h1>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Guardar</button>
+        </form>
+
+        <div class="btn-container">
+            <a href="{% url 'home' %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Regresar al Inicio
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

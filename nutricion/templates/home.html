@@ -1,15 +1,47 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Inicio{% endblock %}
 
+{% block extra_css %}
+<link href="{% static 'nutricion/css/home.css' %}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-    <h1>Bienvenido, Nutriólogo</h1>
-    <div class="button-container">
-        <a href="{% url 'registrar_seguimiento' %}" class="btn btn-primary">
-            <i class="fas fa-plus-circle"></i> Registrar Seguimiento
-        </a>
-        <a href="{% url 'lista_seguimientos' %}" class="btn btn-secondary">
-            <i class="fas fa-list"></i> Ver Seguimientos
-        </a>
+    <div class="home-container">
+        <!-- Logo en la parte superior derecha -->
+        <div class="logo-container">
+            <img src="{% static 'nutricion/images/Logo4.png' %}" alt="Logo" class="logo">
+        </div>
+
+        <h1>Bienvenido, Nutriólogo</h1>
+        <p class="intro-text">Gestiona y da seguimiento a los pacientes de manera eficiente y personalizada.</p>
+
+        <div class="button-container">
+            <a href="{% url 'registrar_seguimiento' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Registrar Seguimiento
+            </a>
+            <a href="{% url 'lista_seguimientos' %}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> Ver Seguimientos
+            </a>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <i class="fas fa-user-plus"></i>
+                <p>Pacientes Activos</p>
+                <span>45</span>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-user-md"></i>
+                <p>Trabajadores</p>
+                <span>10</span>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-child"></i>
+                <p>Niños Registrados</p>
+                <span>30</span>
+            </div>
+        </div>
     </div>
 {% endblock %}
