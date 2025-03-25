@@ -3,13 +3,23 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'nutricion/css/registro_nino.css' %}">
-
 {% endblock %}
 
 {% block content %}
 <div class="registro-ninos-page">
     <div class="registro-ninos-container">
         <h2>Registro de Evaluación Nutricional - Niños</h2>
+
+        <!-- ✅ Mostrar solo mensajes de esta vista -->
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    {% if "[ninos]" in message %}
+                        <li class="alert {{ message.tags }}">{{ message|cut:"[ninos]" }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        {% endif %}
 
         <!-- Botón para mostrar el formulario -->
         <div class="acciones-container">
@@ -63,9 +73,15 @@
                                 <a href="{% url 'editar_nino' nino.id %}" class="btn btn-warning btn-sm">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <a href="{% url 'eliminar_nino' nino.id %}" class="btn btn-danger btn-sm">
-                                    <i class="fas fa-trash-alt"></i>
-                                </a>
+                                {% if request.user.is_admin %}
+                                    <a href="{% url 'eliminar_nino' nino.id %}" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>                                
+                                {% else %}
+                                    <button class="btn btn-secondary btn-sm" title="Sin permiso para eliminar" disabled>
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                {% endif %}
                             </td>
                         </tr>
                     {% empty %}
@@ -102,11 +118,12 @@
         });
 
         $("#cancelar-formulario").on("click", function() {
+            $("#formulario-nino form")[0].reset(); // Limpiar campos
             $("#formulario-nino").slideUp();
             $("#mostrar-formulario").show();
         });
 
-        // Forzar CURP a mayúsculas automáticamente al escribir
+        // Forzar CURP a mayúsculas automáticamente
         $('input[name="curp"]').on('input', function () {
             this.value = this.value.toUpperCase();
         });

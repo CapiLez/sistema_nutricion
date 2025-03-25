@@ -10,6 +10,17 @@
     <div class="registro-trabajadores-container">
         <h2>Registro de Evaluación Nutricional - Trabajadores</h2>
 
+        <!-- ✅ Mensajes solo de esta vista -->
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    {% if "[trabajadores]" in message %}
+                        <li class="alert {{ message.tags }}">{{ message|cut:"[trabajadores]" }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        {% endif %}
+
         <!-- Botón para mostrar el formulario -->
         <div class="acciones-container">
             <button id="mostrar-formulario" class="btn btn-success">
@@ -60,9 +71,15 @@
                                 <a href="{% url 'editar_trabajador' trabajador.id %}" class="btn btn-warning btn-sm">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <a href="{% url 'eliminar_trabajador' trabajador.id %}" class="btn btn-danger btn-sm">
-                                    <i class="fas fa-trash-alt"></i>
-                                </a>
+                                {% if request.user.is_admin %}
+                                    <a href="{% url 'eliminar_trabajador' trabajador.id %}" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>                                
+                                {% else %}
+                                    <button class="btn btn-secondary btn-sm" title="Sin permiso para eliminar" disabled>
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                {% endif %}
                             </td>
                         </tr>
                     {% empty %}
@@ -99,6 +116,7 @@
         });
 
         $("#cancelar-formulario").on("click", function() {
+            $("#formulario-trabajador form")[0].reset(); // Limpiar campos
             $("#formulario-trabajador").slideUp();
             $("#mostrar-formulario").show();
         });

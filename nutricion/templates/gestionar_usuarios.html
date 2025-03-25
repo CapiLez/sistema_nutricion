@@ -9,16 +9,18 @@
 <div class="gestionar-usuarios-page">
     <h2>Gestión de Usuarios</h2>
 
-    <!-- ✅ Mostrar mensaje de éxito o error -->
+    <!-- Mostrar mensaje de éxito o error -->
     {% if messages %}
         <ul class="messages">
             {% for message in messages %}
-                <li class="alert {{ message.tags }}">{{ message }}</li>
+                {% if "[usuarios]" in message %}
+                    <li class="alert {{ message.tags }}">{{ message|cut:"[usuarios]" }}</li>
+                {% endif %}
             {% endfor %}
         </ul>
     {% endif %}
 
-    <!-- ✅ Formulario de Agregar / Editar -->
+    <!-- Formulario de Agregar / Editar -->
     <div class="form-usuario">
         {% if editar %}
             <h3>Editar Usuario: {{ usuario.username }}</h3>
@@ -44,7 +46,7 @@
         {% endif %}
     </div>
 
-    <!-- ✅ Tabla de Usuarios -->
+    <!-- Tabla de Usuarios -->
     <div class="tabla-usuarios">
         <h3>Usuarios Registrados</h3>
         <table class="table">
@@ -61,7 +63,7 @@
                 <tr>
                     <td>{{ usuario.get_full_name }}</td>
                     <td>{{ usuario.username }}</td>
-                    <td>{{ usuario.es_administrador|yesno:"Sí,No" }}</td>
+                    <td>{{ usuario.is_admin|yesno:"Sí,No" }}</td>
                     <td>
                         <a href="{% url 'gestionar_usuarios' %}?edit={{ usuario.id }}" class="btn btn-warning btn-sm">
                             <i class="fas fa-edit"></i> Editar

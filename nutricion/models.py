@@ -1,12 +1,26 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
+# models.py
 class Usuario(AbstractUser):
     telefono = models.CharField(max_length=15, blank=True, null=True)
-    es_administrador = models.BooleanField(default=False)
+    
+    ROLES = [
+        ('administrador', 'Administrador'),
+        ('jefe_departamento', 'Jefe de Departamento'),
+        ('nutriologo', 'Nutriólogo'),
+    ]
+    rol = models.CharField(max_length=20, choices=ROLES, default='nutriologo')
 
     def is_admin(self):
-        return self.is_superuser or self.es_administrador
+        return self.rol == 'administrador' or self.is_superuser
+
+    def is_jefe_departamento(self):
+        return self.rol == 'jefe_departamento'
+
+    def is_nutriologo(self):
+        return self.rol == 'nutriologo'
+
 
 class Paciente(models.Model):
     nombre = models.CharField(max_length=255)

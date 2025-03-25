@@ -1,13 +1,18 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
-<div class="registro-ninos-page">
-    <div class="registro-ninos-container">
+<link rel="stylesheet" href="{% static 'nutricion/css/editar_nino.css' %}">
+
+<div class="editar-nino-page">
+    <div class="editar-nino-container">
         <h2>Editar Niño: {{ nino.nombre }}</h2>
         <form method="POST">
             {% csrf_token %}
             {{ form.as_p }}
-            <button type="submit" class="btn btn-success">Guardar Cambios</button>
-            <a href="{% url 'registro_ninos' %}" class="btn btn-secondary">Cancelar</a>
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-success">Guardar Cambios</button>
+                <a href="{% url cancel_url %}" class="btn btn-secondary">Cancelar</a>
+            </div>
         </form>
     </div>
 </div>

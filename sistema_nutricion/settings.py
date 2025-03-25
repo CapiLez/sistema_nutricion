@@ -130,3 +130,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'nutricion.Usuario'
 STATIC_URL = '/static/'
 LOGIN_URL = '/login/'  # Redirigir a nuestra vista personalizada de login
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'

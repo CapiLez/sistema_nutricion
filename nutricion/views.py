@@ -5,8 +5,14 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 import pandas as pd
 from .models import Paciente, SeguimientoTrimestral, Trabajador, Usuario
-from .forms import PacienteForm, SeguimientoTrimestralForm, TrabajadorForm, UserCreationForm
-from .forms import LoginForm 
+from .forms import (
+    LoginForm,
+    PacienteForm,
+    SeguimientoTrimestralForm,
+    TrabajadorForm,
+    UsuarioCreacionForm,
+    UsuarioEdicionForm
+)
 
 def iniciar_sesion(request):
     if request.method == 'POST':
@@ -15,19 +21,16 @@ def iniciar_sesion(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             user = authenticate(request, username=username, password=password)
-
             if user is not None:
                 login(request, user)
                 messages.success(request, f"Bienvenido, {user.username}")
-                return redirect('home')  # Redirigir a la página principal
+                return redirect('home')
             else:
                 messages.error(request, "Usuario o contraseña incorrectos")
     else:
         form = LoginForm()
-    
     return render(request, 'login.html', {'form': form})
 
-# Vista para cerrar sesión
 def cerrar_sesion(request):
     logout(request)
     return redirect('login')
@@ -36,11 +39,17 @@ def cerrar_sesion(request):
 def home(request):
     return render(request, 'home.html', {'usuario': request.user})
 
-# Función para verificar si el usuario es administrador
+# Verificaciones por rol
 def es_admin(user):
-    return user.is_superuser or user.es_administrador
+    return user.is_admin()
 
-# Vista para gestionar usuarios
+def es_jefe_departamento(user):
+    return user.is_jefe_departamento()
+
+def es_nutriologo(user):
+    return user.is_nutriologo()
+
+# Gestión de usuarios solo para administrador
 @login_required
 @user_passes_test(es_admin)
 def gestionar_usuarios(request):
@@ -52,22 +61,20 @@ def gestionar_usuarios(request):
     if user_id:
         usuario_a_editar = get_object_or_404(Usuario, id=user_id)
         editar = True
-        form = UserCreationForm(request.POST or None, instance=usuario_a_editar)
+        form = UsuarioEdicionForm(request.POST or None, instance=usuario_a_editar)
     else:
-        form = UserCreationForm(request.POST or None)
+        form = UsuarioCreacionForm(request.POST or None)
 
     if request.method == 'POST':
         if editar:
             if form.is_valid():
                 form.save()
-                messages.success(request, 'Usuario actualizado exitosamente.')
+                messages.success(request, '[usuarios] Usuario actualizado exitosamente.')
                 return redirect('gestionar_usuarios')
         else:
             if form.is_valid():
-                user = form.save(commit=False)
-                user.set_password(form.cleaned_data['password'])
-                user.save()
-                messages.success(request, 'Usuario agregado exitosamente.')
+                form.save()
+                messages.success(request, '[usuarios] Usuario agregado exitosamente.')
                 return redirect('gestionar_usuarios')
 
     return render(request, 'gestionar_usuarios.html', {
@@ -77,21 +84,19 @@ def gestionar_usuarios(request):
         'usuario': usuario_a_editar
     })
 
-
-# Vista para agregar usuarios
 @login_required
 @user_passes_test(es_admin)
 def agregar_usuario(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = UsuarioCreacionForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])  # Encriptar contraseña
+            user.set_password(form.cleaned_data['password'])
             user.save()
-            messages.success(request, 'Usuario agregado exitosamente.')
+            messages.success(request, '[usuarios] Usuario agregado exitosamente.')
             return redirect('gestionar_usuarios')
     else:
-        form = UserCreationForm()
+        form = UsuarioCreacionForm()
     return render(request, 'agregar_usuario.html', {'form': form})
 
 @login_required
@@ -99,130 +104,137 @@ def agregar_usuario(request):
 def editar_usuario(request, user_id):
     usuario = get_object_or_404(Usuario, id=user_id)
     if request.method == 'POST':
-        form = UserCreationForm(request.POST, instance=usuario)
+        form = UsuarioCreacionForm(request.POST, instance=usuario)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Usuario actualizado exitosamente.')
+            messages.success(request, '[usuarios] Usuario actualizado exitosamente.')
             return redirect('gestionar_usuarios')
     else:
-        form = UserCreationForm(instance=usuario)
+        form = UsuarioCreacionForm(instance=usuario)
     return render(request, 'editar_usuario.html', {'form': form, 'usuario': usuario})
 
-
-# Vista para eliminar usuarios
 @login_required
 @user_passes_test(es_admin)
 def eliminar_usuario(request, user_id):
     if request.method == 'POST':
         usuario = get_object_or_404(Usuario, id=user_id)
         if usuario.is_superuser:
-            messages.error(request, 'No puedes eliminar a un superusuario.')
+            messages.error(request, '[usuarios] No puedes eliminar a un superusuario.')
         else:
             usuario.delete()
-            messages.success(request, 'Usuario eliminado correctamente.')
+            messages.success(request, '[usuarios] Usuario eliminado correctamente.')
     return redirect('gestionar_usuarios')
 
+# Registro de niños y trabajadores accesible por administradores y jefes de departamento
 @login_required
+@user_passes_test(lambda u: u.is_admin() or u.is_jefe_departamento() or u.is_nutriologo())
 def registro_ninos(request):
     if request.method == 'POST':
         form = PacienteForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('registro_ninos')  # Redirigir para actualizar la lista
-
+            messages.success(request, '[ninos] Niño agregado exitosamente.')
+            return redirect('registro_ninos')
     else:
         form = PacienteForm()
 
-    # Obtener los últimos 5 niños agregados ordenados por ID
     ultimos_ninos = Paciente.objects.order_by('-id')[:5]
-
-    return render(request, 'registro_ninos.html', {
-        'form': form,
-        'ultimos_ninos': ultimos_ninos  # Pasar la variable al template
-    })
+    return render(request, 'registro_ninos.html', {'form': form, 'ultimos_ninos': ultimos_ninos})
 
 @login_required
+@user_passes_test(lambda u: u.is_admin() or u.is_jefe_departamento() or u.is_nutriologo())
 def editar_nino(request, nino_id):
     nino = get_object_or_404(Paciente, id=nino_id)
     if request.method == 'POST':
         form = PacienteForm(request.POST, instance=nino)
         if form.is_valid():
             form.save()
-            messages.success(request, "Niño actualizado correctamente.")
-            return redirect('registro_ninos')
+            messages.success(request, '[ninos] Niño actualizado correctamente.')
+            return redirect('registro_ninos' if 'from' not in request.GET else 'historial')
     else:
         form = PacienteForm(instance=nino)
-    return render(request, 'editar_nino.html', {'form': form, 'nino': nino})
+
+    return render(request, 'editar_nino.html', {
+        'form': form,
+        'nino': nino,
+        'cancel_url': 'historial' if 'from' in request.GET else 'registro_ninos'
+    })
 
 @login_required
+@user_passes_test(lambda u: u.is_admin())
 def eliminar_nino(request, nino_id):
     nino = get_object_or_404(Paciente, id=nino_id)
     if request.method == 'POST':
         nino.delete()
-        messages.success(request, "Niño eliminado correctamente.")
-        return redirect('registro_ninos')
-    return render(request, 'eliminar_nino.html', {'nino': nino})
+        messages.success(request, '[ninos] Niño eliminado correctamente.')
+        return redirect('registro_ninos' if 'from' not in request.GET else 'historial')
+
+    return render(request, 'eliminar_nino.html', {
+        'nino': nino,
+        'cancel_url': 'historial' if 'from' in request.GET else 'registro_ninos'
+    })
 
 @login_required
+@user_passes_test(lambda u: u.is_admin() or u.is_jefe_departamento() or u.is_nutriologo())
 def registro_trabajadores(request):
     if request.method == 'POST':
         form = TrabajadorForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('registro_trabajadores')  # Redirige para actualizar la tabla
-
+            messages.success(request, '[trabajadores] Trabajador agregado exitosamente.')
+            return redirect('registro_trabajadores')
     else:
         form = TrabajadorForm()
 
-    # Obtener los últimos 5 trabajadores agregados
     ultimos_trabajadores = Trabajador.objects.order_by('-id')[:5]
 
     return render(request, 'registro_trabajadores.html', {
         'form': form,
-        'ultimos_trabajadores': ultimos_trabajadores  # Pasar la variable a la plantilla
+        'ultimos_trabajadores': ultimos_trabajadores
     })
 
 @login_required
+@user_passes_test(lambda u: u.is_admin() or u.is_jefe_departamento() or u.is_nutriologo())
 def editar_trabajador(request, trabajador_id):
     trabajador = get_object_or_404(Trabajador, id=trabajador_id)
     if request.method == 'POST':
         form = TrabajadorForm(request.POST, instance=trabajador)
         if form.is_valid():
             form.save()
-            messages.success(request, "Trabajador actualizado correctamente.")
-            return redirect('registro_trabajadores')
+            messages.success(request, '[trabajadores] Trabajador actualizado correctamente.')
+            return redirect('registro_trabajadores' if 'from' not in request.GET else 'historial')
     else:
         form = TrabajadorForm(instance=trabajador)
-    return render(request, 'editar_trabajador.html', {'form': form, 'trabajador': trabajador})
 
+    return render(request, 'editar_trabajador.html', {
+        'form': form,
+        'trabajador': trabajador,
+        'cancel_url': 'historial' if 'from' in request.GET else 'registro_trabajadores'
+    })
 
 @login_required
+@user_passes_test(lambda u: u.is_admin())
 def eliminar_trabajador(request, trabajador_id):
     trabajador = get_object_or_404(Trabajador, id=trabajador_id)
     if request.method == 'POST':
         trabajador.delete()
-        messages.success(request, "Trabajador eliminado correctamente.")
-        return redirect('registro_trabajadores')
-    return render(request, 'eliminar_trabajador.html', {'trabajador': trabajador})
+        messages.success(request, '[trabajadores] Trabajador eliminado correctamente.')
+        return redirect('registro_trabajadores' if 'from' not in request.GET else 'historial')
 
+    return render(request, 'eliminar_trabajador.html', {
+        'trabajador': trabajador,
+        'cancel_url': 'historial' if 'from' in request.GET else 'registro_trabajadores'
+    })
 
+# Las demás vistas siguen abiertas a cualquier usuario autenticado (como nutriólogos)
 @login_required
 def historial(request):
-    q_nino = request.GET.get('q_nino', '')  # Buscar niños
-    q_trabajador = request.GET.get('q_trabajador', '')  # Buscar trabajadores
-
-    resultados_ninos = []
-    resultados_trabajadores = []
-
-    if q_nino:
-        resultados_ninos = Paciente.objects.filter(nombre__icontains=q_nino)
-
-    if q_trabajador:
-        resultados_trabajadores = Trabajador.objects.filter(nombre__icontains=q_trabajador)
-
+    q_nino = request.GET.get('q_nino', '')
+    q_trabajador = request.GET.get('q_trabajador', '')
+    resultados_ninos = Paciente.objects.filter(nombre__icontains=q_nino) if q_nino else []
+    resultados_trabajadores = Trabajador.objects.filter(nombre__icontains=q_trabajador) if q_trabajador else []
     pacientes = Paciente.objects.all()
     trabajadores = Trabajador.objects.all()
-
     return render(request, 'historial.html', {
         'pacientes': pacientes,
         'trabajadores': trabajadores,
@@ -273,17 +285,13 @@ def lista_seguimientos(request):
 
 @login_required
 def ultimos_ninos(request):
-    ultimos = Paciente.objects.order_by('-id')[:5]  # Últimos 5 niños agregados
+    ultimos = Paciente.objects.order_by('-id')[:5]
     return render(request, 'ultimos_ninos.html', {'ultimos': ultimos})
 
 @login_required
 def buscar_nino(request):
     query = request.GET.get('q')
-    resultados = []
-    
-    if query:
-        resultados = Paciente.objects.filter(nombre__icontains=query)
-    
+    resultados = Paciente.objects.filter(nombre__icontains=query) if query else []
     return render(request, 'buscar_nino.html', {'resultados': resultados, 'query': query})
 
 @login_required
