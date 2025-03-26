@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'nutricion/css/registro_trabajadores.css' %}">
+<link rel="stylesheet" href="{% static 'nutricion/css/registro_trabajadores.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -10,7 +10,6 @@
     <div class="registro-trabajadores-container">
         <h2>Registro de Evaluación Nutricional - Trabajadores</h2>
 
-        <!-- ✅ Mensajes solo de esta vista -->
         {% if messages %}
             <ul class="messages">
                 {% for message in messages %}
@@ -21,20 +20,32 @@
             </ul>
         {% endif %}
 
-        <!-- Botón para mostrar el formulario -->
         <div class="acciones-container">
             <button id="mostrar-formulario" class="btn btn-success">
                 <i class="fas fa-user-plus"></i> Agregar Trabajador
             </button>
         </div>
 
-        <!-- Formulario (Oculto por defecto) -->
         <div id="formulario-trabajador" class="hidden">
             <h3>Agregar Nuevo Trabajador</h3>
             <form method="POST">
                 {% csrf_token %}
                 <div class="form-group">
-                    {{ form.as_p }}
+                    {% for field in form %}
+                        <div class="form-field">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.help_text %}
+                                <small class="form-help">{{ field.help_text }}</small>
+                            {% endif %}
+                            {% if field.errors %}
+                                <div class="form-error">{{ field.errors }}</div>
+                            {% endif %}
+                            {% if field.name == 'imc' %}
+                                <div id="imc-category" class="imc-category"></div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
                 </div>
                 <div class="form-buttons">
                     <button type="submit" class="btn btn-success">
@@ -47,7 +58,6 @@
             </form>
         </div>
 
-        <!-- Tabla de Últimos Trabajadores Agregados -->
         <div class="ultimos-trabajadores">
             <h3>Últimos Trabajadores Agregados</h3>
             <table class="table">
@@ -57,6 +67,7 @@
                         <th>CURP</th>
                         <th>Cargo</th>
                         <th>Departamento</th>
+                        <th>IMC</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -68,13 +79,16 @@
                             <td>{{ trabajador.cargo }}</td>
                             <td>{{ trabajador.departamento }}</td>
                             <td>
+                                <span class="badge imc-badge" data-imc="{{ trabajador.imc }}">{{ trabajador.imc|default:"-" }}</span>
+                            </td>
+                            <td>
                                 <a href="{% url 'editar_trabajador' trabajador.id %}" class="btn btn-warning btn-sm">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 {% if request.user.is_admin %}
                                     <a href="{% url 'eliminar_trabajador' trabajador.id %}" class="btn btn-danger btn-sm">
                                         <i class="fas fa-trash-alt"></i>
-                                    </a>                                
+                                    </a>
                                 {% else %}
                                     <button class="btn btn-secondary btn-sm" title="Sin permiso para eliminar" disabled>
                                         <i class="fas fa-ban"></i>
@@ -84,14 +98,13 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="5">No hay trabajadores registrados recientemente.</td>
+                            <td colspan="6">No hay trabajadores registrados recientemente.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <!-- Botones de Navegación -->
         <div class="btn-container">
             <a href="{% url 'home' %}" class="btn btn-primary">
                 <i class="fas fa-arrow-left"></i> Regresar al Inicio
@@ -106,25 +119,72 @@
 <!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function() {
-        // Ocultar formulario al inicio
+    $(document).ready(function () {
         $("#formulario-trabajador").hide();
 
-        $("#mostrar-formulario").on("click", function() {
+        $("#mostrar-formulario").on("click", function () {
             $("#formulario-trabajador").slideDown();
             $(this).hide();
         });
 
-        $("#cancelar-formulario").on("click", function() {
-            $("#formulario-trabajador form")[0].reset(); // Limpiar campos
+        $("#cancelar-formulario").on("click", function () {
+            $("#formulario-trabajador form")[0].reset();
             $("#formulario-trabajador").slideUp();
             $("#mostrar-formulario").show();
+            $("#imc-category").text('');
         });
 
-        // CURP en mayúsculas automáticamente
         $('input[name="curp"]').on('input', function () {
             this.value = this.value.toUpperCase();
         });
+
+        function calcularIMC() {
+            const peso = parseFloat($('#id_peso').val()) || 0;
+            const talla = parseFloat($('#id_talla').val()) || 0;
+            if (peso > 0 && talla > 0) {
+                const tallaM = talla / 100;
+                const imc = peso / (tallaM * tallaM);
+                $('#id_imc').val(imc.toFixed(2));
+                mostrarCategoriaIMC(imc);
+            }
+        }
+
+        function mostrarCategoriaIMC(imc) {
+            let categoria = '';
+            let clase = '';
+            if (imc < 18.5) {
+                categoria = 'Bajo peso';
+                clase = 'imc-low';
+            } else if (imc < 25) {
+                categoria = 'Normal';
+                clase = 'imc-normal';
+            } else if (imc < 30) {
+                categoria = 'Sobrepeso';
+                clase = 'imc-high';
+            } else {
+                categoria = 'Obesidad';
+                clase = 'imc-obese';
+            }
+            $('#imc-category').html(`<span class="${clase}">${categoria}</span>`);
+        }
+
+        $('#id_peso, #id_talla').on('input', calcularIMC);
+
+        $('.imc-badge').each(function () {
+            const imc = parseFloat($(this).data('imc'));
+            if (!isNaN(imc)) {
+                if (imc < 18.5) {
+                    $(this).addClass('imc-low');
+                } else if (imc < 25) {
+                    $(this).addClass('imc-normal');
+                } else if (imc < 30) {
+                    $(this).addClass('imc-high');
+                } else {
+                    $(this).addClass('imc-obese');
+                }
+            }
+        });
     });
 </script>
+
 {% endblock %}

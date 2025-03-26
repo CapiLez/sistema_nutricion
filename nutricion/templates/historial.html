@@ -165,15 +165,27 @@
                                 <i class="fas fa-ban"></i>
                             </button>
                         {% endif %}
-                        <a href="{% url 'seguimientos_nino' paciente.id %}" class="btn btn-info btn-sm">
-                            <i class="fas fa-stethoscope"></i>
+                        <a href="{% url 'registrar_seguimiento' %}?paciente_id={{ paciente.id }}" class="btn btn-success btn-sm" title="Registrar seguimiento">
+                            <i class="fas fa-notes-medical"></i>
                         </a>
+                        <a href="{% url 'seguimientos_nino' paciente.id %}" class="btn btn-info btn-sm" title="Ver seguimientos">
+                            <i class="fas fa-stethoscope"></i>
+                        </a>                        
                         
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+            {% if not q_nino %}
+        {% if pacientes %}
+            <table class="table">
+            </table>
+        {% else %}
+            <p class="alert alert-info mt-2">⚠ No hay niños registrados actualmente.</p>
+        {% endif %}
+        {% endif %}
+
     {% endif %}
 
     <!-- Tabla completa: Trabajadores -->
@@ -211,15 +223,28 @@
                                 <i class="fas fa-ban"></i>
                             </button>
                         {% endif %}
-                        <a href="{% url 'seguimientos_trabajador' trabajador.id %}" class="btn btn-info btn-sm">
-                            <i class="fas fa-stethoscope"></i>
+                        <a href="{% url 'registrar_seguimiento_trabajador' %}?trabajador_id={{ trabajador.id }}" class="btn btn-success btn-sm" title="Registrar seguimiento">
+                            <i class="fas fa-notes-medical"></i>
                         </a>
+                        <a href="{% url 'seguimientos_trabajador' trabajador.id %}" class="btn btn-info btn-sm" title="Ver seguimientos">
+                            <i class="fas fa-stethoscope"></i>
+                        </a>                        
                         
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        {% if not q_trabajador %}
+    {% if trabajadores %}
+        <table class="table">
+            
+        </table>
+    {% else %}
+        <p class="alert alert-info mt-2">⚠ No hay trabajadores registrados actualmente.</p>
+    {% endif %}
+{% endif %}
+
     {% endif %}
 
     <!-- Botón de regreso -->

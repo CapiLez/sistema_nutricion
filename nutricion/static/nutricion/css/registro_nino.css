@@ -222,3 +222,20 @@ button[type="button"]:hover {
     transition: all 0.3s ease; /* Transición suave */
     overflow: hidden; /* Evita movimiento brusco */
 }
+
+.imc-low { background-color: #ffc107; color: #000; }
+.imc-normal { background-color: #28a745; color: #fff; }
+.imc-high { background-color: #fd7e14; color: #fff; }
+.imc-obese { background-color: #dc3545; color: #fff; }
+.imc-category span {
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-weight: bold;
+    display: inline-block;
+     margin-top: 5px;
+}
+.imc-badge {
+    border-radius: 10px;
+    padding: 4px 8px;
+    font-weight: bold;
+}

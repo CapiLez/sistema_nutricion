@@ -42,7 +42,16 @@ def cerrar_sesion(request):
 
 @login_required
 def home(request):
-    return render(request, 'home.html', {'usuario': request.user})
+    total_ninos = Paciente.objects.count()
+    total_trabajadores = Trabajador.objects.count()
+    total_pacientes = total_ninos + total_trabajadores
+
+    return render(request, 'home.html', {
+        'usuario': request.user,
+        'total_ninos': total_ninos,
+        'total_trabajadores': total_trabajadores,
+        'total_pacientes': total_pacientes,
+    })
 
 # ===========================
 # Verificaciones de rol
@@ -276,14 +285,27 @@ def exportar_historial_excel(request):
 
 @login_required
 def registrar_seguimiento(request):
+    paciente_id = request.GET.get('paciente_id')
+    initial_data = {}
+
+    if paciente_id:
+        paciente = get_object_or_404(Paciente, id=paciente_id)
+        initial_data = {
+            'paciente': paciente,
+            'edad': paciente.edad,
+            'peso': paciente.peso,
+            'talla': paciente.talla,
+            'imc': paciente.imc,
+        }
+
     if request.method == "POST":
         form = SeguimientoTrimestralForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, '[seguimientos] Seguimiento del niño registrado correctamente.')
             return redirect('lista_seguimientos')
     else:
-        form = SeguimientoTrimestralForm()
+        form = SeguimientoTrimestralForm(initial=initial_data)
+
     return render(request, 'registrar_seguimiento.html', {'form': form})
 
 @login_required
@@ -347,27 +369,38 @@ def lista_seguimientos(request):
 
 @login_required
 def registrar_seguimiento_trabajador(request):
+    trabajador_id = request.GET.get('trabajador_id')
+    initial_data = {}
+
+    if trabajador_id:
+        trabajador = get_object_or_404(Trabajador, id=trabajador_id)
+        initial_data = {
+            'trabajador': trabajador,
+            'peso': trabajador.peso,
+            'talla': trabajador.talla,
+            'imc': trabajador.imc,
+        }
+
     if request.method == "POST":
         form = SeguimientoTrabajadorForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, '[seguimientos] Seguimiento del trabajador registrado correctamente.')
-            return redirect('lista_seguimientos_trabajador')
+            return redirect('lista_seguimientos')
     else:
-        form = SeguimientoTrabajadorForm()
+        form = SeguimientoTrabajadorForm(initial=initial_data)
+
     return render(request, 'registrar_seguimiento_trabajador.html', {'form': form})
 
 @login_required
-def lista_seguimientos_trabajador(request):
-    query = request.GET.get('q', '')
-    seguimientos = SeguimientoTrabajador.objects.select_related('trabajador')
-    if query:
-        seguimientos = seguimientos.filter(trabajador__nombre__icontains=query)
-
-    return render(request, 'lista_seguimientos_trabajador.html', {
-        'seguimientos': seguimientos,
-        'query': query
+def seguimientos_trabajador(request, trabajador_id):
+    trabajador = get_object_or_404(Trabajador, id=trabajador_id)
+    seguimientos = SeguimientoTrabajador.objects.filter(trabajador=trabajador)
+    return render(request, 'seguimientos_trabajador.html', {
+        'trabajador': trabajador,
+        'seguimientos': seguimientos
     })
+
 
 # ===========================
 # Funciones Extras

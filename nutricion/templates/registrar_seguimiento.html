@@ -2,23 +2,31 @@
 
 {% block title %}Registrar Seguimiento{% endblock %}
 
-{% load static %}  <!-- Aquí se carga el tag static -->
+{% load static %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'nutricion/css/registrar_seguimiento.css' %}">
+<link rel="stylesheet" href="{% static 'nutricion/css/registrar_seguimiento.css' %}">
 {% endblock %}
 
 {% block content %}
 <div class="registrar-seguimiento-page">
     <div class="registrar-seguimiento-container">
         <h1>Registrar Seguimiento Trimestral</h1>
-        <form method="post">
+
+        <form method="post" id="form-seguimiento-nino">
             {% csrf_token %}
             {{ form.as_p }}
-            <button type="submit">Guardar</button>
+            <div class="form-buttons mt-3">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+                <button type="button" class="btn btn-danger" id="cancelar-formulario">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
         </form>
-        
-        <div class="btn-container">
+
+        <div class="btn-container mt-4">
             <a href="{% url 'lista_seguimientos' %}" class="btn btn-secondary">Ver Lista de Seguimientos</a>
             <a href="{% url 'home' %}" class="btn btn-primary">
                 <i class="fas fa-arrow-left"></i> Regresar al Inicio
@@ -26,4 +34,14 @@
         </div>
     </div>
 </div>
+
+<!-- Script para limpiar campos -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#cancelar-formulario').on('click', function () {
+            $('#form-seguimiento-nino')[0].reset();
+        });
+    });
+</script>
 {% endblock %}

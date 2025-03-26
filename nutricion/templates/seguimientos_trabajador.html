@@ -9,7 +9,7 @@
 
 {% block content %}
 <div class="seguimientos-page">
-    <h2>Seguimientos Nutricionales de {{ trabajador.nombre }}</h2>
+    <h2>Seguimientos Nutricionales del Trabajador: {{ trabajador.nombre }}</h2>
 
     {% if seguimientos %}
         <table class="table">
@@ -35,27 +35,27 @@
                     <td>{{ s.dx }}</td>
                     <td>
                         {% if s.imc < 18.5 %}
-                            <span class="badge badge-warning">Bajo Peso</span>
-                        {% elif s.imc >= 18.5 and s.imc < 24.9 %}
-                            <span class="badge badge-success">Normal</span>
-                        {% elif s.imc >= 25 and s.imc < 29.9 %}
-                            <span class="badge badge-warning">Sobrepeso</span>
-                        {% elif s.imc >= 30 %}
-                            <span class="badge badge-danger">Obesidad</span>
+                            <span class="badge bg-warning">Bajo Peso</span>
+                        {% elif s.imc < 25 %}
+                            <span class="badge bg-success">Normal</span>
+                        {% elif s.imc < 30 %}
+                            <span class="badge bg-warning">Sobrepeso</span>
                         {% else %}
-                            <span class="badge badge-secondary">No Clasificado</span>
+                            <span class="badge bg-danger">Obesidad</span>
                         {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
-            </tbody>
+            </tbody>            
         </table>
     {% else %}
-        <p class="alert alert-info">No hay seguimientos registrados para este trabajador.</p>
+        <p class="alert alert-info">Este trabajador no tiene seguimientos registrados aún.</p>
     {% endif %}
 
-    <a href="{% url 'historial' %}" class="btn btn-secondary mt-3">
-        <i class="fas fa-arrow-left"></i> Regresar al Historial
-    </a>
+    <div class="btn-container mt-3">
+        <a href="{% url 'registro_trabajadores' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Regresar al Registro de Trabajadores
+        </a>
+    </div>
 </div>
 {% endblock %}

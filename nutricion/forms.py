@@ -1,13 +1,17 @@
 from django import forms
-from django.contrib.auth.models import User
-from .models import Paciente, SeguimientoTrabajador, Trabajador, SeguimientoTrimestral, Usuario
+from .models import (
+    Usuario, Paciente, Trabajador,
+    SeguimientoTrimestral, SeguimientoTrabajador
+)
 import datetime
-from django import forms
-from .models import Usuario
+
+### -------------------- LOGIN --------------------
 
 class LoginForm(forms.Form):
     username = forms.CharField(label="Usuario", max_length=150)
     password = forms.CharField(label="Contraseña", widget=forms.PasswordInput)
+
+### -------------------- USUARIOS --------------------
 
 class UsuarioCreacionForm(forms.ModelForm):
     password = forms.CharField(
@@ -57,33 +61,31 @@ class UsuarioEdicionForm(forms.ModelForm):
             user.save()
         return user
 
+### -------------------- PACIENTES --------------------
+
 class PacienteForm(forms.ModelForm):
     class Meta:
         model = Paciente
         fields = '__all__'
         widgets = {
             'fecha_nacimiento': forms.DateInput(
-                attrs={
-                    'type': 'date',
-                    'max': datetime.date.today().isoformat()
-                }
+                attrs={'type': 'date', 'max': datetime.date.today().isoformat()}
             ),
         }
 
     def clean_curp(self):
         curp = self.cleaned_data.get('curp')
         return curp.upper() if curp else curp
-    
+
+### -------------------- TRABAJADORES --------------------
+
 class TrabajadorForm(forms.ModelForm):
     class Meta:
         model = Trabajador
         fields = '__all__'
         widgets = {
             'fecha_nacimiento': forms.DateInput(
-                attrs={
-                    'type': 'date',
-                    'max': datetime.date.today().isoformat()
-                }
+                attrs={'type': 'date', 'max': datetime.date.today().isoformat()}
             ),
         }
 
@@ -91,19 +93,66 @@ class TrabajadorForm(forms.ModelForm):
         curp = self.cleaned_data.get('curp')
         return curp.upper() if curp else curp
 
+### -------------------- SEGUIMIENTOS NIÑOS --------------------
+
 class SeguimientoTrimestralForm(forms.ModelForm):
     class Meta:
         model = SeguimientoTrimestral
-        fields = '__all__'
-        widgets = {
-            'fecha_valoracion': forms.DateInput(attrs={'type': 'date'}),
+        fields = [
+            'paciente', 'edad', 'peso', 'talla', 'imc',
+            'indicador_peso_edad', 'indicador_peso_talla',
+            'indicador_talla_edad', 'dx', 'fecha_valoracion'
+        ]
+        labels = {
+            'paciente': 'Paciente',
+            'edad': 'Edad',
+            'peso': 'Peso (kg)',
+            'talla': 'Talla (cm)',
+            'imc': 'IMC',
+            'indicador_peso_edad': 'Peso para la Edad',
+            'indicador_peso_talla': 'Peso para la Talla',
+            'indicador_talla_edad': 'Talla para la Edad',
+            'dx': 'Diagnóstico Nutricional',
+            'fecha_valoracion': 'Fecha de Valoración',
         }
+        widgets = {
+            'fecha_valoracion': forms.DateInput(attrs={'type': 'date'})
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        peso = cleaned_data.get('peso')
+        talla = cleaned_data.get('talla')
+        edad = cleaned_data.get('edad')
+
+        if peso and talla and edad:
+            # Fórmulas ficticias de ejemplo. Reemplaza con fórmulas reales si las tienes.
+            cleaned_data['indicador_peso_edad'] = round(peso / edad, 2) if edad > 0 else 0
+            cleaned_data['indicador_peso_talla'] = round(peso / talla, 2) if talla > 0 else 0
+            cleaned_data['indicador_talla_edad'] = round(talla / edad, 2) if edad > 0 else 0
+
+        return cleaned_data
+
+
+### -------------------- SEGUIMIENTOS TRABAJADORES --------------------
 
 class SeguimientoTrabajadorForm(forms.ModelForm):
     class Meta:
         model = SeguimientoTrabajador
-        fields = '__all__'
-        widgets = {
-            'fecha_valoracion': forms.DateInput(attrs={'type': 'date'}),
+        fields = [
+            'trabajador', 'edad', 'peso', 'talla', 'imc',
+            'dx', 'fecha_valoracion'
+        ]
+        labels = {
+            'trabajador': 'Trabajador',
+            'edad': 'Edad',
+            'peso': 'Peso (kg)',
+            'talla': 'Talla (cm)',
+            'imc': 'IMC',
+            'dx': 'Diagnóstico Nutricional',
+            'fecha_valoracion': 'Fecha de Valoración',
         }
-
+        widgets = {
+            'fecha_valoracion': forms.DateInput(attrs={'type': 'date'})
+        }

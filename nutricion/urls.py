@@ -37,7 +37,8 @@ urlpatterns = [
     path('seguimientos/', views.lista_seguimientos_general, name='seguimientos_general'),
     path('lista_seguimientos/', lista_seguimientos, name='lista_seguimientos'),
     path('seguimiento/trabajador/nuevo/', views.registrar_seguimiento_trabajador, name='registrar_seguimiento_trabajador'),
-    path('seguimientos/trabajadores/', views.lista_seguimientos_trabajador, name='lista_seguimientos_trabajador'),
+    path('seguimientos/trabajador/<int:trabajador_id>/', views.seguimientos_trabajador, name='seguimientos_trabajador'),
+
 
     # Extras
     path('ultimos_ninos/', ultimos_ninos, name='ultimos_ninos'),

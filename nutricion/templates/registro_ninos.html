@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'nutricion/css/registro_nino.css' %}">
+<link rel="stylesheet" href="{% static 'nutricion/css/registro_nino.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -10,7 +10,6 @@
     <div class="registro-ninos-container">
         <h2>Registro de Evaluación Nutricional - Niños</h2>
 
-        <!-- ✅ Mostrar solo mensajes de esta vista -->
         {% if messages %}
             <ul class="messages">
                 {% for message in messages %}
@@ -21,20 +20,32 @@
             </ul>
         {% endif %}
 
-        <!-- Botón para mostrar el formulario -->
         <div class="acciones-container">
             <button id="mostrar-formulario" class="btn btn-success">
                 <i class="fas fa-user-plus"></i> Agregar Niño
             </button>
         </div>
 
-        <!-- Formulario (Oculto por defecto) -->
         <div id="formulario-nino" class="hidden">
             <h3>Agregar Nuevo Niño</h3>
             <form method="POST">
                 {% csrf_token %}
                 <div class="form-group">
-                    {{ form.as_p }}
+                    {% for field in form %}
+                        <div class="form-field">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.help_text %}
+                                <small class="form-help">{{ field.help_text }}</small>
+                            {% endif %}
+                            {% if field.errors %}
+                                <div class="form-error">{{ field.errors }}</div>
+                            {% endif %}
+                            {% if field.name == 'imc' %}
+                                <div id="imc-category" class="imc-category"></div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
                 </div>
                 <div class="form-buttons">
                     <button type="submit" class="btn btn-success">
@@ -47,7 +58,6 @@
             </form>
         </div>
 
-        <!-- Tabla de Últimos Niños Agregados -->
         <div class="ultimos-ninos">
             <h3>Últimos Niños Agregados</h3>
             <table class="table">
@@ -55,6 +65,7 @@
                     <tr>
                         <th>Nombre</th>
                         <th>Edad</th>
+                        <th>IMC</th>
                         <th>CURP</th>
                         <th>Grado</th>
                         <th>Grupo</th>
@@ -66,6 +77,9 @@
                         <tr>
                             <td>{{ nino.nombre }}</td>
                             <td>{{ nino.edad }} años</td>
+                            <td>
+                                <span class="badge imc-badge" data-imc="{{ nino.imc }}">{{ nino.imc|default:"-" }}</span>
+                            </td>
                             <td>{{ nino.curp|upper }}</td>
                             <td>{{ nino.grado }}</td>
                             <td>{{ nino.grupo }}</td>
@@ -76,7 +90,7 @@
                                 {% if request.user.is_admin %}
                                     <a href="{% url 'eliminar_nino' nino.id %}" class="btn btn-danger btn-sm">
                                         <i class="fas fa-trash-alt"></i>
-                                    </a>                                
+                                    </a>
                                 {% else %}
                                     <button class="btn btn-secondary btn-sm" title="Sin permiso para eliminar" disabled>
                                         <i class="fas fa-ban"></i>
@@ -86,14 +100,13 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="6">No hay niños registrados recientemente.</td>
+                            <td colspan="7">No hay niños registrados recientemente.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <!-- Botones de Navegación -->
         <div class="btn-container">
             <a href="{% url 'home' %}" class="btn btn-primary">
                 <i class="fas fa-arrow-left"></i> Regresar al Inicio
@@ -105,28 +118,74 @@
     </div>
 </div>
 
-<!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function() {
-        // Ocultar formulario al inicio
+    $(document).ready(function () {
         $("#formulario-nino").hide();
 
-        $("#mostrar-formulario").on("click", function() {
+        $("#mostrar-formulario").on("click", function () {
             $("#formulario-nino").slideDown();
             $(this).hide();
         });
 
-        $("#cancelar-formulario").on("click", function() {
-            $("#formulario-nino form")[0].reset(); // Limpiar campos
+        $("#cancelar-formulario").on("click", function () {
+            $("#formulario-nino form")[0].reset();
             $("#formulario-nino").slideUp();
             $("#mostrar-formulario").show();
+            $("#imc-category").text('');
         });
 
-        // Forzar CURP a mayúsculas automáticamente
         $('input[name="curp"]').on('input', function () {
             this.value = this.value.toUpperCase();
         });
+
+        function calcularIMC() {
+            const peso = parseFloat($('#id_peso').val()) || 0;
+            const talla = parseFloat($('#id_talla').val()) || 0;
+            if (peso > 0 && talla > 0) {
+                const tallaM = talla / 100;
+                const imc = peso / (tallaM * tallaM);
+                $('#id_imc').val(imc.toFixed(2));
+                mostrarCategoriaIMC(imc);
+            }
+        }
+
+        function mostrarCategoriaIMC(imc) {
+            let categoria = '';
+            let clase = '';
+            if (imc < 18.5) {
+                categoria = 'Bajo peso';
+                clase = 'imc-low';
+            } else if (imc < 25) {
+                categoria = 'Normal';
+                clase = 'imc-normal';
+            } else if (imc < 30) {
+                categoria = 'Sobrepeso';
+                clase = 'imc-high';
+            } else {
+                categoria = 'Obesidad';
+                clase = 'imc-obese';
+            }
+            $('#imc-category').html(`<span class="${clase}">${categoria}</span>`);
+        }
+
+        $('#id_peso, #id_talla').on('input', calcularIMC);
+
+        $('.imc-badge').each(function () {
+            const imc = parseFloat($(this).data('imc'));
+            if (!isNaN(imc)) {
+                if (imc < 18.5) {
+                    $(this).addClass('imc-low');
+                } else if (imc < 25) {
+                    $(this).addClass('imc-normal');
+                } else if (imc < 30) {
+                    $(this).addClass('imc-high');
+                } else {
+                    $(this).addClass('imc-obese');
+                }
+            }
+        });
     });
 </script>
+
 {% endblock %}

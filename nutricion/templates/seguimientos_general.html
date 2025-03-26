@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Seguimiento General{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'nutricion/css/seguimientos.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="seguimientos-page">
+    <h2>Seguimientos Nutricionales</h2>
+
+    <div class="mb-4 d-flex justify-content-between">
+        <form method="GET" class="d-flex me-3">
+            <input type="text" name="q_nino" value="{{ q_nino }}" placeholder="Buscar niño..." class="form-control me-2">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-search"></i> Buscar Niño
+            </button>
+        </form>
+
+        <form method="GET" class="d-flex">
+            <input type="text" name="q_trabajador" value="{{ q_trabajador }}" placeholder="Buscar trabajador..." class="form-control me-2">
+            <button type="submit" class="btn btn-info">
+                <i class="fas fa-search"></i> Buscar Trabajador
+            </button>
+        </form>
+    </div>
+
+    <!-- Tabla de Seguimientos de Niños -->
+    <h3>Niños</h3>
+    {% if seguimientos_ninos %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Fecha</th>
+                    <th>Edad</th>
+                    <th>Peso</th>
+                    <th>Talla</th>
+                    <th>IMC</th>
+                    <th>Diagnóstico</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in seguimientos_ninos %}
+                    <tr>
+                        <td>{{ s.paciente.nombre }}</td>
+                        <td>{{ s.fecha_valoracion }}</td>
+                        <td>{{ s.edad }}</td>
+                        <td>{{ s.peso }}</td>
+                        <td>{{ s.talla }}</td>
+                        <td>{{ s.imc }}</td>
+                        <td>{{ s.dx }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No hay seguimientos de niños registrados.</p>
+    {% endif %}
+
+    <!-- Tabla de Seguimientos de Trabajadores -->
+    <h3>Trabajadores</h3>
+    {% if seguimientos_trabajadores %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Fecha</th>
+                    <th>Edad</th>
+                    <th>Peso</th>
+                    <th>Talla</th>
+                    <th>IMC</th>
+                    <th>Diagnóstico</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in seguimientos_trabajadores %}
+                    <tr>
+                        <td>{{ s.trabajador.nombre }}</td>
+                        <td>{{ s.fecha_valoracion }}</td>
+                        <td>{{ s.edad }}</td>
+                        <td>{{ s.peso }}</td>
+                        <td>{{ s.talla }}</td>
+                        <td>{{ s.imc }}</td>
+                        <td>{{ s.dx }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No hay seguimientos de trabajadores registrados.</p>
+    {% endif %}
+
+    <a href="{% url 'home' %}" class="btn btn-secondary mt-3">
+        <i class="fas fa-arrow-left"></i> Regresar al Inicio
+    </a>
+</div>
+{% endblock %}
