@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Últimos Cambios{% endblock %}
+
+{% block content %}
+<div class="historial-page">
+    <h2>Últimos Cambios Registrados</h2>
+
+    {% if versiones %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>ID</th>
+                    <th>Comentario</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for version in versiones %}
+                <tr>
+                    <td>{{ version.revision.date_created|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if version.revision.user %}
+                            {{ version.revision.user.get_full_name|default:version.revision.user.username }}
+                        {% else %}
+                            <em>Desconocido</em>
+                        {% endif %}
+                    </td>
+                    <td>{{ version.object_id }}</td>
+                    <td>{{ version.revision.comment }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="alert alert-info">No hay cambios registrados recientemente.</p>
+    {% endif %}
+</div>
+{% endblock %}

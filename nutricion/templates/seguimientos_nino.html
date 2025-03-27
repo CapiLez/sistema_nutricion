@@ -4,7 +4,7 @@
 {% block title %}Seguimientos - {{ nino.nombre }}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'nutricion/css/seguimientos.css' %}">
+<link rel="stylesheet" href="{% static 'nutricion/css/seguimientos_ninos.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -12,68 +12,89 @@
     <h2>Seguimientos Nutricionales de {{ nino.nombre }}</h2>
 
     {% if seguimientos %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Edad</th>
-                    <th>Peso (kg)</th>
-                    <th>Talla (cm)</th>
-                    <th>IMC</th>
-                    <th>Dx Nutricional</th>
-                    <th>P/E</th>
-                    <th>T/E</th>
-                    <th>P/T</th>
-                    <th>Clasificación Nutricional</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for s in seguimientos %}
-                <tr>
-                    <td>{{ s.fecha_valoracion }}</td>
-                    <td>{{ s.edad }}</td>
-                    <td>{{ s.peso }}</td>
-                    <td>{{ s.talla }}</td>
-                    <td>{{ s.imc }}</td>
-                    <td>{{ s.dx }}</td>
-                    <td>{{ s.indicador_peso_edad }}</td>
-                    <td>{{ s.indicador_talla_edad }}</td>
-                    <td>{{ s.indicador_peso_talla }}</td>
-                    <td>
-                        <ul class="text-start small">
-                            <li><strong>P/E:</strong>
-                                {% if s.indicador_peso_edad < -3 %}Desnutrición severa
-                                {% elif s.indicador_peso_edad < -2 %}Desnutrición moderada
-                                {% elif s.indicador_peso_edad <= 2 %}Normal
-                                {% else %}Sobrepeso
-                                {% endif %}
-                            </li>
-                            <li><strong>T/E:</strong>
-                                {% if s.indicador_talla_edad < -3 %}Retraso severo
-                                {% elif s.indicador_talla_edad < -2 %}Retraso moderado
-                                {% elif s.indicador_talla_edad <= 2 %}Normal
-                                {% else %}Alto
-                                {% endif %}
-                            </li>
-                            <li><strong>P/T:</strong>
-                                {% if s.indicador_peso_talla < -3 %}Desnutrición aguda severa
-                                {% elif s.indicador_peso_talla < -2 %}Desnutrición aguda moderada
-                                {% elif s.indicador_peso_talla <= 2 %}Normal
-                                {% else %}Sobrepeso
-                                {% endif %}
-                            </li>
-                        </ul>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Edad</th>
+                        <th>Peso (kg)</th>
+                        <th>Talla (cm)</th>
+                        <th>IMC</th>
+                        <th>Dx Nutricional</th>
+                        <th>P/E</th>
+                        <th>T/E</th>
+                        <th>P/T</th>
+                        <th>Clasificación Nutricional</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in seguimientos %}
+                    <tr>
+                        <td>{{ s.fecha_valoracion|date:"d/m/Y" }}</td>
+                        <td>{{ s.edad }}</td>
+                        <td>{{ s.peso|floatformat:1 }}</td>
+                        <td>{{ s.talla|floatformat:1 }}</td>
+                        <td>{{ s.imc|floatformat:1 }}</td>
+                        <td>{{ s.dx }}</td>
+                        <td>{{ s.indicador_peso_edad|floatformat:1 }}</td>
+                        <td>{{ s.indicador_talla_edad|floatformat:1 }}</td>
+                        <td>{{ s.indicador_peso_talla|floatformat:1 }}</td>
+                        <td>
+                            <ul class="classification-list">
+                                <li><strong>P/E:</strong> 
+                                    <span class="badge {% if s.indicador_peso_edad < -3 %}severe
+                                               {% elif s.indicador_peso_edad < -2 %}moderate
+                                               {% elif s.indicador_peso_edad <= 2 %}normal
+                                               {% else %}overweight{% endif %}">
+                                        {% if s.indicador_peso_edad < -3 %}Desnutrición severa
+                                        {% elif s.indicador_peso_edad < -2 %}Desnutrición moderada
+                                        {% elif s.indicador_peso_edad <= 2 %}Normal
+                                        {% else %}Sobrepeso
+                                        {% endif %}
+                                    </span>
+                                </li>
+                                <li><strong>T/E:</strong> 
+                                    <span class="badge {% if s.indicador_talla_edad < -3 %}severe
+                                               {% elif s.indicador_talla_edad < -2 %}moderate
+                                               {% elif s.indicador_talla_edad <= 2 %}normal
+                                               {% else %}high{% endif %}">
+                                        {% if s.indicador_talla_edad < -3 %}Retraso severo
+                                        {% elif s.indicador_talla_edad < -2 %}Retraso moderado
+                                        {% elif s.indicador_talla_edad <= 2 %}Normal
+                                        {% else %}Alto
+                                        {% endif %}
+                                    </span>
+                                </li>
+                                <li><strong>P/T:</strong> 
+                                    <span class="badge {% if s.indicador_peso_talla < -3 %}severe
+                                               {% elif s.indicador_peso_talla < -2 %}moderate
+                                               {% elif s.indicador_peso_talla <= 2 %}normal
+                                               {% else %}overweight{% endif %}">
+                                        {% if s.indicador_peso_talla < -3 %}Desnutrición aguda severa
+                                        {% elif s.indicador_peso_talla < -2 %}Desnutrición aguda moderada
+                                        {% elif s.indicador_peso_talla <= 2 %}Normal
+                                        {% else %}Sobrepeso
+                                        {% endif %}
+                                    </span>
+                                </li>
+                            </ul>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
-        <p class="alert alert-info">No hay seguimientos registrados para este niño.</p>
+        <div class="no-results">
+            <i class="fas fa-info-circle"></i> No hay seguimientos registrados para este niño.
+        </div>
     {% endif %}
 
-    <a href="{% url 'historial' %}" class="btn btn-secondary mt-3">
-        <i class="fas fa-arrow-left"></i> Regresar al Historial
-    </a>
+    <div class="back-button-container">
+        <a href="{% url 'historial' %}" class="back-button">
+            <i class="fas fa-arrow-left"></i> Volver al historial
+        </a>
+    </div>
 </div>
 {% endblock %}

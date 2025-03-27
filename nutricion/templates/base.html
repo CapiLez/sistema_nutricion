@@ -16,6 +16,11 @@
             <a href="{% url 'registro_ninos' %}"><i class="fas fa-child"></i> Niños</a>
             <a href="{% url 'registro_trabajadores' %}"><i class="fas fa-user-md"></i> Trabajadores</a>
             <a href="{% url 'historial' %}"><i class="fas fa-file-medical"></i> Historial</a>
+            {% if request.user.is_superuser or request.user.is_admin %}
+            <a href="{% url 'ultimos_cambios' %}">
+                <i class="fas fa-clock-rotate-left"></i> Últimos Cambios
+            </a>
+            {% endif %}
             <a href="{% url 'seguimientos_general' %}"><i class="fas fa-chart-line"></i> Seguimiento General</a>
     
             {% if request.user.is_superuser or request.user.es_administrador %}

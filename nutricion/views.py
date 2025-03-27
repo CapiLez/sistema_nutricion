@@ -14,6 +14,8 @@ from .forms import (
     PacienteForm, TrabajadorForm,
     SeguimientoTrimestralForm, SeguimientoTrabajadorForm
 )
+from reversion import create_revision, set_user, set_comment
+from reversion.models import Version
 
 # ===========================
 # Autenticación
@@ -136,7 +138,10 @@ def registro_ninos(request):
     if request.method == 'POST':
         form = PacienteForm(request.POST)
         if form.is_valid():
-            form.save()
+            with create_revision():
+                form.save()
+                set_user(request.user)
+                set_comment("Registro de nuevo niño")
             messages.success(request, '[ninos] Niño agregado exitosamente.')
             return redirect('registro_ninos')
     else:
@@ -145,6 +150,7 @@ def registro_ninos(request):
     ultimos_ninos = Paciente.objects.order_by('-id')[:5]
     return render(request, 'registro_ninos.html', {'form': form, 'ultimos_ninos': ultimos_ninos})
 
+
 @login_required
 @user_passes_test(lambda u: u.is_admin() or u.is_jefe_departamento() or u.is_nutriologo())
 def editar_nino(request, nino_id):
@@ -152,7 +158,10 @@ def editar_nino(request, nino_id):
     if request.method == 'POST':
         form = PacienteForm(request.POST, instance=nino)
         if form.is_valid():
-            form.save()
+            with create_revision():
+                form.save()
+                set_user(request.user)
+                set_comment("Edición de niño desde vista")
             messages.success(request, '[ninos] Niño actualizado correctamente.')
             return redirect('registro_ninos' if 'from' not in request.GET else 'historial')
     else:
@@ -189,7 +198,10 @@ def registro_trabajadores(request):
     if request.method == 'POST':
         form = TrabajadorForm(request.POST)
         if form.is_valid():
-            form.save()
+            with create_revision():
+                form.save()
+                set_user(request.user)
+                set_comment("Registro de nuevo trabajador")
             messages.success(request, '[trabajadores] Trabajador agregado exitosamente.')
             return redirect('registro_trabajadores')
     else:
@@ -208,7 +220,10 @@ def editar_trabajador(request, trabajador_id):
     if request.method == 'POST':
         form = TrabajadorForm(request.POST, instance=trabajador)
         if form.is_valid():
-            form.save()
+            with create_revision():
+                form.save()
+                set_user(request.user)
+                set_comment("Edición de trabajador desde vista")
             messages.success(request, '[trabajadores] Trabajador actualizado correctamente.')
             return redirect('registro_trabajadores' if 'from' not in request.GET else 'historial')
     else:
@@ -279,6 +294,48 @@ def exportar_historial_excel(request):
         df.to_excel(writer, index=False, sheet_name="Historial Nutricional")
     return response
 
+@login_required
+def historial_nino_cambios(request, nino_id):
+    nino = get_object_or_404(Paciente, id=nino_id)
+
+    versiones = Version.objects.get_for_object(nino)
+
+    return render(request, 'historial_nino_cambios.html', {
+        'nino': nino,
+        'versiones': versiones
+    })
+
+@login_required
+def historial_trabajador_cambios(request, trabajador_id):
+    trabajador = get_object_or_404(Trabajador, id=trabajador_id)
+    versiones = Version.objects.get_for_object(trabajador)
+
+    return render(request, 'historial_trabajador_cambios.html', {
+        'trabajador': trabajador,
+        'versiones': versiones
+    })
+
+@login_required
+def historial_seguimiento_nino_cambios(request, seguimiento_id):
+    seguimiento = get_object_or_404(SeguimientoTrimestral, id=seguimiento_id)
+    versiones = Version.objects.get_for_object(seguimiento)
+
+    return render(request, 'historial_seguimiento_nino_cambios.html', {
+        'seguimiento': seguimiento,
+        'versiones': versiones
+    })
+
+@login_required
+def historial_seguimiento_trabajador_cambios(request, seguimiento_id):
+    seguimiento = get_object_or_404(SeguimientoTrabajador, id=seguimiento_id)
+    versiones = Version.objects.get_for_object(seguimiento)
+
+    return render(request, 'historial_seguimiento_trabajador_cambios.html', {
+        'seguimiento': seguimiento,
+        'versiones': versiones
+    })
+
+
 # ===========================
 # Seguimientos
 # ===========================
@@ -301,7 +358,10 @@ def registrar_seguimiento(request):
     if request.method == "POST":
         form = SeguimientoTrimestralForm(request.POST)
         if form.is_valid():
-            form.save()
+            with create_revision():
+                form.save()
+                set_user(request.user)
+                set_comment("Registro de seguimiento trimestral de niño")
             return redirect('lista_seguimientos')
     else:
         form = SeguimientoTrimestralForm(initial=initial_data)
@@ -384,7 +444,10 @@ def registrar_seguimiento_trabajador(request):
     if request.method == "POST":
         form = SeguimientoTrabajadorForm(request.POST)
         if form.is_valid():
-            form.save()
+            with create_revision():
+                form.save()
+                set_user(request.user)
+                set_comment("Registro de seguimiento de trabajador")
             messages.success(request, '[seguimientos] Seguimiento del trabajador registrado correctamente.')
             return redirect('lista_seguimientos')
     else:
@@ -410,6 +473,15 @@ def seguimientos_trabajador(request, trabajador_id):
 def ultimos_ninos(request):
     ultimos = Paciente.objects.order_by('-id')[:5]
     return render(request, 'ultimos_ninos.html', {'ultimos': ultimos})
+
+@login_required
+@user_passes_test(es_admin)
+def ultimos_cambios(request):
+    versiones = Version.objects.select_related('revision', 'revision__user').order_by('-revision__date_created')[:50]
+
+    return render(request, 'ultimos_cambios.html', {
+        'versiones': versiones
+    })
 
 @login_required
 def buscar_nino(request):

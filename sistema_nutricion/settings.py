@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-okc+7l_)_j@=b)x_1htckc8x@q@1%tnbas(b#8+m71&_nkp(dq
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["10.39.0.114", "localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'reversion',
     'nutricion'
 ]
 

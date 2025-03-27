@@ -29,7 +29,13 @@ urlpatterns = [
     # Historial
     path('historial/', historial, name='historial'),
     path('historial/exportar/', exportar_historial_excel, name='exportar_historial'),
+    path('nino/<int:nino_id>/historial-cambios/', views.historial_nino_cambios, name='historial_nino_cambios'),
 
+    # Historial de cambios
+    path('trabajador/<int:trabajador_id>/historial-cambios/', views.historial_trabajador_cambios, name='historial_trabajador_cambios'),
+    path('seguimiento-nino/<int:seguimiento_id>/historial-cambios/', views.historial_seguimiento_nino_cambios, name='historial_seguimiento_nino_cambios'),
+    path('seguimiento-trabajador/<int:seguimiento_id>/historial-cambios/', views.historial_seguimiento_trabajador_cambios, name='historial_seguimiento_trabajador_cambios'),
+    
     # Seguimientos
     path('registrar_seguimiento/', registrar_seguimiento, name='registrar_seguimiento'),
     path('seguimientos/nino/<int:nino_id>/', views.seguimientos_nino, name='seguimientos_nino'),
@@ -38,10 +44,10 @@ urlpatterns = [
     path('lista_seguimientos/', lista_seguimientos, name='lista_seguimientos'),
     path('seguimiento/trabajador/nuevo/', views.registrar_seguimiento_trabajador, name='registrar_seguimiento_trabajador'),
     path('seguimientos/trabajador/<int:trabajador_id>/', views.seguimientos_trabajador, name='seguimientos_trabajador'),
-
-
+    
     # Extras
     path('ultimos_ninos/', ultimos_ninos, name='ultimos_ninos'),
+    path('cambios-recientes/', views.ultimos_cambios, name='ultimos_cambios'),
     path('buscar_nino/', buscar_nino, name='buscar_nino'),
     path('autocomplete_ninos/', autocomplete_ninos, name='autocomplete_ninos'),
 ]

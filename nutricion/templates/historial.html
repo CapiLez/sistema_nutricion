@@ -11,246 +11,252 @@
 <div class="historial-page">
     <h1>Historial de Evaluaciones Nutricionales</h1>
 
-    <!-- Contenedor de búsqueda -->
-    <div class="search-container">
-        <!-- Buscar Niño -->
-        <div class="search-box">
-            <h3>Buscar Niño</h3>
+    <!-- Sección Niños -->
+    <div class="section-container">
+        <h2>Niños Registrados</h2>
+        
+        <!-- Barra de búsqueda para Niños -->
+        <div class="search-section">
             <form method="GET" class="search-form" id="form-busqueda-nino">
-                <input type="text" id="buscar-nino" name="q_nino" placeholder="Buscar niño..." value="{{ q_nino }}">
-                <button type="submit"><i class="fas fa-search"></i></button>
+                <div class="search-input-group">
+                    <input type="text" id="buscar-nino" name="q_nino" placeholder="Buscar por nombre de niño..." value="{{ q_nino }}" class="search-input">
+                    <button type="submit" class="search-button">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                </div>
             </form>
         </div>
 
-        <!-- Buscar Trabajador -->
-        <div class="search-box">
-            <h3>Buscar Trabajador</h3>
-            <form method="GET" class="search-form" id="form-busqueda-trabajador">
-                <input type="text" id="buscar-trabajador" name="q_trabajador" placeholder="Buscar trabajador..." value="{{ q_trabajador }}">
-                <button type="submit"><i class="fas fa-search"></i></button>
-            </form>
-        </div>
+        <!-- Resultados de búsqueda: Niños -->
+        {% if resultados_ninos %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Edad</th>
+                            <th>CURP</th>
+                            <th>Grado</th>
+                            <th>Grupo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for nino in resultados_ninos %}
+                        <tr>
+                            <td>{{ nino.nombre }}</td>
+                            <td>{{ nino.edad }} años</td>
+                            <td>{{ nino.curp|upper }}</td>
+                            <td>{{ nino.grado }}</td>
+                            <td>{{ nino.grupo }}</td>
+                            <td class="actions-cell">
+                                {% if request.user.is_admin %}
+                                    <a href="{% url 'editar_nino' nino.id %}?from=historial" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'eliminar_nino' nino.id %}?from=historial" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-secondary btn-sm" disabled title="Sin permiso">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% elif q_nino %}
+            <p class="no-results">⚠ No se encontraron niños con ese nombre.</p>
+        {% endif %}
+
+        <!-- Tabla completa: Niños -->
+        {% if not q_nino %}
+            {% if pacientes %}
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>CURP</th>
+                                <th>Nombre</th>
+                                <th>Grado</th>
+                                <th>Grupo</th>
+                                <th>Sexo</th>
+                                <th>Fecha Nac.</th>
+                                <th>Edad</th>
+                                <th>Peso (kg)</th>
+                                <th>Talla (cm)</th>
+                                <th>IMC</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for paciente in pacientes %}
+                            <tr>
+                                <td>{{ paciente.id }}</td>
+                                <td>{{ paciente.curp|upper }}</td>
+                                <td>{{ paciente.nombre }}</td>
+                                <td>{{ paciente.grado }}</td>
+                                <td>{{ paciente.grupo }}</td>
+                                <td>{{ paciente.sexo }}</td>
+                                <td>{{ paciente.fecha_nacimiento }}</td>
+                                <td>{{ paciente.edad }}</td>
+                                <td>{{ paciente.peso }}</td>
+                                <td>{{ paciente.talla }}</td>
+                                <td>{{ paciente.imc }}</td>
+                                <td class="actions-cell">
+                                    {% if request.user.is_admin %}
+                                        <a href="{% url 'editar_nino' paciente.id %}?from=historial" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'eliminar_nino' paciente.id %}?from=historial" class="btn btn-danger btn-sm">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-sm" disabled title="Sin permiso">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                    {% endif %}
+                                    <a href="{% url 'registrar_seguimiento' %}?paciente_id={{ paciente.id }}" class="btn btn-success btn-sm" title="Registrar seguimiento">
+                                        <i class="fas fa-notes-medical"></i>
+                                    </a>
+                                    <a href="{% url 'seguimientos_nino' paciente.id %}" class="btn btn-info btn-sm" title="Ver seguimientos">
+                                        <i class="fas fa-stethoscope"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="no-results">⚠ No hay niños registrados actualmente.</p>
+            {% endif %}
+        {% endif %}
     </div>
 
-    <!-- Resultados de búsqueda: Niños -->
-    {% if resultados_ninos %}
-        <h3>Resultados - Niños</h3>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Edad</th>
-                    <th>CURP</th>
-                    <th>Grado</th>
-                    <th>Grupo</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for nino in resultados_ninos %}
-                <tr>
-                    <td>{{ nino.nombre }}</td>
-                    <td>{{ nino.edad }} años</td>
-                    <td>{{ nino.curp|upper }}</td>
-                    <td>{{ nino.grado }}</td>
-                    <td>{{ nino.grupo }}</td>
-                    <td>
-                        {% if request.user.is_admin %}
-                            <a href="{% url 'editar_nino' nino.id %}?from=historial" class="btn btn-warning btn-sm">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="{% url 'eliminar_nino' nino.id %}?from=historial" class="btn btn-danger btn-sm">
-                                <i class="fas fa-trash-alt"></i>
-                            </a>
-                        {% else %}
-                            <button class="btn btn-secondary btn-sm" disabled title="Sin permiso">
-                                <i class="fas fa-ban"></i>
-                            </button>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% elif q_nino %}
-        <p class="no-resultados">⚠ No se encontraron niños con ese nombre.</p>
-    {% endif %}
-
-    <!-- Resultados de búsqueda: Trabajadores -->
-    {% if resultados_trabajadores %}
-        <h3>Resultados - Trabajadores</h3>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>CURP</th>
-                    <th>Cargo</th>
-                    <th>Departamento</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for trabajador in resultados_trabajadores %}
-                <tr>
-                    <td>{{ trabajador.nombre }}</td>
-                    <td>{{ trabajador.curp|upper }}</td>
-                    <td>{{ trabajador.cargo }}</td>
-                    <td>{{ trabajador.departamento }}</td>
-                    <td>
-                        {% if request.user.is_admin %}
-                            <a href="{% url 'editar_trabajador' trabajador.id %}?from=historial" class="btn btn-warning btn-sm">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="{% url 'eliminar_trabajador' trabajador.id %}?from=historial" class="btn btn-danger btn-sm">
-                                <i class="fas fa-trash-alt"></i>
-                            </a>
-                        {% else %}
-                            <button class="btn btn-secondary btn-sm" disabled title="Sin permiso">
-                                <i class="fas fa-ban"></i>
-                            </button>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% elif q_trabajador %}
-        <p class="no-resultados">⚠ No se encontraron trabajadores con esa información.</p>
-    {% endif %}
-
-    <!-- Tabla completa: Niños -->
-    {% if not q_nino %}
-        <h2>Niños Registrados</h2>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>No.</th>
-                    <th>CURP</th>
-                    <th>Nombre</th>
-                    <th>Grado</th>
-                    <th>Grupo</th>
-                    <th>Sexo</th>
-                    <th>Fecha de Nacimiento</th>
-                    <th>Edad</th>
-                    <th>Peso (kg)</th>
-                    <th>Talla (cm)</th>
-                    <th>IMC</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for paciente in pacientes %}
-                <tr>
-                    <td>{{ paciente.id }}</td>
-                    <td>{{ paciente.curp|upper }}</td>
-                    <td>{{ paciente.nombre }}</td>
-                    <td>{{ paciente.grado }}</td>
-                    <td>{{ paciente.grupo }}</td>
-                    <td>{{ paciente.sexo }}</td>
-                    <td>{{ paciente.fecha_nacimiento }}</td>
-                    <td>{{ paciente.edad }}</td>
-                    <td>{{ paciente.peso }}</td>
-                    <td>{{ paciente.talla }}</td>
-                    <td>{{ paciente.imc }}</td>
-                    <td>
-                        {% if request.user.is_admin %}
-                            <a href="{% url 'editar_nino' paciente.id %}?from=historial" class="btn btn-warning btn-sm">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="{% url 'eliminar_nino' paciente.id %}?from=historial" class="btn btn-danger btn-sm">
-                                <i class="fas fa-trash-alt"></i>
-                            </a>
-                        {% else %}
-                            <button class="btn btn-secondary btn-sm" disabled title="Sin permiso">
-                                <i class="fas fa-ban"></i>
-                            </button>
-                        {% endif %}
-                        <a href="{% url 'registrar_seguimiento' %}?paciente_id={{ paciente.id }}" class="btn btn-success btn-sm" title="Registrar seguimiento">
-                            <i class="fas fa-notes-medical"></i>
-                        </a>
-                        <a href="{% url 'seguimientos_nino' paciente.id %}" class="btn btn-info btn-sm" title="Ver seguimientos">
-                            <i class="fas fa-stethoscope"></i>
-                        </a>                        
-                        
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-            {% if not q_nino %}
-        {% if pacientes %}
-            <table class="table">
-            </table>
-        {% else %}
-            <p class="alert alert-info mt-2">⚠ No hay niños registrados actualmente.</p>
-        {% endif %}
-        {% endif %}
-
-    {% endif %}
-
-    <!-- Tabla completa: Trabajadores -->
-    {% if not q_trabajador %}
+    <!-- Sección Trabajadores -->
+    <div class="section-container">
         <h2>Trabajadores Registrados</h2>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>No.</th>
-                    <th>CURP</th>
-                    <th>Nombre</th>
-                    <th>Cargo</th>
-                    <th>Departamento</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for trabajador in trabajadores %}
-                <tr>
-                    <td>{{ trabajador.id }}</td>
-                    <td>{{ trabajador.curp|upper }}</td>
-                    <td>{{ trabajador.nombre }}</td>
-                    <td>{{ trabajador.cargo }}</td>
-                    <td>{{ trabajador.departamento }}</td>
-                    <td>
-                        {% if request.user.is_admin %}
-                            <a href="{% url 'editar_trabajador' trabajador.id %}?from=historial" class="btn btn-warning btn-sm">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="{% url 'eliminar_trabajador' trabajador.id %}?from=historial" class="btn btn-danger btn-sm">
-                                <i class="fas fa-trash-alt"></i>
-                            </a>
-                        {% else %}
-                            <button class="btn btn-secondary btn-sm" disabled title="Sin permiso">
-                                <i class="fas fa-ban"></i>
-                            </button>
-                        {% endif %}
-                        <a href="{% url 'registrar_seguimiento_trabajador' %}?trabajador_id={{ trabajador.id }}" class="btn btn-success btn-sm" title="Registrar seguimiento">
-                            <i class="fas fa-notes-medical"></i>
-                        </a>
-                        <a href="{% url 'seguimientos_trabajador' trabajador.id %}" class="btn btn-info btn-sm" title="Ver seguimientos">
-                            <i class="fas fa-stethoscope"></i>
-                        </a>                        
-                        
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% if not q_trabajador %}
-    {% if trabajadores %}
-        <table class="table">
-            
-        </table>
-    {% else %}
-        <p class="alert alert-info mt-2">⚠ No hay trabajadores registrados actualmente.</p>
-    {% endif %}
-{% endif %}
+        
+        <!-- Barra de búsqueda para Trabajadores -->
+        <div class="search-section">
+            <form method="GET" class="search-form" id="form-busqueda-trabajador">
+                <div class="search-input-group">
+                    <input type="text" id="buscar-trabajador" name="q_trabajador" placeholder="Buscar por nombre de trabajador..." value="{{ q_trabajador }}" class="search-input">
+                    <button type="submit" class="search-button">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                </div>
+            </form>
+        </div>
 
-    {% endif %}
+        <!-- Resultados de búsqueda: Trabajadores -->
+        {% if resultados_trabajadores %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>CURP</th>
+                            <th>Cargo</th>
+                            <th>Departamento</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trabajador in resultados_trabajadores %}
+                        <tr>
+                            <td>{{ trabajador.nombre }}</td>
+                            <td>{{ trabajador.curp|upper }}</td>
+                            <td>{{ trabajador.cargo }}</td>
+                            <td>{{ trabajador.departamento }}</td>
+                            <td class="actions-cell">
+                                {% if request.user.is_admin %}
+                                    <a href="{% url 'editar_trabajador' trabajador.id %}?from=historial" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'eliminar_trabajador' trabajador.id %}?from=historial" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-secondary btn-sm" disabled title="Sin permiso">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% elif q_trabajador %}
+            <p class="no-results">⚠ No se encontraron trabajadores con esa información.</p>
+        {% endif %}
+
+        <!-- Tabla completa: Trabajadores -->
+        {% if not q_trabajador %}
+            {% if trabajadores %}
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>CURP</th>
+                                <th>Nombre</th>
+                                <th>Cargo</th>
+                                <th>Departamento</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trabajador in trabajadores %}
+                            <tr>
+                                <td>{{ trabajador.id }}</td>
+                                <td>{{ trabajador.curp|upper }}</td>
+                                <td>{{ trabajador.nombre }}</td>
+                                <td>{{ trabajador.cargo }}</td>
+                                <td>{{ trabajador.departamento }}</td>
+                                <td class="actions-cell">
+                                    {% if request.user.is_admin %}
+                                        <a href="{% url 'editar_trabajador' trabajador.id %}?from=historial" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'eliminar_trabajador' trabajador.id %}?from=historial" class="btn btn-danger btn-sm">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-sm" disabled title="Sin permiso">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                    {% endif %}
+                                    <a href="{% url 'registrar_seguimiento_trabajador' %}?trabajador_id={{ trabajador.id }}" class="btn btn-success btn-sm" title="Registrar seguimiento">
+                                        <i class="fas fa-notes-medical"></i>
+                                    </a>
+                                    <a href="{% url 'seguimientos_trabajador' trabajador.id %}" class="btn btn-info btn-sm" title="Ver seguimientos">
+                                        <i class="fas fa-stethoscope"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="no-results">⚠ No hay trabajadores registrados actualmente.</p>
+            {% endif %}
+        {% endif %}
+    </div>
 
     <!-- Botón de regreso -->
-    <a href="{% url 'home' %}" class="btn btn-primary mt-3">
-        <i class="fas fa-arrow-left"></i> Regresar al Inicio
-    </a>
+    <div class="back-button-container">
+        <a href="{% url 'home' %}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Regresar al Inicio
+        </a>
+    </div>
 </div>
 
 <!-- JS para limpiar campos tras buscar -->

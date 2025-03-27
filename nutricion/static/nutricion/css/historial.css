@@ -1,95 +1,290 @@
+/* Estilos generales para la página de historial */
 .historial-page {
     font-family: 'Arial', sans-serif;
-    background-color: #e3f2fd;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    background-color: #f8f9fa;
+    padding: 25px;
+    margin: auto;
+    max-width: 1200px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
 }
 
+/* Encabezados */
 .historial-page h1 {
-    color: #00796b;
-    margin-bottom: 20px;
-    font-weight: bold;
-}
-
-h2 {
-    margin-top: 30px;
-    color: #00796b;
-    font-weight: bold;
-}
-
-.search-box {
-    margin-bottom: 15px;
+    color: #2c3e50;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 30px;
     text-align: center;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
 }
 
-.search-box h3 {
-    margin-bottom: 8px;
-    color: #0288d1;
+.section-container {
+    margin-bottom: 40px;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.section-container h2 {
+    color: #3498db;
+    font-size: 22px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Barras de búsqueda */
+.search-section {
+    margin-bottom: 20px;
 }
 
 .search-form {
+    margin-bottom: 15px;
+}
+
+.search-input-group {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
+    max-width: 500px;
+    margin-bottom: 15px;
 }
 
-.search-form input {
-    padding: 6px;
-    border-radius: 4px;
-    border: 1px solid #00796b;
-    width: 250px;
+.search-input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px 0 0 4px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s;
+    border: 1px solid #333; /* Contorno negro */
 }
 
-.search-form button {
-    background-color: #0288d1;
+.search-input:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.search-button {
+    padding: 10px 15px;
+    background-color: #3498db;
     color: white;
-    padding: 6px 12px;
     border: none;
-    border-radius: 4px;
+    border-radius: 0 4px 4px 0;
     cursor: pointer;
+    font-size: 14px;
     transition: background-color 0.3s;
+    border: 1px solid #333; /* Contorno negro */
 }
 
-.search-form button:hover {
-    background-color: #01579b;
+.search-button:hover {
+    background-color: #2980b9;
 }
 
-.table {
+/* Tablas */
+.table-responsive {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.data-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 15px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.table th,
-.table td {
+.data-table th {
+    background-color: #3498db;
+    color: white;
     padding: 12px;
-    border: 1px solid #00796b;
+    text-align: left;
+    font-weight: 500;
+}
+
+.data-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
     text-align: left;
 }
 
-.table th {
-    background-color: #00796b;
-    color: white;
+.data-table tr:nth-child(even) {
+    background-color: #f8f9fa;
 }
 
-.table tr:nth-child(even) {
-    background-color: #e0f2f1;
+.data-table tr:hover {
+    background-color: #f1f8fe;
+}
+
+.actions-cell {
+    white-space: nowrap;
+}
+
+/* Botones */
+.btn {
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-right: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+}
+
+.btn-sm {
+    padding: 5px 8px;
+    font-size: 12px;
 }
 
 .btn-primary {
-    margin-top: 20px;
-    background-color: #0288d1;
-    color: white;
-    padding: 8px 16px;
-    text-decoration: none;
-    border-radius: 6px;
-    transition: background-color 0.3s;
+    background-color: #3498db;
+    border: 1px solid #2980b9;
 }
 
 .btn-primary:hover {
-    background-color: #01579b;
+    background-color: #2980b9;
+}
+
+.btn-warning {
+    background-color: #f39c12;
+    border: 1px solid #e67e22;
+    color: white;
+}
+
+.btn-warning:hover {
+    background-color: #e67e22;
+}
+
+.btn-danger {
+    background-color: #e74c3c;
+    border: 1px solid #c0392b;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+}
+
+.btn-success {
+    background-color: #2ecc71;
+    border: 1px solid #27ae60;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #27ae60;
+}
+
+.btn-info {
+    background-color: #1abc9c;
+    border: 1px solid #16a085;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #16a085;
+}
+
+.btn-secondary {
+    background-color: #95a5a6;
+    border: 1px solid #7f8c8d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #7f8c8d;
+}
+
+/* Mensajes de no resultados */
+.no-results {
+    color: #7f8c8d;
+    font-style: italic;
+    padding: 15px;
+    text-align: center;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    margin: 20px 0;
+}
+
+/* Contenedor del botón Volver - Versión refinada */
+.back-button-container {
+    text-align: center;
+    margin: 25px 0 15px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+}
+
+/* Estilo mejorado del botón Volver */
+.back-button-container .btn {
+    padding: 7px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    background-color: #2980b9;
+    color: white;
+    border: 1px solid #2472a4;
+    text-transform: none; /* Elimina las mayúsculas forzadas */
+}
+
+.back-button-container .btn:hover {
+    background-color: #2472a4;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.back-button-container .btn i {
+    margin-right: 6px;
+    font-size: 12px;
+    transition: transform 0.2s;
+}
+
+.back-button-container .btn:hover i {
+    transform: translateX(-2px);
+}
+
+/* Versión móvil */
+@media (max-width: 768px) {
+    .back-button-container {
+        margin: 20px 0 10px;
+    }
+    
+    .back-button-container .btn {
+        padding: 6px 14px;
+        font-size: 12px;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .search-input-group {
+        flex-direction: column;
+    }
+    
+    .search-input {
+        border-radius: 4px;
+        margin-bottom: 5px;
+    }
+    
+    .search-button {
+        border-radius: 4px;
+        width: 100%;
+    }
+    
+    .data-table {
+        font-size: 14px;
+    }
+    
+    .btn {
+        margin-bottom: 5px;
+    }
 }

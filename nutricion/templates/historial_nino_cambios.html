@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Historial de Cambios - {{ nino.nombre }}{% endblock %}
+
+{% block content %}
+<div class="historial-page">
+    <h2>Historial de Cambios - {{ nino.nombre }}</h2>
+
+    {% if versiones %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Comentario</th>
+                    <th>Vista JSON</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for version in versiones %}
+                <tr>
+                    <td>{{ version.revision.date_created }}</td>
+                    <td>{{ version.revision.user }}</td>
+                    <td>{{ version.revision.comment }}</td>
+                    <td>
+                        <pre>{{ version.field_dict|safe }}</pre>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="alert alert-warning">No hay cambios registrados para este niño.</p>
+    {% endif %}
+
+    <a href="{% url 'historial' %}" class="btn btn-secondary mt-3">
+        <i class="fas fa-arrow-left"></i> Volver al historial
+    </a>
+</div>
+{% endblock %}
