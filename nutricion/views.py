@@ -177,7 +177,13 @@ def editar_nino(request, nino_id):
 @user_passes_test(es_admin)
 def eliminar_nino(request, nino_id):
     nino = get_object_or_404(Paciente, id=nino_id)
+
     if request.method == 'POST':
+        with create_revision():
+            set_user(request.user)
+            set_comment("Eliminación de niño")
+            # Guardar última versión antes de eliminar
+            nino.save()
         nino.delete()
         messages.success(request, '[ninos] Niño eliminado correctamente.')
         return redirect('registro_ninos' if 'from' not in request.GET else 'historial')
@@ -186,6 +192,7 @@ def eliminar_nino(request, nino_id):
         'nino': nino,
         'cancel_url': 'historial' if 'from' in request.GET else 'registro_ninos'
     })
+
 
 
 # ===========================
@@ -239,7 +246,12 @@ def editar_trabajador(request, trabajador_id):
 @user_passes_test(es_admin)
 def eliminar_trabajador(request, trabajador_id):
     trabajador = get_object_or_404(Trabajador, id=trabajador_id)
+
     if request.method == 'POST':
+        with create_revision():
+            set_user(request.user)
+            set_comment("Eliminación de trabajador")
+            trabajador.save()  # Guarda versión final
         trabajador.delete()
         messages.success(request, '[trabajadores] Trabajador eliminado correctamente.')
         return redirect('registro_trabajadores' if 'from' not in request.GET else 'historial')
@@ -248,6 +260,7 @@ def eliminar_trabajador(request, trabajador_id):
         'trabajador': trabajador,
         'cancel_url': 'historial' if 'from' in request.GET else 'registro_trabajadores'
     })
+
 
 # ===========================
 # Historial y Búsqueda
