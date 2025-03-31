@@ -1,101 +1,170 @@
-/* Configuración general de la página de edición */
-.editar-nino-page {
-    font-family: 'Arial', sans-serif;
-    background-color: #e3f2fd;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
-    padding: 40px;
+/* Variables de color - Tema infantil */
+:root {
+    --primary-color: #00b894;    /* Verde turquesa */
+    --primary-dark: #00a884;    /* Verde más oscuro */
+    --secondary-color: #fdcb6e;  /* Amarillo */
+    --secondary-dark: #e8a623;   /* Amarillo oscuro */
+    --background-light: #f8f9fa;
+    --white: #ffffff;
+    --text-dark: #2d3436;
+    --text-light: #f5f5f5;
+    --border-color: #dfe6e9;
+    --error-color: #d63031;
 }
 
-/* Estilo del contenedor principal del formulario */
+/* Estructura principal (igual que trabajadores) */
 .editar-nino-container {
-    background: #ffffff;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    max-width: 600px;
-    width: 100%;
+    max-width: 700px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.card {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.card-header {
+    background-color: var(--primary-color);
+    color: var(--white);
+    padding: 1.5rem;
     text-align: center;
+    border-bottom: 1px solid var(--primary-dark);
 }
 
-/* Encabezado del formulario */
-.editar-nino-container h2 {
-    color: #00796b;
-    font-size: 24px;
-    margin-bottom: 20px;
+.card-header h2 {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 500;
 }
 
-/* Campos del formulario */
-input[type="text"],
-input[type="number"],
-input[type="date"],
-select,
-textarea {
-    width: 95%;
-    padding: 8px 10px;
-    margin-bottom: 15px;
-    border: 1.5px solid #00796b;
-    border-radius: 6px;
-    font-size: 14px;
-    color: #333;
-    background-color: #ffffff;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: border-color 0.3s, box-shadow 0.3s;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
+.card-header i {
+    margin-right: 0.75rem;
 }
 
-input:focus,
-select:focus,
-textarea:focus {
-    border-color: #004d40;
-    box-shadow: 0 0 6px rgba(0, 77, 64, 0.3);
+.card-body {
+    padding: 2rem 2.5rem;
+}
+
+/* Formulario (igual que trabajadores) */
+.nino-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--primary-dark);
+    font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: var(--background-light);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.2);
     outline: none;
+    background-color: var(--white);
 }
 
-/* Etiquetas de los campos */
-label {
-    font-weight: bold;
-    color: #00796b;
-    margin-bottom: 5px;
-    display: block;
-    font-size: 14px;
-    text-align: left;
+.form-text {
+    font-size: 0.85rem;
+    color: var(--secondary-dark);
 }
 
-/* Botones del formulario */
-.form-buttons {
+.error-message {
+    color: var(--error-color);
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+/* Botones (igual que trabajadores) */
+.form-actions {
     display: flex;
     justify-content: space-between;
-    margin-top: 15px;
+    margin-top: 2rem;
+    gap: 1.5rem;
 }
 
-button[type="submit"],
-a.btn {
-    padding: 10px 15px;
-    border-radius: 6px;
-    font-size: 16px;
-    color: white;
-    text-decoration: none;
+.btn {
+    padding: 0.8rem 1.75rem;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: 500;
+    border: none;
     cursor: pointer;
-    transition: background-color 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    text-decoration: none;
 }
 
-.btn-success {
-    background-color: #00796b;
+.btn i {
+    margin-right: 0.75rem;
 }
 
-.btn-success:hover {
-    background-color: #004d40;
+.btn-save {
+    background-color: var(--primary-color);
+    color: var(--white);
+    flex: 1;
 }
 
-.btn-secondary {
-    background-color: #ff9800;
+.btn-save:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.btn-secondary:hover {
-    background-color: #e65100;
+.btn-cancel {
+    background-color: var(--secondary-color);
+    color: var(--white);
+    flex: 1;
+}
+
+.btn-cancel:hover {
+    background-color: var(--secondary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive (igual que trabajadores) */
+@media (max-width: 768px) {
+    .editar-nino-container {
+        padding: 0 0.5rem;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .btn {
+        width: 100%;
+    }
 }

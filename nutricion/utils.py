@@ -31,8 +31,6 @@ class RevisionUpdateView(LoginRequiredMixin, UpdateView):
         messages.success(self.request, self.success_message)
         return response
 
-
-# utils.py o donde tengas CancelUrlMixin
 class CancelUrlMixin:
     cancel_url_default = None
     cancel_url_alt = None
@@ -42,7 +40,6 @@ class CancelUrlMixin:
         context['cancel_url'] = self.cancel_url_alt if 'from' in self.request.GET else self.cancel_url_default
         return context
     
-
 class BaseDeleteViewConCancel(LoginRequiredMixin, DeleteView):
     """
     Esta clase ya incluye el LoginRequiredMixin.
