@@ -1,39 +1,83 @@
 <!DOCTYPE html>
 {% load static %}
 <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <title>{% block title %}Interfaz Nutriólogos{% endblock %}</title>
-        <link href="{% static 'nutricion/css/style.css' %}" rel="stylesheet">
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-        {% block extra_css %}{% endblock %}
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Interfaz Nutriólogos{% endblock %}</title>
+    <link href="{% static 'nutricion/css/style.css' %}" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="home-page">
+    <!-- Checkbox invisible para el toggle -->
+    <input type="checkbox" id="navbar-toggle" style="display:none;">
     
-<body>
+    <!-- Label que actúa como botón -->
+    <label for="navbar-toggle" class="navbar-toggle">
+        <i class="fas fa-bars"></i>
+    </label>
+    
     <div class="navbar">
         <nav>
-            <a href="{% url 'home' %}"><i class="fas fa-home"></i> Inicio</a>
-            <a href="{% url 'registro_ninos' %}"><i class="fas fa-child"></i> Niños</a>
-            <a href="{% url 'registro_trabajadores' %}"><i class="fas fa-user-md"></i> Trabajadores</a>
-            <a href="{% url 'historial' %}"><i class="fas fa-file-medical"></i> Historial</a>
+            <div class="nav-header">
+                <i class="fas fa-stethoscope logo-icon"></i>
+                <span class="logo-text">Sistema Nutrición</span>
+            </div>
+            
+            <div class="nav-section">
+                <span class="section-title">PRINCIPAL</span>
+                <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                    <i class="fas fa-home"></i> <span class="link-text">Inicio</span>
+                </a>
+                <a href="{% url 'historial' %}" class="{% if request.resolver_match.url_name == 'historial' %}active{% endif %}">
+                    <i class="fas fa-file-medical"></i> <span class="link-text">Historial</span>
+                </a>
+            </div>
+            
+            <div class="nav-section">
+                <span class="section-title">REGISTROS</span>
+                <a href="{% url 'registro_ninos' %}" class="{% if request.resolver_match.url_name == 'registro_ninos' %}active{% endif %}">
+                    <i class="fas fa-child"></i> <span class="link-text">Niños</span>
+                </a>
+                <a href="{% url 'registro_trabajadores' %}" class="{% if request.resolver_match.url_name == 'registro_trabajadores' %}active{% endif %}">
+                    <i class="fas fa-user-tie"></i> <span class="link-text">Trabajadores</span>
+                </a>
+            </div>
+            
+            <div class="nav-section">
+                <span class="section-title">ANÁLISIS</span>
+                <a href="{% url 'seguimientos_general' %}" class="{% if request.resolver_match.url_name == 'seguimientos_general' %}active{% endif %}">
+                    <i class="fas fa-chart-line"></i> <span class="link-text">Seguimiento General</span>
+                </a>
+            </div>
+            
             {% if request.user.is_superuser or request.user.is_admin %}
-            <a href="{% url 'ultimos_cambios' %}">
-                <i class="fas fa-clock-rotate-left"></i> Últimos Cambios
-            </a>
+            <div class="nav-section">
+                <span class="section-title">ADMINISTRACIÓN</span>
+                <a href="{% url 'gestionar_usuarios' %}" class="{% if request.resolver_match.url_name == 'gestionar_usuarios' %}active{% endif %}">
+                    <i class="fas fa-users-cog"></i> <span class="link-text">Gestionar Usuarios</span>
+                </a>
+            </div>
             {% endif %}
-            <a href="{% url 'seguimientos_general' %}"><i class="fas fa-chart-line"></i> Seguimiento General</a>
-    
-            {% if request.user.is_superuser or request.user.es_administrador %}
-                <a href="{% url 'gestionar_usuarios' %}"><i class="fas fa-users-cog"></i> Gestionar Usuarios</a>
-            {% endif %}
-    
-            <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+            
+            <div class="nav-footer">
+                <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> <span class="link-text">Cerrar Sesión</span>
+                    </button>
+                </form>                
+            </div>
         </nav>
     </div>
-    
 
     <div class="main-content">
         {% block content %}{% endblock %}
     </div>
+    
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

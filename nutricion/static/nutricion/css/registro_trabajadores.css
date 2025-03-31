@@ -1,230 +1,399 @@
-/* ✅ Configuración general */
+/* ===== ESTILOS GENERALES ===== */
 .registro-trabajadores-page {
-    font-family: 'Arial', sans-serif;
-    background-color: #e3f2fd;
-    display: flex;
-    justify-content: left;
-    align-items: flex-start;
-    min-height: 100vh;
-    padding: 40px;
+    font-family: 'Poppins', 'Roboto', sans-serif;
+    background-color: #f5f7fa;
+    padding: 20px;
+    margin: 15px auto;
+    max-width: 1200px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border-radius: 8px;
+    color: #3a3a3a;
 }
 
-/* ✅ Contenedor principal */
+/* ===== ENCABEZADOS ===== */
+.registro-trabajadores-page h2 {
+    color: #2c3e50;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-align: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e0e6ed;
+    position: relative;
+}
+
+.registro-trabajadores-page h2:after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(to right, #1abc9c, #3498db);
+}
+
+.registro-trabajadores-page h3 {
+    color: #2c3e50;
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f4f8;
+}
+
+/* ===== CONTENEDOR PRINCIPAL ===== */
 .registro-trabajadores-container {
     background: #ffffff;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    max-width: 600px;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border-left: 3px solid #1abc9c;
+    margin-bottom: 25px;
     width: 100%;
-    text-align: center;
-    margin-right: -50px;
+    box-sizing: border-box;
 }
 
-/* ✅ Estilos generales */
-.registro-trabajadores-container h2 {
-    color: #00796b;
-    font-size: 24px;
+/* ===== MENSAJES ===== */
+.messages {
+    list-style: none;
+    padding: 0;
     margin-bottom: 20px;
 }
 
-.acciones-container {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.btn-success {
-    background-color: #00796b;
-    color: white;
+.alert {
     padding: 10px 15px;
     border-radius: 6px;
-    font-size: 16px;
-    transition: background 0.3s ease;
+    margin-bottom: 10px;
+    font-size: 14px;
 }
 
-.btn-success:hover {
-    background-color: #004d40;
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
 }
 
-/* ✅ Formulario oculto y transición más suave */
-.hidden {
-    display: none;
+.alert-error, .alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
 }
 
+/* ===== FORMULARIO ===== */
 #formulario-trabajador {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 5px;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
-    transition: all 0.3s ease; /* Transición suave */
-    overflow: hidden; /* Evita movimiento brusco */
-}
-
-/* ✅ Tabla de Últimos Trabajadores Agregados */
-.ultimos-trabajadores {
-    margin-top: 20px;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 5px;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.table {
+    background: #ffffff;
+    padding: 18px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    box-sizing: border-box;
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
 }
 
-.table th, .table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: center;
+.form-group {
+    margin-bottom: 15px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.table th {
-    background-color: #00796b;
-    color: white;
+.form-field {
+    margin-bottom: 15px;
 }
 
-/* ✅ Botones de navegación */
-.btn-container {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
-}
-
-.btn-container a.btn {
-    padding: 10px 20px;
-    text-decoration: none;
-    color: white;
-    border-radius: 6px;
-    font-size: 16px;
-    text-align: center;
-    transition: background 0.3s ease;
-}
-
-.btn-primary {
-    background-color: #0288d1;
-}
-
-.btn-primary:hover {
-    background-color: #01579b;
-}
-
-.btn-secondary {
-    background-color: #ff9800;
-}
-
-.btn-secondary:hover {
-    background-color: #e65100;
-}
-
-/* ✅ Campos de Texto y Selección */
 input[type="text"],
 input[type="number"],
 input[type="date"],
 select,
 textarea {
-    width: 95%;
-    padding: 8px 10px;
-    margin-bottom: 15px;
-    border: 1.5px solid #00796b;
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 6px;
+    border: 1px solid #dbe1e8;
     border-radius: 6px;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    color: #333;
-    background-color: #ffffff;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: border-color 0.3s, box-shadow 0.3s;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
+    font-size: 13px;
+    transition: all 0.3s;
+    background-color: white;
+    box-sizing: border-box;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-    border-color: #004d40;
-    box-shadow: 0 0 6px rgba(0, 77, 64, 0.3);
+    border-color: #1abc9c;
+    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.1);
     outline: none;
 }
 
-/* ✅ Etiquetas de los campos */
 label {
-    font-weight: bold;
-    color: #00796b;
-    margin-bottom: 5px;
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 6px;
     display: block;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    margin-left: auto;
-    margin-right: auto;
+    font-size: 13px;
 }
 
-/* ✅ Ajustes de los botones del formulario */
-.form-buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 15px;
-}
-
-button[type="submit"],
-button[type="button"] {
-    padding: 8px 14px;
-    border-radius: 6px;
-    border: none;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-button[type="submit"] {
-    background-color: #00796b;
-    color: white;
-}
-
-button[type="submit"]:hover {
-    background-color: #004d40;
-}
-
-button[type="button"] {
-    background-color: #d32f2f;
-    color: white;
-}
-
-button[type="button"]:hover {
-    background-color: #b71c1c;
-}
-/* ✅ Etiquetas de los campos */
-label {
-    font-weight: bold;
-    color: #00796b;
-    margin-bottom: 5px;
+.form-help {
+    color: #6c757d;
+    font-size: 12px;
     display: block;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    margin-left: auto;
-    margin-right: auto;
-    text-align: left; /* Cambiado de center a left */
-}
-
-
-.imc-low { background-color: #ffc107; color: #000; }
-.imc-normal { background-color: #28a745; color: #fff; }
-.imc-high { background-color: #fd7e14; color: #fff; }
-.imc-obese { background-color: #dc3545; color: #fff; }
-
-.imc-category span {
-    padding: 5px 10px;
-    border-radius: 6px;
-    font-weight: bold;
-    display: inline-block;
     margin-top: 5px;
 }
 
+.form-error {
+    color: #e74c3c;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/* ===== BOTONES ===== */
+.btn {
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-right: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    font-weight: 500;
+    transition: all 0.3s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: none;
+    cursor: pointer;
+}
+
+.btn i {
+    margin-right: 6px;
+    font-size: 14px;
+}
+
+.btn-success {
+    background: linear-gradient(to right, #2ecc71, #27ae60);
+    color: white;
+}
+
+.btn-success:hover {
+    background: linear-gradient(to right, #27ae60, #2ecc71);
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(to right, #3498db, #2980b9);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(to right, #2980b9, #3498db);
+}
+
+.btn-warning {
+    background: linear-gradient(to right, #f39c12, #e67e22);
+    color: white;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(to right, #e67e22, #f39c12);
+}
+
+.btn-danger {
+    background: linear-gradient(to right, #e74c3c, #c0392b);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(to right, #c0392b, #e74c3c);
+}
+
+.btn-secondary {
+    background: linear-gradient(to right, #95a5a6, #7f8c8d);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(to right, #7f8c8d, #95a5a6);
+}
+
+.btn-sm {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+/* ===== TABLA ===== */
+.ultimos-trabajadores {
+    margin-top: 25px;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    margin-bottom: 18px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: white;
+    border-radius: 8px;
+}
+
+.table th {
+    background: linear-gradient(to right, #2c3e50, #34495e);
+    color: white;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 500;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f4f8;
+    text-align: left;
+    font-size: 13px;
+    color: #4a5568;
+}
+
+.table tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+.table tr:hover {
+    background-color: #f0f7f5;
+}
+
+/* ===== BOTONES DE ACCIÓN EN TABLA ===== */
+.acciones-cell {
+    white-space: nowrap;
+}
+
+.acciones-tabla {
+    display: flex;
+    gap: 5px;
+}
+
+/* Iconos de acciones */
+.action-icon {
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.btn-warning .action-icon {
+    color: white;
+}
+
+.btn-warning:hover .action-icon {
+    transform: scale(1.1);
+}
+
+.btn-danger .action-icon {
+    color: white;
+}
+
+.btn-danger:hover .action-icon {
+    transform: scale(1.1);
+}
+
+.btn-secondary .action-icon {
+    color: white;
+}
+
+/* ===== BADGES IMC ===== */
 .imc-badge {
-    border-radius: 10px;
     padding: 4px 8px;
-    font-weight: bold;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 12px;
+    display: inline-block;
+}
+
+.imc-low {
+    background-color: #f39c12;
+    color: white;
+}
+
+.imc-normal {
+    background-color: #2ecc71;
+    color: white;
+}
+
+.imc-high {
+    background-color: #e67e22;
+    color: white;
+}
+
+.imc-obese {
+    background-color: #e74c3c;
+    color: white;
+}
+
+/* ===== BOTONES INFERIORES ===== */
+.btn-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 25px;
+}
+
+.btn-container a.btn {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-container a.btn i {
+    transition: transform 0.3s;
+}
+
+.btn-container a.btn:hover i {
+    transform: translateX(-4px);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .registro-trabajadores-page {
+        padding: 15px;
+        margin: 10px;
+    }
+    
+    .registro-trabajadores-container {
+        padding: 15px;
+    }
+    
+    .form-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    button[type="submit"],
+    button[type="button"] {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+    
+    .table th, 
+    .table td {
+        padding: 8px 10px;
+    }
+    
+    .btn-container {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .btn-container a.btn {
+        width: 100%;
+        margin-bottom: 8px;
+        justify-content: center;
+    }
+    
+    .acciones-tabla {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
 }

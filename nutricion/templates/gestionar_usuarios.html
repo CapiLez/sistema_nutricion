@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Gestionar Usuarios{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'nutricion/css/gestionar_usuarios.css' %}">
 {% endblock %}
@@ -9,76 +11,89 @@
 <div class="gestionar-usuarios-page">
     <h2>Gestión de Usuarios</h2>
 
-    <!-- Mostrar mensaje de éxito o error -->
+    <!-- Mensajes flash -->
     {% if messages %}
         <ul class="messages">
             {% for message in messages %}
                 {% if "[usuarios]" in message %}
-                    <li class="alert {{ message.tags }}">{{ message|cut:"[usuarios]" }}</li>
+                    <li class="alert alert-{{ message.tags }}">{{ message|cut:"[usuarios]" }}</li>
                 {% endif %}
             {% endfor %}
         </ul>
     {% endif %}
 
-    <!-- Formulario de Agregar / Editar -->
+    <!-- Formulario de usuario -->
     <div class="form-usuario">
         {% if editar %}
             <h3>Editar Usuario: {{ usuario.username }}</h3>
-            <form method="POST">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-warning">
-                    <i class="fas fa-edit"></i> Guardar Cambios
-                </button>
-                <a href="{% url 'gestionar_usuarios' %}" class="btn btn-secondary">
-                    Cancelar
-                </a>
-            </form>
         {% else %}
             <h3>Agregar Nuevo Usuario</h3>
-            <form method="POST">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-plus-circle"></i> Crear Usuario
-                </button>
-            </form>
         {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-{% if editar %}warning{% else %}success{% endif %}">
+                    <i class="fas {% if editar %}fa-edit{% else %}fa-plus-circle{% endif %}"></i>
+                    {% if editar %}Guardar Cambios{% else %}Crear Usuario{% endif %}
+                </button>
+                {% if editar %}
+                <a href="{% url 'gestionar_usuarios' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+                {% endif %}
+            </div>
+        </form>
     </div>
 
-    <!-- Tabla de Usuarios -->
+    <!-- Tabla de usuarios -->
     <div class="tabla-usuarios">
         <h3>Usuarios Registrados</h3>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Usuario</th>
-                    <th>Administrador</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for usuario in usuarios %}
-                <tr>
-                    <td>{{ usuario.get_full_name }}</td>
-                    <td>{{ usuario.username }}</td>
-                    <td>{{ usuario.is_admin|yesno:"Sí,No" }}</td>
-                    <td>
-                        <a href="{% url 'gestionar_usuarios' %}?edit={{ usuario.id }}" class="btn btn-warning btn-sm">
-                            <i class="fas fa-edit"></i> Editar
-                        </a>
-                        <form action="{% url 'eliminar_usuario' usuario.id %}" method="POST" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar este usuario?');">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Usuario</th>
+                        <th>Administrador</th>
+                        <th class="acciones-cell">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr>
+                        <td>{{ usuario.get_full_name }}</td>
+                        <td>{{ usuario.username }}</td>
+                        <td>{{ usuario.is_admin|yesno:"Sí,No" }}</td>
+                        <td class="acciones-cell">
+                            <a href="{% url 'gestionar_usuarios' %}?edit={{ usuario.id }}" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                            <a href="{% url 'eliminar_usuario' usuario.id %}" class="btn btn-danger btn-sm">
                                 <i class="fas fa-trash"></i> Eliminar
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                            </a>                            
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">No hay usuarios registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -12,12 +12,15 @@ class Usuario(AbstractUser):
     ]
     rol = models.CharField(max_length=20, choices=ROLES, default='nutriologo')
 
+    @property
     def is_admin(self):
         return self.rol == 'administrador' or self.is_superuser
 
+    @property
     def is_jefe_departamento(self):
         return self.rol == 'jefe_departamento'
 
+    @property
     def is_nutriologo(self):
         return self.rol == 'nutriologo'
 

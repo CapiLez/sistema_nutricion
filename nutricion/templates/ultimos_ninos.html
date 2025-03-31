@@ -1,12 +1,45 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Últimos Niños Agregados{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'nutricion/css/ultimos_ninos.css' %}">
+{% endblock %}
+
 {% block content %}
-<h2>Últimos Niños Agregados</h2>
-<ul>
-    {% for nino in ultimos %}
-        <li>{{ nino.nombre }} - {{ nino.edad }} años</li>
-    {% empty %}
-        <p>No hay niños registrados recientemente.</p>
-    {% endfor %}
-</ul>
-<a href="{% url 'registro_ninos' %}" class="btn btn-primary">Regresar</a>
+<div class="ultimos-ninos-page">
+    <h2><i class="fas fa-child"></i> Últimos Niños Agregados</h2>
+
+    {% if ultimos %}
+        <div class="table-responsive">
+            <table class="table data-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Edad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nino in ultimos %}
+                    <tr>
+                        <td>{{ nino.nombre }}</td>
+                        <td>{{ nino.edad }} años</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-circle"></i> No hay niños registrados recientemente.
+        </div>
+    {% endif %}
+
+    <div class="back-button-container mt-4">
+        <a href="{% url 'registro_ninos' %}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Regresar al Registro
+        </a>
+    </div>
+</div>
 {% endblock %}

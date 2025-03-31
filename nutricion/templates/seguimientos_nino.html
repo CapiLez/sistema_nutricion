@@ -42,40 +42,45 @@
                         <td>{{ s.indicador_peso_talla|floatformat:1 }}</td>
                         <td>
                             <ul class="classification-list">
+                                <!-- Peso para la Edad -->
                                 <li><strong>P/E:</strong> 
-                                    <span class="badge {% if s.indicador_peso_edad < -3 %}severe
-                                               {% elif s.indicador_peso_edad < -2 %}moderate
-                                               {% elif s.indicador_peso_edad <= 2 %}normal
-                                               {% else %}overweight{% endif %}">
+                                    <span class="badge 
+                                        {% if s.indicador_peso_edad < -3 %}severe
+                                        {% elif s.indicador_peso_edad < -2 %}moderate
+                                        {% elif s.indicador_peso_edad <= 2 %}normal
+                                        {% else %}overweight{% endif %}">
                                         {% if s.indicador_peso_edad < -3 %}Desnutrición severa
                                         {% elif s.indicador_peso_edad < -2 %}Desnutrición moderada
                                         {% elif s.indicador_peso_edad <= 2 %}Normal
-                                        {% else %}Sobrepeso
-                                        {% endif %}
+                                        {% else %}Sobrepeso{% endif %}
                                     </span>
                                 </li>
+
+                                <!-- Talla para la Edad -->
                                 <li><strong>T/E:</strong> 
-                                    <span class="badge {% if s.indicador_talla_edad < -3 %}severe
-                                               {% elif s.indicador_talla_edad < -2 %}moderate
-                                               {% elif s.indicador_talla_edad <= 2 %}normal
-                                               {% else %}high{% endif %}">
+                                    <span class="badge 
+                                        {% if s.indicador_talla_edad < -3 %}severe
+                                        {% elif s.indicador_talla_edad < -2 %}moderate
+                                        {% elif s.indicador_talla_edad <= 2 %}normal
+                                        {% else %}high{% endif %}">
                                         {% if s.indicador_talla_edad < -3 %}Retraso severo
                                         {% elif s.indicador_talla_edad < -2 %}Retraso moderado
                                         {% elif s.indicador_talla_edad <= 2 %}Normal
-                                        {% else %}Alto
-                                        {% endif %}
+                                        {% else %}Alto{% endif %}
                                     </span>
                                 </li>
+
+                                <!-- Peso para la Talla -->
                                 <li><strong>P/T:</strong> 
-                                    <span class="badge {% if s.indicador_peso_talla < -3 %}severe
-                                               {% elif s.indicador_peso_talla < -2 %}moderate
-                                               {% elif s.indicador_peso_talla <= 2 %}normal
-                                               {% else %}overweight{% endif %}">
+                                    <span class="badge 
+                                        {% if s.indicador_peso_talla < -3 %}severe
+                                        {% elif s.indicador_peso_talla < -2 %}moderate
+                                        {% elif s.indicador_peso_talla <= 2 %}normal
+                                        {% else %}overweight{% endif %}">
                                         {% if s.indicador_peso_talla < -3 %}Desnutrición aguda severa
                                         {% elif s.indicador_peso_talla < -2 %}Desnutrición aguda moderada
                                         {% elif s.indicador_peso_talla <= 2 %}Normal
-                                        {% else %}Sobrepeso
-                                        {% endif %}
+                                        {% else %}Sobrepeso{% endif %}
                                     </span>
                                 </li>
                             </ul>
@@ -91,8 +96,8 @@
         </div>
     {% endif %}
 
-    <div class="back-button-container">
-        <a href="{% url 'historial' %}" class="back-button">
+    <div class="back-button-container mt-4">
+        <a href="{% url 'historial' %}" class="btn btn-primary">
             <i class="fas fa-arrow-left"></i> Volver al historial
         </a>
     </div>

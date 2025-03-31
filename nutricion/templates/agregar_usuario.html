@@ -1,23 +1,27 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Agregar Usuario</title>
-    <link href="{% static 'nutricion/css/style.css' %}" rel="stylesheet">
-</head>
-<body>
-    <h1>Agregar Usuario</h1>
+{% extends 'base.html' %}
+{% load static %}
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-success">
-            <i class="fas fa-save"></i> Guardar Usuario
-        </button>
-    </form>
+{% block title %}Agregar Usuario{% endblock %}
 
-    <a href="{% url 'gestionar_usuarios' %}" class="btn btn-secondary">
-        <i class="fas fa-arrow-left"></i> Regresar
-    </a>
-</body>
-</html>
+{% block content %}
+<link rel="stylesheet" href="{% static 'nutricion/css/style.css' %}">
+
+<div class="form-page">
+    <div class="form-container">
+        <h2>Agregar Usuario</h2>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i> Guardar Usuario
+                </button>
+                <a href="{% url 'gestionar_usuarios' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

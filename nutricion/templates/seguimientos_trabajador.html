@@ -4,7 +4,7 @@
 {% block title %}Seguimientos - {{ trabajador.nombre }}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'nutricion/css/seguimientos.css' %}">
+<link rel="stylesheet" href="{% static 'nutricion/css/seguimientos_trabajadores.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -12,49 +12,54 @@
     <h2>Seguimientos Nutricionales del Trabajador: {{ trabajador.nombre }}</h2>
 
     {% if seguimientos %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Edad</th>
-                    <th>Peso (kg)</th>
-                    <th>Talla (cm)</th>
-                    <th>IMC</th>
-                    <th>Dx Nutricional</th>
-                    <th>Clasificación IMC</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for s in seguimientos %}
-                <tr>
-                    <td>{{ s.fecha_valoracion }}</td>
-                    <td>{{ s.edad }}</td>
-                    <td>{{ s.peso }}</td>
-                    <td>{{ s.talla }}</td>
-                    <td>{{ s.imc }}</td>
-                    <td>{{ s.dx }}</td>
-                    <td>
-                        {% if s.imc < 18.5 %}
-                            <span class="badge bg-warning">Bajo Peso</span>
-                        {% elif s.imc < 25 %}
-                            <span class="badge bg-success">Normal</span>
-                        {% elif s.imc < 30 %}
-                            <span class="badge bg-warning">Sobrepeso</span>
-                        {% else %}
-                            <span class="badge bg-danger">Obesidad</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>            
-        </table>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Edad</th>
+                        <th>Peso (kg)</th>
+                        <th>Talla (cm)</th>
+                        <th>IMC</th>
+                        <th>Dx Nutricional</th>
+                        <th>Clasificación IMC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in seguimientos %}
+                    <tr>
+                        <td>{{ s.fecha_valoracion|date:"d/m/Y" }}</td>
+                        <td>{{ s.edad }}</td>
+                        <td>{{ s.peso|floatformat:1 }}</td>
+                        <td>{{ s.talla|floatformat:1 }}</td>
+                        <td>{{ s.imc|floatformat:1 }}</td>
+                        <td>{{ s.dx }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if s.imc < 18.5 %}imc-low
+                                {% elif s.imc < 25 %}imc-normal
+                                {% elif s.imc < 30 %}imc-high
+                                {% else %}imc-obese{% endif %}">
+                                {% if s.imc < 18.5 %}Bajo peso
+                                {% elif s.imc < 25 %}Normal
+                                {% elif s.imc < 30 %}Sobrepeso
+                                {% else %}Obesidad{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
-        <p class="alert alert-info">Este trabajador no tiene seguimientos registrados aún.</p>
+        <div class="no-results">
+            <i class="fas fa-info-circle"></i> Este trabajador no tiene seguimientos registrados aún.
+        </div>
     {% endif %}
 
-    <div class="btn-container mt-3">
-        <a href="{% url 'historial' %}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Regresar al Historial
+    <div class="back-button-container mt-4">
+        <a href="{% url 'historial' %}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Volver al historial
         </a>
     </div>
 </div>

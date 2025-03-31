@@ -1,17 +1,28 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block content %}
-<link rel="stylesheet" href="{% static 'nutricion/css/editar_trabajador.css' %}">
 
+{% block title %}Editar Trabajador{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'nutricion/css/editar_trabajador.css' %}">
+{% endblock %}
+
+{% block content %}
 <div class="editar-trabajador-page">
     <div class="editar-trabajador-container">
-        <h2>Editar Trabajador: {{ trabajador.nombre }}</h2>
+        <h2><i class="fas fa-user-edit"></i> Editar Trabajador: {{ form.instance.nombre }}</h2>
+
         <form method="POST">
             {% csrf_token %}
             {{ form.as_p }}
+
             <div class="form-buttons">
-                <button type="submit" class="btn btn-success">Guardar Cambios</button>
-                <a href="{% url cancel_url %}" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+                <a href="{% url cancel_url %}" class="btn btn-secondary">
+                    <i class="fas fa-times-circle"></i> Cancelar
+                </a>                
             </div>
         </form>
     </div>

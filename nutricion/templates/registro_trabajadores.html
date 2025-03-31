@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Registro de Trabajadores{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'nutricion/css/registro_trabajadores.css' %}">
 {% endblock %}
@@ -30,24 +32,22 @@
             <h3>Agregar Nuevo Trabajador</h3>
             <form method="POST">
                 {% csrf_token %}
-                <div class="form-group">
-                    {% for field in form %}
-                        <div class="form-field">
-                            {{ field.label_tag }}
-                            {{ field }}
-                            {% if field.help_text %}
-                                <small class="form-help">{{ field.help_text }}</small>
-                            {% endif %}
-                            {% if field.errors %}
-                                <div class="form-error">{{ field.errors }}</div>
-                            {% endif %}
-                            {% if field.name == 'imc' %}
-                                <div id="imc-category" class="imc-category"></div>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                </div>
-                <div class="form-buttons">
+                {% for field in form %}
+                    <div class="form-group">
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <div class="alert alert-danger">{{ error }}</div>
+                        {% endfor %}
+                        {% if field.name == 'imc' %}
+                            <div id="imc-category" class="imc-category"></div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <div class="form-buttons mt-3">
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-save"></i> Guardar
                     </button>
@@ -58,7 +58,7 @@
             </form>
         </div>
 
-        <div class="ultimos-trabajadores">
+        <div class="ultimos-trabajadores mt-4">
             <h3>Últimos Trabajadores Agregados</h3>
             <table class="table">
                 <thead>
@@ -90,7 +90,7 @@
                                         <i class="fas fa-trash-alt"></i>
                                     </a>
                                 {% else %}
-                                    <button class="btn btn-secondary btn-sm" title="Sin permiso para eliminar" disabled>
+                                    <button class="btn btn-secondary btn-sm" disabled title="Sin permiso">
                                         <i class="fas fa-ban"></i>
                                     </button>
                                 {% endif %}
@@ -105,7 +105,7 @@
             </table>
         </div>
 
-        <div class="btn-container">
+        <div class="btn-container mt-4">
             <a href="{% url 'home' %}" class="btn btn-primary">
                 <i class="fas fa-arrow-left"></i> Regresar al Inicio
             </a>
@@ -116,7 +116,7 @@
     </div>
 </div>
 
-<!-- Scripts -->
+{% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function () {
@@ -186,5 +186,5 @@
         });
     });
 </script>
-
+{% endblock %}
 {% endblock %}

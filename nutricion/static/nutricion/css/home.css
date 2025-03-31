@@ -1,17 +1,61 @@
+/* ===== ESTILOS GENERALES ===== */
+.home-container {
+    font-family: 'Poppins', 'Roboto', sans-serif;
+    background-color: #f5f7fa;
+    padding: 40px;
+    margin: 20px auto;
+    max-width: 1200px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    color: #3a3a3a;
+    position: relative;
+}
 
-h1 {
-    color: #00796b;
+/* ===== LOGO ===== */
+.logo-container {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+}
+
+.logo {
+    width: 180px;
+    height: auto;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* ===== ENCABEZADOS ===== */
+.home-container h1 {
+    color: #2c3e50;
+    font-size: 32px;
+    font-weight: 600;
     margin-bottom: 20px;
-    font-size: 2.5em;
-    font-weight: bold;
+    text-align: center;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e0e6ed;
+    position: relative;
+}
+
+.home-container h1:after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(to right, #1abc9c, #3498db);
 }
 
 .intro-text {
-    margin-bottom: 30px;
-    font-size: 1.2em;
-    color: #455a64;
+    font-size: 16px;
+    color: #4a5568;
+    text-align: center;
+    margin-bottom: 40px;
+    line-height: 1.6;
 }
 
+/* ===== BOTONES ===== */
 .button-container {
     display: flex;
     justify-content: center;
@@ -19,79 +63,131 @@ h1 {
     margin-bottom: 40px;
 }
 
-.btn-primary, .btn-secondary {
-    padding: 10px 20px;
-    border-radius: 8px;
+.btn {
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
     text-decoration: none;
-    color: white;
-    transition: background-color 0.3s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: none;
+    cursor: pointer;
+}
+
+.btn i {
+    margin-right: 8px;
+    font-size: 16px;
+    transition: transform 0.3s;
 }
 
 .btn-primary {
-    background-color: #0288d1;
+    background: linear-gradient(to right, #3498db, #2980b9);
+    color: white;
 }
 
 .btn-primary:hover {
-    background-color: #01579b;
+    background: linear-gradient(to right, #2980b9, #3498db);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover i {
+    transform: scale(1.1);
 }
 
 .btn-secondary {
-    background-color: #00796b;
+    background: linear-gradient(to right, #1abc9c, #16a085);
+    color: white;
 }
 
 .btn-secondary:hover {
-    background-color: #004d40;
+    background: linear-gradient(to right, #16a085, #1abc9c);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.imc-image {
-    margin: 30px auto;
-    width: 200px;
-    height: auto;
+.btn-secondary:hover i {
+    transform: scale(1.1);
 }
 
+/* ===== ESTADÍSTICAS ===== */
 .stats-container {
     display: flex;
     justify-content: center;
-    gap: 40px;
-    margin-top: 30px;
+    gap: 30px;
+    margin-top: 40px;
+    flex-wrap: wrap;
 }
 
 .stat-card {
-    background-color: #4db6ac;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    color: white;
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid #1abc9c;
     text-align: center;
+    min-width: 200px;
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
 }
 
 .stat-card i {
-    font-size: 2em;
-    margin-bottom: 10px;
+    font-size: 32px;
+    color: #1abc9c;
+    margin-bottom: 15px;
 }
 
 .stat-card p {
-    font-size: 1.1em;
-    margin-bottom: 5px;
+    color: #4a5568;
+    font-size: 14px;
+    margin-bottom: 10px;
+    font-weight: 500;
 }
 
 .stat-card span {
-    font-size: 1.5em;
-    font-weight: bold;
+    color: #2c3e50;
+    font-size: 24px;
+    font-weight: 600;
 }
 
-.home-container {
-    position: relative;
-    padding: 75px;
-}
-
-.logo-container {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-}
-
-.logo {
-    width: 180px; /* Ajusta el tamaño de la imagen según lo necesites */
-    height: auto;
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .home-container {
+        padding: 30px 20px;
+        margin: 10px;
+    }
+    
+    .logo-container {
+        position: static;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .button-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .stats-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .stat-card {
+        width: 100%;
+    }
 }

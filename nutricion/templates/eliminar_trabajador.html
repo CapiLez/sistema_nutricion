@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Eliminar Trabajador{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'nutricion/css/eliminar.css' %}">
 {% endblock %}
@@ -8,12 +10,16 @@
 {% block content %}
 <div class="eliminar-page">
     <div class="eliminar-container">
-        <h2>¿Eliminar a {{ trabajador.nombre }}?</h2>
-        <p>Esta acción no se puede deshacer.</p>
+        <h2>¿Eliminar a <span class="nombre">{{ object.nombre }}</span>?</h2>
+        <p class="advertencia">Esta acción no se puede deshacer.</p>
         <form method="POST">
             {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Eliminar</button>
-            <a href="{% url cancel_url %}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash-alt"></i> Eliminar
+            </button>
+            <a href="{% url cancel_url %}" class="btn btn-secondary">
+                <i class="fas fa-times-circle"></i> Cancelar
+            </a>
         </form>
     </div>
 </div>

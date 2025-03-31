@@ -1,40 +1,52 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Historial de Cambios - {{ nino.nombre }}{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'nutricion/css/historial.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="historial-page">
-    <h2>Historial de Cambios - {{ nino.nombre }}</h2>
+    <h2><i class="fas fa-history"></i> Historial de Cambios: <strong>{{ nino.nombre }}</strong></h2>
 
     {% if versiones %}
-        <table class="table">
+    <div class="table-responsive">
+        <table class="table table-striped">
             <thead>
                 <tr>
                     <th>Fecha</th>
                     <th>Usuario</th>
                     <th>Comentario</th>
-                    <th>Vista JSON</th>
+                    <th>Detalles</th>
                 </tr>
             </thead>
             <tbody>
                 {% for version in versiones %}
                 <tr>
-                    <td>{{ version.revision.date_created }}</td>
-                    <td>{{ version.revision.user }}</td>
-                    <td>{{ version.revision.comment }}</td>
+                    <td>{{ version.revision.date_created|date:"d/m/Y H:i" }}</td>
+                    <td>{{ version.revision.user.get_full_name|default:version.revision.user.username }}</td>
+                    <td>{{ version.revision.comment|default:"-" }}</td>
                     <td>
-                        <pre>{{ version.field_dict|safe }}</pre>
+                        <details>
+                            <summary>Ver JSON</summary>
+                            <pre>{{ version.field_dict|safe }}</pre>
+                        </details>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+    </div>
     {% else %}
-        <p class="alert alert-warning">No hay cambios registrados para este niño.</p>
+        <div class="alert alert-warning mt-3">
+            <i class="fas fa-exclamation-circle"></i> No hay cambios registrados para este niño.
+        </div>
     {% endif %}
 
-    <a href="{% url 'historial' %}" class="btn btn-secondary mt-3">
-        <i class="fas fa-arrow-left"></i> Volver al historial
+    <a href="{% url 'historial' %}" class="btn btn-secondary mt-4">
+        <i class="fas fa-arrow-left"></i> Volver al Historial
     </a>
 </div>
 {% endblock %}

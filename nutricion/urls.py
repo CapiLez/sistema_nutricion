@@ -1,53 +1,53 @@
 from django.urls import path
-from .views import (
-    cerrar_sesion, home, gestionar_usuarios, eliminar_usuario, iniciar_sesion,
-    registro_ninos, registro_trabajadores, historial, exportar_historial_excel,
-    registrar_seguimiento, lista_seguimientos, ultimos_ninos, buscar_nino, autocomplete_ninos
+from django.contrib.auth.views import LoginView, LogoutView
+
+from nutricion.views_cbv import (
+    HomeView,
+    GestionUsuariosView, EliminarUsuarioView,
+    RegistroNinoView, EditarNinoView, EliminarNinoView, HistorialNinoCambiosView,
+    RegistroTrabajadorView, EditarTrabajadorView, EliminarTrabajadorView,
+    SeguimientosNinoView, SeguimientosTrabajadorView,
+    ListaSeguimientosView, ListaSeguimientosGeneralView,
+    RegistrarSeguimientoNinoView, RegistrarSeguimientoTrabajadorView,
+    HistorialView, ExportarHistorialExcelView,
+    UltimosCambiosView
 )
-from nutricion import views
 
 urlpatterns = [
-    path('', iniciar_sesion, name='login'),
-    path('home/', home, name='home'),
-    path('logout/', cerrar_sesion, name='logout'),
+    # Autenticación
+    path('', LoginView.as_view(template_name='login.html', redirect_authenticated_user=True), name='login'),
+    path('logout/', LogoutView.as_view(next_page='login'), name='logout'),
+    path('home/', HomeView.as_view(), name='home'),
 
     # Gestión de usuarios
-    path('usuarios/', views.gestionar_usuarios, name='gestionar_usuarios'),
-    path('usuarios/editar/<int:user_id>/', views.editar_usuario, name='editar_usuario'),
-    path('usuarios/eliminar/<int:user_id>/', views.eliminar_usuario, name='eliminar_usuario'),
+    path('usuarios/', GestionUsuariosView.as_view(), name='gestionar_usuarios'),
+    path('usuarios/eliminar/<int:pk>/', EliminarUsuarioView.as_view(), name='eliminar_usuario'),
+
 
     # Niños
-    path('registro_ninos/', registro_ninos, name='registro_ninos'),
-    path('ninos/editar/<int:nino_id>/', views.editar_nino, name='editar_nino'),
-    path('ninos/eliminar/<int:nino_id>/', views.eliminar_nino, name='eliminar_nino'),
+    path('registro_ninos/', RegistroNinoView.as_view(), name='registro_ninos'),
+    path('ninos/editar/<int:pk>/', EditarNinoView.as_view(), name='editar_nino'),
+    path('ninos/eliminar/<int:pk>/', EliminarNinoView.as_view(), name='eliminar_nino'),
+    path('nino/<int:nino_id>/historial-cambios/', HistorialNinoCambiosView.as_view(), name='historial_nino_cambios'),
 
     # Trabajadores
-    path('registro_trabajadores/', registro_trabajadores, name='registro_trabajadores'),
-    path('trabajadores/editar/<int:trabajador_id>/', views.editar_trabajador, name='editar_trabajador'),
-    path('trabajadores/eliminar/<int:trabajador_id>/', views.eliminar_trabajador, name='eliminar_trabajador'),
+    path('registro_trabajadores/', RegistroTrabajadorView.as_view(), name='registro_trabajadores'),
+    path('trabajadores/editar/<int:pk>/', EditarTrabajadorView.as_view(), name='editar_trabajador'),
+    path('trabajadores/eliminar/<int:trabajador_id>/', EliminarTrabajadorView.as_view(), name='eliminar_trabajador'),
+
+
+    # Seguimientos
+    path('registrar_seguimiento/', RegistrarSeguimientoNinoView.as_view(), name='registrar_seguimiento'),
+    path('seguimiento/trabajador/nuevo/', RegistrarSeguimientoTrabajadorView.as_view(), name='registrar_seguimiento_trabajador'),
+    path('seguimientos/', ListaSeguimientosGeneralView.as_view(), name='seguimientos_general'),
+    path('lista_seguimientos/', ListaSeguimientosView.as_view(), name='lista_seguimientos'),
+    path('seguimientos/nino/<int:nino_id>/', SeguimientosNinoView.as_view(), name='seguimientos_nino'),
+    path('seguimientos/trabajador/<int:trabajador_id>/', SeguimientosTrabajadorView.as_view(), name='seguimientos_trabajador'),
 
     # Historial
-    path('historial/', historial, name='historial'),
-    path('historial/exportar/', exportar_historial_excel, name='exportar_historial'),
-    path('nino/<int:nino_id>/historial-cambios/', views.historial_nino_cambios, name='historial_nino_cambios'),
+    path('historial/', HistorialView.as_view(), name='historial'),
+    path('historial/exportar/', ExportarHistorialExcelView.as_view(), name='exportar_historial'),
 
-    # Historial de cambios
-    path('trabajador/<int:trabajador_id>/historial-cambios/', views.historial_trabajador_cambios, name='historial_trabajador_cambios'),
-    path('seguimiento-nino/<int:seguimiento_id>/historial-cambios/', views.historial_seguimiento_nino_cambios, name='historial_seguimiento_nino_cambios'),
-    path('seguimiento-trabajador/<int:seguimiento_id>/historial-cambios/', views.historial_seguimiento_trabajador_cambios, name='historial_seguimiento_trabajador_cambios'),
-    
-    # Seguimientos
-    path('registrar_seguimiento/', registrar_seguimiento, name='registrar_seguimiento'),
-    path('seguimientos/nino/<int:nino_id>/', views.seguimientos_nino, name='seguimientos_nino'),
-    path('seguimientos/trabajador/<int:trabajador_id>/', views.seguimientos_trabajador, name='seguimientos_trabajador'),
-    path('seguimientos/', views.lista_seguimientos_general, name='seguimientos_general'),
-    path('lista_seguimientos/', lista_seguimientos, name='lista_seguimientos'),
-    path('seguimiento/trabajador/nuevo/', views.registrar_seguimiento_trabajador, name='registrar_seguimiento_trabajador'),
-    path('seguimientos/trabajador/<int:trabajador_id>/', views.seguimientos_trabajador, name='seguimientos_trabajador'),
-    
     # Extras
-    path('ultimos_ninos/', ultimos_ninos, name='ultimos_ninos'),
-    path('cambios-recientes/', views.ultimos_cambios, name='ultimos_cambios'),
-    path('buscar_nino/', buscar_nino, name='buscar_nino'),
-    path('autocomplete_ninos/', autocomplete_ninos, name='autocomplete_ninos'),
+    path('cambios-recientes/', UltimosCambiosView.as_view(), name='ultimos_cambios'),
 ]

@@ -1,13 +1,26 @@
 {% extends 'base.html' %}
+
+{% block title %}Buscar Niño{% endblock %}
+
 {% block content %}
-<h2>Resultados de Búsqueda</h2>
-<p>Resultados para "{{ query }}":</p>
-<ul>
-    {% for nino in resultados %}
-        <li>{{ nino.nombre }} - {{ nino.edad }} años</li>
-    {% empty %}
-        <p>No se encontraron niños con ese nombre.</p>
-    {% endfor %}
-</ul>
-<a href="{% url 'registro_ninos' %}" class="btn btn-primary">Regresar</a>
+<div class="container">
+    <h2><i class="fas fa-search"></i> Resultados de Búsqueda</h2>
+    <p>Resultados para: <strong>"{{ query }}"</strong></p>
+
+    {% if resultados %}
+        <ul class="result-list">
+            {% for nino in resultados %}
+                <li><i class="fas fa-child"></i> {{ nino.nombre }} - {{ nino.edad }} años</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-circle"></i> No se encontraron niños con ese nombre.
+        </div>
+    {% endif %}
+
+    <a href="{% url 'registro_ninos' %}" class="btn btn-secondary mt-3">
+        <i class="fas fa-arrow-left"></i> Regresar
+    </a>
+</div>
 {% endblock %}

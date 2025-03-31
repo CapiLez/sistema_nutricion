@@ -14,7 +14,19 @@
 
         <form method="post" id="seguimiento-trabajador-form">
             {% csrf_token %}
-            {{ form.as_p }}
+            {% for field in form %}
+                <div class="form-group">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
             <div class="form-buttons mt-3">
                 <button type="submit" class="btn btn-success">
                     <i class="fas fa-save"></i> Guardar
@@ -26,7 +38,9 @@
         </form>
 
         <div class="btn-container mt-4">
-            <a href="{% url 'lista_seguimientos' %}" class="btn btn-secondary">Ver Lista de Seguimientos</a>
+            <a href="{% url 'lista_seguimientos' %}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> Ver Lista de Seguimientos
+            </a>
             <a href="{% url 'home' %}" class="btn btn-primary">
                 <i class="fas fa-arrow-left"></i> Regresar al Inicio
             </a>
@@ -34,7 +48,7 @@
     </div>
 </div>
 
-<!-- Script para limpiar campos -->
+{% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function () {
@@ -43,4 +57,5 @@
         });
     });
 </script>
+{% endblock %}
 {% endblock %}

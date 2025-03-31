@@ -1,17 +1,28 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block content %}
-<link rel="stylesheet" href="{% static 'nutricion/css/editar_nino.css' %}">
 
+{% block title %}Editar Niño{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'nutricion/css/editar_nino.css' %}">
+{% endblock %}
+
+{% block content %}
 <div class="editar-nino-page">
     <div class="editar-nino-container">
-        <h2>Editar Niño: {{ nino.nombre }}</h2>
+        <h2><i class="fas fa-user-edit"></i> Editar Niño: {{ form.instance.nombre }}</h2>
+        
         <form method="POST">
             {% csrf_token %}
             {{ form.as_p }}
+
             <div class="form-buttons">
-                <button type="submit" class="btn btn-success">Guardar Cambios</button>
-                <a href="{% url cancel_url %}" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+                <a href="{% url cancel_url %}" class="btn btn-secondary">
+                    <i class="fas fa-times-circle"></i> Cancelar
+                </a>
             </div>
         </form>
     </div>

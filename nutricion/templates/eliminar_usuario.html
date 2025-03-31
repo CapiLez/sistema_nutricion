@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Eliminar Niño{% endblock %}
+{% block title %}Eliminar Usuario{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'nutricion/css/eliminar.css' %}">
@@ -10,15 +10,15 @@
 {% block content %}
 <div class="eliminar-page">
     <div class="eliminar-container">
-        <h2>¿Eliminar a <span class="nombre">{{ object.nombre }}</span>?</h2>
+        <h2>¿Eliminar al usuario <span class="nombre">{{ object.username }}</span>?</h2>
         <p class="advertencia">Esta acción no se puede deshacer.</p>
         <form method="POST">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger">
-                <i class="fas fa-trash-alt"></i> Eliminar
+                <i class="fas fa-trash-alt"></i> Confirmar Eliminación
             </button>
-            <a href="{% url cancel_url %}" class="btn btn-secondary">
-                <i class="fas fa-times-circle"></i> Cancelar
+            <a href="{% url 'gestionar_usuarios' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancelar
             </a>
         </form>
     </div>
