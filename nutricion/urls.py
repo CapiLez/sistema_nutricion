@@ -2,10 +2,12 @@ from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
 
 from nutricion.views_cbv import (
+    GraficasReferenciaView,
     HomeView,
     GestionUsuariosView, EliminarUsuarioView,
     RegistroNinoView, EditarNinoView, EliminarNinoView, HistorialNinoCambiosView,
     RegistroTrabajadorView, EditarTrabajadorView, EliminarTrabajadorView,
+    ReportesView,
     SeguimientosNinoView, SeguimientosTrabajadorView,
     ListaSeguimientosView, ListaSeguimientosGeneralView,
     RegistrarSeguimientoNinoView, RegistrarSeguimientoTrabajadorView,
@@ -47,6 +49,13 @@ urlpatterns = [
     # Historial
     path('historial/', HistorialView.as_view(), name='historial'),
     path('historial/exportar/', ExportarHistorialExcelView.as_view(), name='exportar_historial'),
+
+    # Reportes
+    path('reportes/', ReportesView.as_view(), name='reportes'),
+
+    #Graficas
+    # en urls.py
+    path('reportes/graficas/', GraficasReferenciaView.as_view(), name='graficas_referencia'),
 
     # Extras
     path('cambios-recientes/', UltimosCambiosView.as_view(), name='ultimos_cambios'),

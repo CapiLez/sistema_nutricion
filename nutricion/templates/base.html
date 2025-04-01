@@ -52,9 +52,9 @@
                 <a href="{% url 'seguimientos_general' %}" class="{% if request.resolver_match.url_name == 'seguimientos_general' %}active{% endif %}">
                     <i class="fas fa-chart-line"></i> <span class="link-text">Seguimiento General</span>
                 </a>
-                <a href="#" class="{% if request.resolver_match.url_name == 'reportes' %}active{% endif %}">
+                <a href="{% url 'reportes' %}" class="{% if request.resolver_match.url_name == 'reportes' %}active{% endif %}">
                     <i class="fas fa-file-alt"></i> <span class="link-text">Reportes</span>
-                </a>
+                </a>                
             </div>
             
             {% if request.user.is_superuser or request.user.is_admin %}

@@ -13,110 +13,114 @@
 
     <!-- =================== SECCIÓN NIÑOS =================== -->
     <div class="section-container">
-        <h2><i class="fas fa-child"></i> Niños</h2>
+        <h2 class="section-toggle" data-target="#ninos-section"><i class="fas fa-child"></i> Niños <i class="fas fa-chevron-down toggle-icon"></i></h2>
 
-        <!-- Buscador -->
-        <div class="search-section">
-            <form method="GET" class="search-form">
-                <div class="search-input-group">
-                    <input type="text" name="q_nino" value="{{ q_nino }}" placeholder="Buscar por nombre de niño..." class="search-input">
-                    <button type="submit" class="search-button">
-                        <i class="fas fa-search"></i> Buscar
-                    </button>
-                </div>
-            </form>
-        </div>
+        <div id="ninos-section" class="section-content" style="display: none;">
+            <!-- Buscador -->
+            <div class="search-section">
+                <form method="GET" class="search-form">
+                    <div class="search-input-group">
+                        <input type="text" name="q_nino" value="{{ q_nino }}" placeholder="Buscar por nombre de niño..." class="search-input">
+                        <button type="submit" class="search-button">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                    </div>
+                </form>
+            </div>
 
-        <!-- Tabla o mensaje -->
-        {% if seguimientos_ninos %}
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Fecha</th>
-                            <th>Edad</th>
-                            <th>Peso (kg)</th>
-                            <th>Talla (cm)</th>
-                            <th>IMC</th>
-                            <th>Diagnóstico</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for s in seguimientos_ninos %}
+            <!-- Tabla o mensaje -->
+            {% if seguimientos_ninos %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <td>{{ s.paciente.nombre }}</td>
-                                <td>{{ s.fecha_valoracion }}</td>
-                                <td>{{ s.edad }}</td>
-                                <td>{{ s.peso }}</td>
-                                <td>{{ s.talla }}</td>
-                                <td>{{ s.imc }}</td>
-                                <td>{{ s.dx }}</td>
+                                <th>Nombre</th>
+                                <th>Fecha</th>
+                                <th>Edad</th>
+                                <th>Peso (kg)</th>
+                                <th>Talla (cm)</th>
+                                <th>IMC</th>
+                                <th>Diagnóstico</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <div class="no-results">
-                <i class="fas fa-info-circle"></i>
-                <p>No hay seguimientos de niños registrados.</p>
-            </div>
-        {% endif %}
+                        </thead>
+                        <tbody>
+                            {% for s in seguimientos_ninos %}
+                                <tr>
+                                    <td>{{ s.paciente.nombre }}</td>
+                                    <td>{{ s.fecha_valoracion }}</td>
+                                    <td>{{ s.edad }}</td>
+                                    <td>{{ s.peso }}</td>
+                                    <td>{{ s.talla }}</td>
+                                    <td>{{ s.imc }}</td>
+                                    <td>{{ s.dx }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="no-results">
+                    <i class="fas fa-info-circle"></i>
+                    <p>No hay seguimientos de niños registrados.</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 
     <!-- =================== SECCIÓN TRABAJADORES =================== -->
     <div class="section-container">
-        <h2><i class="fas fa-user-tie"></i> Trabajadores</h2>
+        <h2 class="section-toggle" data-target="#trabajadores-section"><i class="fas fa-user-tie"></i> Trabajadores <i class="fas fa-chevron-down toggle-icon"></i></h2>
 
-        <!-- Buscador -->
-        <div class="search-section">
-            <form method="GET" class="search-form">
-                <div class="search-input-group">
-                    <input type="text" name="q_trabajador" value="{{ q_trabajador }}" placeholder="Buscar por nombre de trabajador..." class="search-input">
-                    <button type="submit" class="search-button">
-                        <i class="fas fa-search"></i> Buscar
-                    </button>
-                </div>
-            </form>
-        </div>
+        <div id="trabajadores-section" class="section-content" style="display: none;">
+            <!-- Buscador -->
+            <div class="search-section">
+                <form method="GET" class="search-form">
+                    <div class="search-input-group">
+                        <input type="text" name="q_trabajador" value="{{ q_trabajador }}" placeholder="Buscar por nombre de trabajador..." class="search-input">
+                        <button type="submit" class="search-button">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                    </div>
+                </form>
+            </div>
 
-        <!-- Tabla o mensaje -->
-        {% if seguimientos_trabajadores %}
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Fecha</th>
-                            <th>Edad</th>
-                            <th>Peso (kg)</th>
-                            <th>Talla (cm)</th>
-                            <th>IMC</th>
-                            <th>Diagnóstico</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for s in seguimientos_trabajadores %}
+            <!-- Tabla o mensaje -->
+            {% if seguimientos_trabajadores %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <td>{{ s.trabajador.nombre }}</td>
-                                <td>{{ s.fecha_valoracion }}</td>
-                                <td>{{ s.edad }}</td>
-                                <td>{{ s.peso }}</td>
-                                <td>{{ s.talla }}</td>
-                                <td>{{ s.imc }}</td>
-                                <td>{{ s.dx }}</td>
+                                <th>Nombre</th>
+                                <th>Fecha</th>
+                                <th>Edad</th>
+                                <th>Peso (kg)</th>
+                                <th>Talla (cm)</th>
+                                <th>IMC</th>
+                                <th>Diagnóstico</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <div class="no-results">
-                <i class="fas fa-info-circle"></i>
-                <p>No hay seguimientos de trabajadores registrados.</p>
-            </div>
-        {% endif %}
+                        </thead>
+                        <tbody>
+                            {% for s in seguimientos_trabajadores %}
+                                <tr>
+                                    <td>{{ s.trabajador.nombre }}</td>
+                                    <td>{{ s.fecha_valoracion }}</td>
+                                    <td>{{ s.edad }}</td>
+                                    <td>{{ s.peso }}</td>
+                                    <td>{{ s.talla }}</td>
+                                    <td>{{ s.imc }}</td>
+                                    <td>{{ s.dx }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="no-results">
+                    <i class="fas fa-info-circle"></i>
+                    <p>No hay seguimientos de trabajadores registrados.</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Botón de regreso -->
@@ -126,4 +130,17 @@
         </a>
     </div>
 </div>
+
+<!-- JS para funcionalidad de despliegue -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Manejar el clic en los títulos de sección
+        $('.section-toggle').on('click', function() {
+            const target = $(this).data('target');
+            $(target).slideToggle('fast');
+            $(this).find('.toggle-icon').toggleClass('fa-chevron-down fa-chevron-up');
+        });
+    });
+</script>
 {% endblock %}

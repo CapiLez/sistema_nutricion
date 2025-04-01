@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.http import HttpResponse
 from reversion.models import Version
+from django.db.models import Avg
 import pandas as pd
 from .utils import BaseDeleteViewConCancel
 from .models import Paciente, Trabajador, SeguimientoTrimestral, SeguimientoTrabajador, Usuario
@@ -14,6 +15,10 @@ from .forms import (
     UsuarioCreacionForm, UsuarioEdicionForm
 )
 from .utils import RevisionCreateView, RevisionUpdateView, CancelUrlMixin, InitialFromModelMixin
+
+#-------------------
+# Views Administración 
+#-------------------
 
 class AdminRequiredMixin(UserPassesTestMixin):
     def test_func(self):
@@ -30,6 +35,10 @@ class HomeView(LoginRequiredMixin, View):
             'total_trabajadores': total_trabajadores,
             'total_pacientes': total_pacientes,
         })
+    
+#-------------------
+# Views Usuarios
+#-------------------
 
 class GestionUsuariosView(LoginRequiredMixin, AdminRequiredMixin, View):
     def get(self, request):
@@ -87,6 +96,10 @@ class EliminarUsuarioView(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
             return redirect('gestionar_usuarios')
         messages.success(self.request, '[usuarios] Usuario eliminado correctamente.')
         return super().form_valid(form)
+    
+#-------------------
+# Views Niños
+#-------------------
 
 class RegistroNinoView(RevisionCreateView):
     model = Paciente
@@ -134,6 +147,10 @@ class EliminarNinoView(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
         context['cancel_url'] = 'historial' if 'from' in self.request.GET else 'registro_ninos'
         context['nino'] = self.object
         return context
+    
+#-------------------
+# Views Trabajadores
+#-------------------
 
 class RegistroTrabajadorView(RevisionCreateView):
     model = Trabajador
@@ -179,6 +196,10 @@ class EliminarTrabajadorView(BaseDeleteViewConCancel, LoginRequiredMixin):
             self.object.save()
         messages.success(self.request, '[trabajadores] Trabajador eliminado correctamente.')
         return super().form_valid(form)
+    
+#-------------------
+# Views Seguimientos
+#-------------------
 
 class RegistrarSeguimientoNinoView(InitialFromModelMixin, RevisionCreateView):
     model = SeguimientoTrimestral
@@ -262,6 +283,10 @@ class ListaSeguimientosView(LoginRequiredMixin, View):
             'q_nino': q_nino,
             'q_trabajador': q_trabajador
         })
+    
+#-------------------
+# Views Historial
+#-------------------
 
 class HistorialView(LoginRequiredMixin, TemplateView):
     template_name = 'historial.html'
@@ -308,6 +333,40 @@ class ExportarHistorialExcelView(LoginRequiredMixin, View):
         with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name="Historial Nutricional")
         return response
+    
+#-------------------
+# Views Reportes
+#-------------------
+
+class ReportesView(LoginRequiredMixin, TemplateView):
+    template_name = 'reportes.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        pacientes = Paciente.objects.all()
+
+        # Extraer listas para el gráfico
+        context['nombres'] = [p.nombre for p in pacientes]
+        context['imcs'] = [p.imc for p in pacientes]
+
+        return context
+    
+#-------------------
+# Graficación de IMC
+#-------------------
+
+class GraficasReferenciaView(LoginRequiredMixin, TemplateView):
+    template_name = 'graficas_referencia.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Aquí cargaríamos los datos para niños y trabajadores si se requiere
+        return context
+
+    
+#-------------------
+# Extras
+#-------------------
 
 class UltimosCambiosView(LoginRequiredMixin, AdminRequiredMixin, ListView):
     model = Version
