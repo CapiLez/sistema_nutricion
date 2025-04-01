@@ -3,9 +3,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from reversion.models import Version
 from django.db.models import Avg
+from django.core.paginator import Paginator
 import pandas as pd
 from .utils import BaseDeleteViewConCancel
 from .models import Paciente, Trabajador, SeguimientoTrimestral, SeguimientoTrabajador, Usuario
@@ -375,3 +376,82 @@ class UltimosCambiosView(LoginRequiredMixin, AdminRequiredMixin, ListView):
 
     def get_queryset(self):
         return Version.objects.select_related('revision', 'revision__user').order_by('-revision__date_created')[:50]
+    
+def buscar_ninos_ajax(request):
+    termino = request.GET.get('term', '')
+    page = int(request.GET.get('page', 1))
+    ninos = Paciente.objects.filter(nombre__icontains=termino).order_by('nombre')
+    paginator = Paginator(ninos, 10)  # 10 por página
+    page_obj = paginator.get_page(page)
+
+    data = [{
+        'id': n.id,
+        'nombre': n.nombre,
+        'edad': n.edad,
+        'curp': n.curp,
+        'grado': n.grado,
+        'grupo': n.grupo
+    } for n in page_obj]
+
+    return JsonResponse({
+        'resultados': data,
+        'has_next': page_obj.has_next()
+    })
+
+def buscar_trabajadores_ajax(request):
+    termino = request.GET.get('term', '')
+    page = int(request.GET.get('page', 1))
+    trabajadores = Trabajador.objects.filter(nombre__icontains=termino).order_by('nombre')
+    paginator = Paginator(trabajadores, 10)
+    page_obj = paginator.get_page(page)
+
+    data = [{
+        'id': t.id,
+        'nombre': t.nombre,
+        'curp': t.curp,
+        'cargo': t.cargo,
+        'departamento': t.departamento
+    } for t in page_obj]
+
+    return JsonResponse({
+        'resultados': data,
+        'has_next': page_obj.has_next()
+    })
+
+def buscar_seguimientos_nino_ajax(request):
+    termino = request.GET.get('term', '')
+    page = int(request.GET.get('page', 1))
+    queryset = SeguimientoTrimestral.objects.select_related('paciente').filter(paciente__nombre__icontains=termino).order_by('-fecha_valoracion')
+    paginator = Paginator(queryset, 10)
+    page_obj = paginator.get_page(page)
+
+    data = [{
+        'nombre': s.paciente.nombre,
+        'fecha': s.fecha_valoracion.strftime('%d/%m/%Y'),
+        'edad': s.edad,
+        'peso': s.peso,
+        'talla': s.talla,
+        'imc': s.imc,
+        'dx': s.dx
+    } for s in page_obj]
+
+    return JsonResponse({'resultados': data, 'has_next': page_obj.has_next()})
+
+def buscar_seguimientos_trabajador_ajax(request):
+    termino = request.GET.get('term', '')
+    page = int(request.GET.get('page', 1))
+    queryset = SeguimientoTrabajador.objects.select_related('trabajador').filter(trabajador__nombre__icontains=termino).order_by('-fecha_valoracion')
+    paginator = Paginator(queryset, 10)
+    page_obj = paginator.get_page(page)
+
+    data = [{
+        'nombre': s.trabajador.nombre,
+        'fecha': s.fecha_valoracion.strftime('%d/%m/%Y'),
+        'edad': s.edad,
+        'peso': s.peso,
+        'talla': s.talla,
+        'imc': s.imc,
+        'dx': s.dx
+    } for s in page_obj]
+
+    return JsonResponse({'resultados': data, 'has_next': page_obj.has_next()})

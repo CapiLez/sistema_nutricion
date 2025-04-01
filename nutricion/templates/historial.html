@@ -14,248 +14,70 @@
     <!-- Sección Niños -->
     <div class="section-container">
         <h2 class="section-toggle" data-target="#ninos-section"><i class="fas fa-child"></i> Niños Registrados <i class="fas fa-chevron-down toggle-icon"></i></h2>
-        
+
         <div id="ninos-section" class="section-content" style="display: none;">
-            <!-- Barra de búsqueda para Niños -->
             <div class="search-section">
-                <form method="GET" class="search-form" id="form-busqueda-nino">
-                    <div class="search-input-group">
-                        <input type="text" id="buscar-nino" name="q_nino" placeholder="Buscar por nombre de niño..." value="{{ q_nino }}" class="search-input">
-                        <button type="submit" class="search-button">
-                            <i class="fas fa-search"></i> Buscar
-                        </button>
-                    </div>
-                </form>
+                <div class="search-input-group">
+                    <input type="text" id="buscar-nino" placeholder="Buscar por nombre de niño..." class="search-input">
+                </div>
             </div>
 
-            <!-- Resultados de búsqueda: Niños -->
-            {% if resultados_ninos %}
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Edad</th>
-                                <th>CURP</th>
-                                <th>Grado</th>
-                                <th>Grupo</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for nino in resultados_ninos %}
-                            <tr>
-                                <td>{{ nino.nombre }}</td>
-                                <td>{{ nino.edad }} años</td>
-                                <td>{{ nino.curp|upper }}</td>
-                                <td>{{ nino.grado }}</td>
-                                <td>{{ nino.grupo }}</td>
-                                <td class="actions-cell">
-                                    {% if request.user.is_admin %}
-                                        <a href="{% url 'editar_nino' nino.id %}?from=historial" class="btn btn-warning btn-sm">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="{% url 'eliminar_nino' nino.id %}?from=historial" class="btn btn-danger btn-sm">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </a>
-                                    {% else %}
-                                        <button class="btn btn-secondary btn-sm" disabled title="Sin permiso">
-                                            <i class="fas fa-ban"></i>
-                                        </button>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% elif q_nino %}
-                <p class="no-results">⚠ No se encontraron niños con ese nombre.</p>
-            {% endif %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Edad</th>
+                            <th>CURP</th>
+                            <th>Grado</th>
+                            <th>Grupo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-ninos-dinamica"></tbody>
+                </table>
+            </div>
 
-            <!-- Tabla completa: Niños -->
-            {% if not q_nino %}
-                {% if pacientes %}
-                    <div class="table-responsive">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>No.</th>
-                                    <th>CURP</th>
-                                    <th>Nombre</th>
-                                    <th>Grado</th>
-                                    <th>Grupo</th>
-                                    <th>Sexo</th>
-                                    <th>Fecha Nac.</th>
-                                    <th>Edad</th>
-                                    <th>Peso (kg)</th>
-                                    <th>Talla (cm)</th>
-                                    <th>IMC</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for paciente in pacientes %}
-                                <tr>
-                                    <td>{{ paciente.id }}</td>
-                                    <td>{{ paciente.curp|upper }}</td>
-                                    <td>{{ paciente.nombre }}</td>
-                                    <td>{{ paciente.grado }}</td>
-                                    <td>{{ paciente.grupo }}</td>
-                                    <td>{{ paciente.sexo }}</td>
-                                    <td>{{ paciente.fecha_nacimiento }}</td>
-                                    <td>{{ paciente.edad }}</td>
-                                    <td>{{ paciente.peso }}</td>
-                                    <td>{{ paciente.talla }}</td>
-                                    <td>{{ paciente.imc }}</td>
-                                    <td class="actions-cell">
-                                        {% if request.user.is_admin %}
-                                            <a href="{% url 'editar_nino' paciente.id %}?from=historial" class="btn btn-warning btn-sm">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="{% url 'eliminar_nino' paciente.id %}?from=historial" class="btn btn-danger btn-sm">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </a>
-                                        {% else %}
-                                            <button class="btn btn-secondary btn-sm" disabled title="Sin permiso">
-                                                <i class="fas fa-ban"></i>
-                                            </button>
-                                        {% endif %}
-                                        <a href="{% url 'registrar_seguimiento' %}?paciente_id={{ paciente.id }}" class="btn btn-success btn-sm" title="Registrar seguimiento">
-                                            <i class="fas fa-notes-medical"></i>
-                                        </a>
-                                        <a href="{% url 'seguimientos_nino' paciente.id %}" class="btn btn-info btn-sm" title="Ver seguimientos">
-                                            <i class="fas fa-stethoscope"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <p class="no-results">⚠ No hay niños registrados actualmente.</p>
-                {% endif %}
-            {% endif %}
+            <div class="pagination-buttons text-center mt-2">
+                <button id="btn-anterior-nino" class="btn btn-outline-secondary" style="display:none;">Anterior</button>
+                <button id="btn-siguiente-nino" class="btn btn-outline-primary" style="display:none;">Siguiente</button>
+            </div>
         </div>
     </div>
 
     <!-- Sección Trabajadores -->
     <div class="section-container">
         <h2 class="section-toggle" data-target="#trabajadores-section"><i class="fas fa-user-tie"></i>Trabajadores Registrados <i class="fas fa-chevron-down toggle-icon"></i></h2>
-        
+
         <div id="trabajadores-section" class="section-content" style="display: none;">
-            <!-- Barra de búsqueda para Trabajadores -->
             <div class="search-section">
-                <form method="GET" class="search-form" id="form-busqueda-trabajador">
-                    <div class="search-input-group">
-                        <input type="text" id="buscar-trabajador" name="q_trabajador" placeholder="Buscar por nombre de trabajador..." value="{{ q_trabajador }}" class="search-input">
-                        <button type="submit" class="search-button">
-                            <i class="fas fa-search"></i> Buscar
-                        </button>
-                    </div>
-                </form>
+                <div class="search-input-group">
+                    <input type="text" id="buscar-trabajador" placeholder="Buscar por nombre de trabajador..." class="search-input">
+                </div>
             </div>
 
-            <!-- Resultados de búsqueda: Trabajadores -->
-            {% if resultados_trabajadores %}
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>CURP</th>
-                                <th>Cargo</th>
-                                <th>Departamento</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for trabajador in resultados_trabajadores %}
-                            <tr>
-                                <td>{{ trabajador.nombre }}</td>
-                                <td>{{ trabajador.curp|upper }}</td>
-                                <td>{{ trabajador.cargo }}</td>
-                                <td>{{ trabajador.departamento }}</td>
-                                <td class="actions-cell">
-                                    {% if request.user.is_admin %}
-                                        <a href="{% url 'editar_trabajador' trabajador.id %}?from=historial" class="btn btn-warning btn-sm">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="{% url 'eliminar_trabajador' trabajador.id %}?from=historial" class="btn btn-danger btn-sm">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </a>
-                                    {% else %}
-                                        <button class="btn btn-secondary btn-sm" disabled title="Sin permiso">
-                                            <i class="fas fa-ban"></i>
-                                        </button>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% elif q_trabajador %}
-                <p class="no-results">⚠ No se encontraron trabajadores con esa información.</p>
-            {% endif %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>CURP</th>
+                            <th>Cargo</th>
+                            <th>Departamento</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-trabajadores-dinamica"></tbody>
+                </table>
+            </div>
 
-            <!-- Tabla completa: Trabajadores -->
-            {% if not q_trabajador %}
-                {% if trabajadores %}
-                    <div class="table-responsive">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>No.</th>
-                                    <th>CURP</th>
-                                    <th>Nombre</th>
-                                    <th>Cargo</th>
-                                    <th>Departamento</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for trabajador in trabajadores %}
-                                <tr>
-                                    <td>{{ trabajador.id }}</td>
-                                    <td>{{ trabajador.curp|upper }}</td>
-                                    <td>{{ trabajador.nombre }}</td>
-                                    <td>{{ trabajador.cargo }}</td>
-                                    <td>{{ trabajador.departamento }}</td>
-                                    <td class="actions-cell">
-                                        {% if request.user.is_admin %}
-                                            <a href="{% url 'editar_trabajador' trabajador.id %}?from=historial" class="btn btn-warning btn-sm">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="{% url 'eliminar_trabajador' trabajador.id %}?from=historial" class="btn btn-danger btn-sm">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </a>
-                                        {% else %}
-                                            <button class="btn btn-secondary btn-sm" disabled title="Sin permiso">
-                                                <i class="fas fa-ban"></i>
-                                            </button>
-                                        {% endif %}
-                                        <a href="{% url 'registrar_seguimiento_trabajador' %}?trabajador_id={{ trabajador.id }}" class="btn btn-success btn-sm" title="Registrar seguimiento">
-                                            <i class="fas fa-notes-medical"></i>
-                                        </a>
-                                        <a href="{% url 'seguimientos_trabajador' trabajador.id %}" class="btn btn-info btn-sm" title="Ver seguimientos">
-                                            <i class="fas fa-stethoscope"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <p class="no-results">⚠ No hay trabajadores registrados actualmente.</p>
-                {% endif %}
-            {% endif %}
+            <div class="pagination-buttons text-center mt-2">
+                <button id="btn-anterior-trabajador" class="btn btn-outline-secondary" style="display:none;">Anterior</button>
+                <button id="btn-siguiente-trabajador" class="btn btn-outline-primary" style="display:none;">Siguiente</button>
+            </div>
         </div>
     </div>
 
-    <!-- Botón de regreso -->
     <div class="back-button-container">
         <a href="{% url 'home' %}" class="btn btn-primary">
             <i class="fas fa-arrow-left"></i> Regresar al Inicio
@@ -263,34 +85,128 @@
     </div>
 </div>
 
-<!-- JS para funcionalidad de despliegue y limpieza de campos -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function() {
-        // Manejar el clic en los títulos de sección
-        $('.section-toggle').on('click', function() {
-            const target = $(this).data('target');
-            $(target).slideToggle('fast');
-            $(this).find('.toggle-icon').toggleClass('fa-chevron-down fa-chevron-up');
-        });
-
-        // Limpiar campos de búsqueda
-        $('#form-busqueda-nino').on('submit', function() {
-            setTimeout(function() {
-                $('#buscar-nino').val('');
-            }, 100);
-        });
-
-        $('#form-busqueda-trabajador').on('submit', function() {
-            setTimeout(function() {
-                $('#buscar-trabajador').val('');
-            }, 100);
-        });
-
-        window.addEventListener("pageshow", function () {
-            $('#buscar-nino').val('');
-            $('#buscar-trabajador').val('');
-        });
+$(document).ready(function() {
+    $('.section-toggle').on('click', function() {
+        const target = $(this).data('target');
+        $(target).slideToggle('fast');
+        $(this).find('.toggle-icon').toggleClass('fa-chevron-down fa-chevron-up');
     });
+
+    let paginaNino = 1;
+    let paginaTrabajador = 1;
+
+    function cargarNinos() {
+        const termino = $('#buscar-nino').val();
+        $.ajax({
+            url: '{% url "buscar_ninos_ajax" %}',
+            data: { term: termino, page: paginaNino },
+            success: function (data) {
+                let html = '';
+                if (data.resultados.length > 0) {
+                    data.resultados.forEach(nino => {
+                        html += `
+                            <tr>
+                                <td>${nino.nombre}</td>
+                                <td>${nino.edad} años</td>
+                                <td>${nino.curp || ''}</td>
+                                <td>${nino.grado || ''}</td>
+                                <td>${nino.grupo || ''}</td>
+                                <td class="actions-cell">
+                                    {% if request.user.is_admin %}
+                                        <a href="/editar-nino/${nino.id}?from=historial" class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
+                                        <a href="/eliminar-nino/${nino.id}?from=historial" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></a>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-sm" disabled><i class="fas fa-ban"></i></button>
+                                    {% endif %}
+                                </td>
+                            </tr>`;
+                    });
+                } else {
+                    html = `<tr><td colspan="6">⚠ No se encontraron niños con ese nombre.</td></tr>`;
+                }
+                $('#tabla-ninos-dinamica').html(html);
+                $('#btn-anterior-nino').toggle(paginaNino > 1);
+                $('#btn-siguiente-nino').toggle(data.has_next);
+            }
+        });
+    }
+
+    function cargarTrabajadores() {
+        const termino = $('#buscar-trabajador').val();
+        $.ajax({
+            url: '{% url "buscar_trabajadores_ajax" %}',
+            data: { term: termino, page: paginaTrabajador },
+            success: function (data) {
+                let html = '';
+                if (data.resultados.length > 0) {
+                    data.resultados.forEach(trabajador => {
+                        html += `
+                            <tr>
+                                <td>${trabajador.nombre}</td>
+                                <td>${trabajador.curp || ''}</td>
+                                <td>${trabajador.cargo || ''}</td>
+                                <td>${trabajador.departamento || ''}</td>
+                                <td class="actions-cell">
+                                    {% if request.user.is_admin %}
+                                        <a href="/editar-trabajador/${trabajador.id}?from=historial" class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
+                                        <a href="/eliminar-trabajador/${trabajador.id}?from=historial" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></a>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-sm" disabled><i class="fas fa-ban"></i></button>
+                                    {% endif %}
+                                    <a href="/registrar-seguimiento-trabajador?trabajador_id=${trabajador.id}" class="btn btn-success btn-sm" title="Registrar seguimiento"><i class="fas fa-notes-medical"></i></a>
+                                    <a href="/seguimientos-trabajador/${trabajador.id}" class="btn btn-info btn-sm" title="Ver seguimientos"><i class="fas fa-stethoscope"></i></a>
+                                </td>
+                            </tr>`;
+                    });
+                } else {
+                    html = `<tr><td colspan="5">⚠ No se encontraron trabajadores con ese nombre.</td></tr>`;
+                }
+                $('#tabla-trabajadores-dinamica').html(html);
+                $('#btn-anterior-trabajador').toggle(paginaTrabajador > 1);
+                $('#btn-siguiente-trabajador').toggle(data.has_next);
+            }
+        });
+    }
+
+    $('#buscar-nino').on('input', function () {
+        paginaNino = 1;
+        cargarNinos();
+    });
+
+    $('#btn-anterior-nino').on('click', function () {
+        if (paginaNino > 1) {
+            paginaNino--;
+            cargarNinos();
+        }
+    });
+
+    $('#btn-siguiente-nino').on('click', function () {
+        paginaNino++;
+        cargarNinos();
+    });
+
+    $('#buscar-trabajador').on('input', function () {
+        paginaTrabajador = 1;
+        cargarTrabajadores();
+    });
+
+    $('#btn-anterior-trabajador').on('click', function () {
+        if (paginaTrabajador > 1) {
+            paginaTrabajador--;
+            cargarTrabajadores();
+        }
+    });
+
+    $('#btn-siguiente-trabajador').on('click', function () {
+        paginaTrabajador++;
+        cargarTrabajadores();
+    });
+
+    // Inicializar tablas
+    cargarNinos();
+    cargarTrabajadores();
+});
 </script>
 {% endblock %}

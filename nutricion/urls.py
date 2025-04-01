@@ -12,7 +12,11 @@ from nutricion.views_cbv import (
     ListaSeguimientosView, ListaSeguimientosGeneralView,
     RegistrarSeguimientoNinoView, RegistrarSeguimientoTrabajadorView,
     HistorialView, ExportarHistorialExcelView,
-    UltimosCambiosView
+    UltimosCambiosView,
+    buscar_ninos_ajax,
+    buscar_seguimientos_nino_ajax,
+    buscar_seguimientos_trabajador_ajax,
+    buscar_trabajadores_ajax
 )
 
 urlpatterns = [
@@ -54,9 +58,13 @@ urlpatterns = [
     path('reportes/', ReportesView.as_view(), name='reportes'),
 
     #Graficas
-    # en urls.py
     path('reportes/graficas/', GraficasReferenciaView.as_view(), name='graficas_referencia'),
 
     # Extras
     path('cambios-recientes/', UltimosCambiosView.as_view(), name='ultimos_cambios'),
+    path('ajax/buscar-ninos/', buscar_ninos_ajax, name='buscar_ninos_ajax'),
+    path('ajax/buscar-trabajadores/', buscar_trabajadores_ajax, name='buscar_trabajadores_ajax'),
+    path('ajax/seguimientos-nino/', buscar_seguimientos_nino_ajax, name='buscar_seguimientos_nino_ajax'),
+    path('ajax/seguimientos-trabajador/', buscar_seguimientos_trabajador_ajax, name='buscar_seguimientos_trabajador_ajax'),
+
 ]

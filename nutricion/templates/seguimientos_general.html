@@ -16,54 +16,32 @@
         <h2 class="section-toggle" data-target="#ninos-section"><i class="fas fa-child"></i> Niños <i class="fas fa-chevron-down toggle-icon"></i></h2>
 
         <div id="ninos-section" class="section-content" style="display: none;">
-            <!-- Buscador -->
             <div class="search-section">
-                <form method="GET" class="search-form">
-                    <div class="search-input-group">
-                        <input type="text" name="q_nino" value="{{ q_nino }}" placeholder="Buscar por nombre de niño..." class="search-input">
-                        <button type="submit" class="search-button">
-                            <i class="fas fa-search"></i> Buscar
-                        </button>
-                    </div>
-                </form>
+                <div class="search-input-group">
+                    <input type="text" id="buscar-nino" placeholder="Buscar por nombre de niño..." class="search-input">
+                </div>
             </div>
 
-            <!-- Tabla o mensaje -->
-            {% if seguimientos_ninos %}
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Fecha</th>
-                                <th>Edad</th>
-                                <th>Peso (kg)</th>
-                                <th>Talla (cm)</th>
-                                <th>IMC</th>
-                                <th>Diagnóstico</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for s in seguimientos_ninos %}
-                                <tr>
-                                    <td>{{ s.paciente.nombre }}</td>
-                                    <td>{{ s.fecha_valoracion }}</td>
-                                    <td>{{ s.edad }}</td>
-                                    <td>{{ s.peso }}</td>
-                                    <td>{{ s.talla }}</td>
-                                    <td>{{ s.imc }}</td>
-                                    <td>{{ s.dx }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="no-results">
-                    <i class="fas fa-info-circle"></i>
-                    <p>No hay seguimientos de niños registrados.</p>
-                </div>
-            {% endif %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Fecha</th>
+                            <th>Edad</th>
+                            <th>Peso (kg)</th>
+                            <th>Talla (cm)</th>
+                            <th>IMC</th>
+                            <th>Diagnóstico</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-seguimientos-ninos"></tbody>
+                </table>
+            </div>
+            <div class="pagination-buttons text-center mt-2">
+                <button id="btn-anterior-nino" class="btn btn-outline-secondary" style="display:none;">Anterior</button>
+                <button id="btn-siguiente-nino" class="btn btn-outline-primary" style="display:none;">Siguiente</button>
+            </div>
         </div>
     </div>
 
@@ -72,58 +50,35 @@
         <h2 class="section-toggle" data-target="#trabajadores-section"><i class="fas fa-user-tie"></i> Trabajadores <i class="fas fa-chevron-down toggle-icon"></i></h2>
 
         <div id="trabajadores-section" class="section-content" style="display: none;">
-            <!-- Buscador -->
             <div class="search-section">
-                <form method="GET" class="search-form">
-                    <div class="search-input-group">
-                        <input type="text" name="q_trabajador" value="{{ q_trabajador }}" placeholder="Buscar por nombre de trabajador..." class="search-input">
-                        <button type="submit" class="search-button">
-                            <i class="fas fa-search"></i> Buscar
-                        </button>
-                    </div>
-                </form>
+                <div class="search-input-group">
+                    <input type="text" id="buscar-trabajador" placeholder="Buscar por nombre de trabajador..." class="search-input">
+                </div>
             </div>
 
-            <!-- Tabla o mensaje -->
-            {% if seguimientos_trabajadores %}
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Fecha</th>
-                                <th>Edad</th>
-                                <th>Peso (kg)</th>
-                                <th>Talla (cm)</th>
-                                <th>IMC</th>
-                                <th>Diagnóstico</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for s in seguimientos_trabajadores %}
-                                <tr>
-                                    <td>{{ s.trabajador.nombre }}</td>
-                                    <td>{{ s.fecha_valoracion }}</td>
-                                    <td>{{ s.edad }}</td>
-                                    <td>{{ s.peso }}</td>
-                                    <td>{{ s.talla }}</td>
-                                    <td>{{ s.imc }}</td>
-                                    <td>{{ s.dx }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="no-results">
-                    <i class="fas fa-info-circle"></i>
-                    <p>No hay seguimientos de trabajadores registrados.</p>
-                </div>
-            {% endif %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Fecha</th>
+                            <th>Edad</th>
+                            <th>Peso (kg)</th>
+                            <th>Talla (cm)</th>
+                            <th>IMC</th>
+                            <th>Diagnóstico</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-seguimientos-trabajadores"></tbody>
+                </table>
+            </div>
+            <div class="pagination-buttons text-center mt-2">
+                <button id="btn-anterior-trabajador" class="btn btn-outline-secondary" style="display:none;">Anterior</button>
+                <button id="btn-siguiente-trabajador" class="btn btn-outline-primary" style="display:none;">Siguiente</button>
+            </div>
         </div>
     </div>
 
-    <!-- Botón de regreso -->
     <div class="back-button-container mt-4">
         <a href="{% url 'home' %}" class="btn btn-primary">
             <i class="fas fa-arrow-left"></i> Regresar al Inicio
@@ -131,16 +86,115 @@
     </div>
 </div>
 
-<!-- JS para funcionalidad de despliegue -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function() {
-        // Manejar el clic en los títulos de sección
-        $('.section-toggle').on('click', function() {
-            const target = $(this).data('target');
-            $(target).slideToggle('fast');
-            $(this).find('.toggle-icon').toggleClass('fa-chevron-down fa-chevron-up');
-        });
+$(document).ready(function() {
+    $('.section-toggle').on('click', function() {
+        const target = $(this).data('target');
+        $(target).slideToggle('fast');
+        $(this).find('.toggle-icon').toggleClass('fa-chevron-down fa-chevron-up');
     });
+
+    let paginaNino = 1;
+    let paginaTrabajador = 1;
+
+    function cargarSeguimientosNino() {
+        const termino = $('#buscar-nino').val();
+        $.ajax({
+            url: '{% url "buscar_seguimientos_nino_ajax" %}',
+            data: { term: termino, page: paginaNino },
+            success: function (data) {
+                let html = '';
+                if (data.resultados.length > 0) {
+                    data.resultados.forEach(s => {
+                        html += `
+                            <tr>
+                                <td>${s.nombre}</td>
+                                <td>${s.fecha}</td>
+                                <td>${s.edad}</td>
+                                <td>${s.peso}</td>
+                                <td>${s.talla}</td>
+                                <td>${s.imc}</td>
+                                <td>${s.dx}</td>
+                            </tr>`;
+                    });
+                } else {
+                    html = `<tr><td colspan="7">⚠ No se encontraron seguimientos.</td></tr>`;
+                }
+                $('#tabla-seguimientos-ninos').html(html);
+                $('#btn-anterior-nino').toggle(paginaNino > 1);
+                $('#btn-siguiente-nino').toggle(data.has_next);
+            }
+        });
+    }
+
+    function cargarSeguimientosTrabajador() {
+        const termino = $('#buscar-trabajador').val();
+        $.ajax({
+            url: '{% url "buscar_seguimientos_trabajador_ajax" %}',
+            data: { term: termino, page: paginaTrabajador },
+            success: function (data) {
+                let html = '';
+                if (data.resultados.length > 0) {
+                    data.resultados.forEach(s => {
+                        html += `
+                            <tr>
+                                <td>${s.nombre}</td>
+                                <td>${s.fecha}</td>
+                                <td>${s.edad}</td>
+                                <td>${s.peso}</td>
+                                <td>${s.talla}</td>
+                                <td>${s.imc}</td>
+                                <td>${s.dx}</td>
+                            </tr>`;
+                    });
+                } else {
+                    html = `<tr><td colspan="7">⚠ No se encontraron seguimientos.</td></tr>`;
+                }
+                $('#tabla-seguimientos-trabajadores').html(html);
+                $('#btn-anterior-trabajador').toggle(paginaTrabajador > 1);
+                $('#btn-siguiente-trabajador').toggle(data.has_next);
+            }
+        });
+    }
+
+    $('#buscar-nino').on('input', function () {
+        paginaNino = 1;
+        cargarSeguimientosNino();
+    });
+
+    $('#btn-anterior-nino').on('click', function () {
+        if (paginaNino > 1) {
+            paginaNino--;
+            cargarSeguimientosNino();
+        }
+    });
+
+    $('#btn-siguiente-nino').on('click', function () {
+        paginaNino++;
+        cargarSeguimientosNino();
+    });
+
+    $('#buscar-trabajador').on('input', function () {
+        paginaTrabajador = 1;
+        cargarSeguimientosTrabajador();
+    });
+
+    $('#btn-anterior-trabajador').on('click', function () {
+        if (paginaTrabajador > 1) {
+            paginaTrabajador--;
+            cargarSeguimientosTrabajador();
+        }
+    });
+
+    $('#btn-siguiente-trabajador').on('click', function () {
+        paginaTrabajador++;
+        cargarSeguimientosTrabajador();
+    });
+
+    // Carga inicial
+    cargarSeguimientosNino();
+    cargarSeguimientosTrabajador();
+});
 </script>
 {% endblock %}
