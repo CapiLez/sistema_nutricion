@@ -115,11 +115,13 @@ $(document).ready(function() {
                                 <td>${nino.grupo || ''}</td>
                                 <td class="actions-cell">
                                     {% if request.user.is_admin %}
-                                        <a href="/editar-nino/${nino.id}?from=historial" class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
-                                        <a href="/eliminar-nino/${nino.id}?from=historial" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></a>
+                                        <a href="/ninos/editar/${nino.id}?from=historial" class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
+                                        <a href="/ninos/eliminar/${nino.id}?from=historial" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></a>
                                     {% else %}
                                         <button class="btn btn-secondary btn-sm" disabled><i class="fas fa-ban"></i></button>
                                     {% endif %}
+                                    <a href="/registrar_seguimiento?paciente_id=${nino.id}" class="btn btn-success btn-sm" title="Registrar seguimiento"><i class="fas fa-notes-medical"></i></a>
+                                    <a href="/seguimientos/nino/${nino.id}" class="btn btn-info btn-sm" title="Ver seguimientos"><i class="fas fa-stethoscope"></i></a>
                                 </td>
                             </tr>`;
                     });
@@ -150,13 +152,13 @@ $(document).ready(function() {
                                 <td>${trabajador.departamento || ''}</td>
                                 <td class="actions-cell">
                                     {% if request.user.is_admin %}
-                                        <a href="/editar-trabajador/${trabajador.id}?from=historial" class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
-                                        <a href="/eliminar-trabajador/${trabajador.id}?from=historial" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></a>
+                                        <a href="/trabajadores/editar/${trabajador.id}?from=historial" class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
+                                        <a href="/trabajadores/eliminar/${trabajador.id}?from=historial" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></a>
                                     {% else %}
                                         <button class="btn btn-secondary btn-sm" disabled><i class="fas fa-ban"></i></button>
                                     {% endif %}
-                                    <a href="/registrar-seguimiento-trabajador?trabajador_id=${trabajador.id}" class="btn btn-success btn-sm" title="Registrar seguimiento"><i class="fas fa-notes-medical"></i></a>
-                                    <a href="/seguimientos-trabajador/${trabajador.id}" class="btn btn-info btn-sm" title="Ver seguimientos"><i class="fas fa-stethoscope"></i></a>
+                                    <a href="/seguimientos/trabajador/${trabajador.id}" class="btn btn-info btn-sm" title="Ver seguimientos"><i class="fas fa-stethoscope"></i></a>
+                                    <a href="/seguimiento/trabajador/nuevo/?trabajador_id=${trabajador.id}" class="btn btn-success btn-sm" title="Registrar seguimiento"><i class="fas fa-notes-medical"></i></a>
                                 </td>
                             </tr>`;
                     });
@@ -204,7 +206,7 @@ $(document).ready(function() {
         cargarTrabajadores();
     });
 
-    // Inicializar tablas
+    // Inicializar con primeros datos
     cargarNinos();
     cargarTrabajadores();
 });
