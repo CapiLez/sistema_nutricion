@@ -67,6 +67,7 @@
                         <th>CURP</th>
                         <th>Cargo</th>
                         <th>Departamento</th>
+                        <th>CAI</th>
                         <th>IMC</th>
                         <th>Acciones</th>
                     </tr>
@@ -78,6 +79,7 @@
                             <td>{{ trabajador.curp|upper }}</td>
                             <td>{{ trabajador.cargo }}</td>
                             <td>{{ trabajador.departamento }}</td>
+                            <td>{{ trabajador.get_cai_display }}</td>
                             <td>
                                 <span class="badge imc-badge" data-imc="{{ trabajador.imc }}">{{ trabajador.imc|default:"-" }}</span>
                             </td>
@@ -98,7 +100,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="6">No hay trabajadores registrados recientemente.</td>
+                            <td colspan="7">No hay trabajadores registrados recientemente.</td>
                         </tr>
                     {% endfor %}
                 </tbody>

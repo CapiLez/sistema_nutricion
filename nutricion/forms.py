@@ -71,6 +71,7 @@ class PacienteForm(forms.ModelForm):
             'fecha_nacimiento': forms.DateInput(
                 attrs={'type': 'date', 'max': datetime.date.today().isoformat()}
             ),
+            'cai': forms.Select()  # Esto genera el select
         }
 
     def clean_curp(self):
@@ -87,6 +88,7 @@ class TrabajadorForm(forms.ModelForm):
             'fecha_nacimiento': forms.DateInput(
                 attrs={'type': 'date', 'max': datetime.date.today().isoformat()}
             ),
+            'cai': forms.Select()  # Esto genera el select
         }
 
     def clean_curp(self):

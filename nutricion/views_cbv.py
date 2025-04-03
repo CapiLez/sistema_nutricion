@@ -378,44 +378,52 @@ class UltimosCambiosView(LoginRequiredMixin, AdminRequiredMixin, ListView):
         return Version.objects.select_related('revision', 'revision__user').order_by('-revision__date_created')[:50]
     
 def buscar_ninos_ajax(request):
-    termino = request.GET.get('term', '')
-    page = int(request.GET.get('page', 1))
-    ninos = Paciente.objects.filter(nombre__icontains=termino).order_by('nombre')
-    paginator = Paginator(ninos, 10)  # 10 por página
-    page_obj = paginator.get_page(page)
+    term = request.GET.get('term', '')
+    page = request.GET.get('page', 1)
 
-    data = [{
-        'id': n.id,
-        'nombre': n.nombre,
-        'edad': n.edad,
-        'curp': n.curp,
-        'grado': n.grado,
-        'grupo': n.grupo
-    } for n in page_obj]
+    ninos = Paciente.objects.filter(nombre__icontains=term).order_by('nombre')
+    paginator = Paginator(ninos, 10)
+    pagina = paginator.get_page(page)
+
+    resultados = [
+        {
+            'id': n.id,
+            'nombre': n.nombre,
+            'edad': n.edad,
+            'curp': n.curp,
+            'grado': n.grado,
+            'grupo': n.grupo,
+            'cai': n.cai,
+        } for n in pagina
+    ]
 
     return JsonResponse({
-        'resultados': data,
-        'has_next': page_obj.has_next()
+        'resultados': resultados,
+        'has_next': pagina.has_next()
     })
 
 def buscar_trabajadores_ajax(request):
-    termino = request.GET.get('term', '')
-    page = int(request.GET.get('page', 1))
-    trabajadores = Trabajador.objects.filter(nombre__icontains=termino).order_by('nombre')
-    paginator = Paginator(trabajadores, 10)
-    page_obj = paginator.get_page(page)
+    term = request.GET.get('term', '')
+    page = request.GET.get('page', 1)
 
-    data = [{
-        'id': t.id,
-        'nombre': t.nombre,
-        'curp': t.curp,
-        'cargo': t.cargo,
-        'departamento': t.departamento
-    } for t in page_obj]
+    trabajadores = Trabajador.objects.filter(nombre__icontains=term).order_by('nombre')
+    paginator = Paginator(trabajadores, 10)
+    pagina = paginator.get_page(page)
+
+    resultados = [
+        {
+            'id': t.id,
+            'nombre': t.nombre,
+            'curp': t.curp,
+            'cargo': t.cargo,
+            'departamento': t.departamento,
+            'cai': t.cai,
+        } for t in pagina
+    ]
 
     return JsonResponse({
-        'resultados': data,
-        'has_next': page_obj.has_next()
+        'resultados': resultados,
+        'has_next': pagina.has_next()
     })
 
 def buscar_seguimientos_nino_ajax(request):

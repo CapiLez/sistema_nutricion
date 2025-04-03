@@ -21,6 +21,7 @@
                         <th>Peso (kg)</th>
                         <th>Talla (cm)</th>
                         <th>IMC</th>
+                        <th>Circunf. Abdominal (cm)</th>
                         <th>Dx Nutricional</th>
                         <th>Clasificación IMC</th>
                     </tr>
@@ -33,6 +34,7 @@
                         <td>{{ s.peso|floatformat:1 }}</td>
                         <td>{{ s.talla|floatformat:1 }}</td>
                         <td>{{ s.imc|floatformat:1 }}</td>
+                        <td>{{ s.circunferencia_abdominal|default:"—" }}</td>
                         <td>{{ s.dx }}</td>
                         <td>
                             <span class="badge 

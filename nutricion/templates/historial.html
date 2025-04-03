@@ -31,6 +31,7 @@
                             <th>CURP</th>
                             <th>Grado</th>
                             <th>Grupo</th>
+                            <th>CAI</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -64,6 +65,7 @@
                             <th>CURP</th>
                             <th>Cargo</th>
                             <th>Departamento</th>
+                            <th>CAI</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -113,6 +115,7 @@ $(document).ready(function() {
                                 <td>${nino.curp || ''}</td>
                                 <td>${nino.grado || ''}</td>
                                 <td>${nino.grupo || ''}</td>
+                                <td>${nino.cai || ''}</td>
                                 <td class="actions-cell">
                                     {% if request.user.is_admin %}
                                         <a href="/ninos/editar/${nino.id}?from=historial" class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
@@ -126,7 +129,7 @@ $(document).ready(function() {
                             </tr>`;
                     });
                 } else {
-                    html = `<tr><td colspan="6">⚠ No se encontraron niños con ese nombre.</td></tr>`;
+                    html = `<tr><td colspan="7">⚠ No se encontraron niños con ese nombre.</td></tr>`;
                 }
                 $('#tabla-ninos-dinamica').html(html);
                 $('#btn-anterior-nino').toggle(paginaNino > 1);
@@ -150,6 +153,7 @@ $(document).ready(function() {
                                 <td>${trabajador.curp || ''}</td>
                                 <td>${trabajador.cargo || ''}</td>
                                 <td>${trabajador.departamento || ''}</td>
+                                <td>${trabajador.cai || ''}</td>
                                 <td class="actions-cell">
                                     {% if request.user.is_admin %}
                                         <a href="/trabajadores/editar/${trabajador.id}?from=historial" class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
@@ -163,7 +167,7 @@ $(document).ready(function() {
                             </tr>`;
                     });
                 } else {
-                    html = `<tr><td colspan="5">⚠ No se encontraron trabajadores con ese nombre.</td></tr>`;
+                    html = `<tr><td colspan="6">⚠ No se encontraron trabajadores con ese nombre.</td></tr>`;
                 }
                 $('#tabla-trabajadores-dinamica').html(html);
                 $('#btn-anterior-trabajador').toggle(paginaTrabajador > 1);
@@ -206,7 +210,6 @@ $(document).ready(function() {
         cargarTrabajadores();
     });
 
-    // Inicializar con primeros datos
     cargarNinos();
     cargarTrabajadores();
 });

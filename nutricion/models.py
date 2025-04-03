@@ -1,6 +1,16 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
+# Opciones de CAI
+CAI_CHOICES = [
+    ("ESTEFANÍA CASTAÑEDA NUÑEZ", "ESTEFANÍA CASTAÑEDA NUÑEZ"),
+    ("JOSEFINA VICENS", "JOSEFINA VICENS"),
+    ("JULIETA CAMPOS DE GONZÁLEZ PEDRERO", "JULIETA CAMPOS DE GONZÁLEZ PEDRERO"),
+    ("JOSÉ MARÍA PINO SUÁREZ", "JOSÉ MARÍA PINO SUÁREZ"),
+    ("MARINA CORTAZAR VDA. DE ESCOBAR", "MARINA CORTAZAR VDA. DE ESCOBAR"),
+    ("EVA SÁMANO DE LÓPEZ MATEOS", "EVA SÁMANO DE LÓPEZ MATEOS"),
+]
+
 # Usuario con roles personalizados
 class Usuario(AbstractUser):
     telefono = models.CharField(max_length=15, blank=True, null=True)
@@ -37,6 +47,7 @@ class Paciente(models.Model):
     grado = models.CharField(max_length=50, blank=True, null=True)
     grupo = models.CharField(max_length=50, blank=True, null=True)
     fecha_nacimiento = models.DateField()
+    cai = models.CharField(max_length=100, choices=CAI_CHOICES)  # CAI asignado
 
     def __str__(self):
         return self.nombre
@@ -53,6 +64,8 @@ class Trabajador(models.Model):
     imc = models.FloatField()
     enfermedades_preexistentes = models.TextField(blank=True)
     observaciones = models.TextField(blank=True)
+    circunferencia_abdominal = models.FloatField(null=True, blank=True)  # Campo adicional
+    cai = models.CharField(max_length=100, choices=CAI_CHOICES)  # CAI asignado
 
     def __str__(self):
         return self.nombre
@@ -65,7 +78,7 @@ class SeguimientoTrimestral(models.Model):
     indicador_peso_talla = models.FloatField()
     indicador_talla_edad = models.FloatField()
     imc = models.FloatField()
-    dx = models.CharField(max_length=255)  # Diagnóstico nutricional
+    dx = models.CharField(max_length=255)
     edad = models.IntegerField()
     peso = models.FloatField()
     talla = models.FloatField()
@@ -75,10 +88,11 @@ class SeguimientoTrimestral(models.Model):
         return f"{self.paciente.nombre} - {self.fecha_valoracion}"
 
 
+# Seguimiento para Trabajadores
 class SeguimientoTrabajador(models.Model):
     trabajador = models.ForeignKey('Trabajador', on_delete=models.CASCADE)
     imc = models.FloatField()
-    dx = models.CharField(max_length=255)  # Diagnóstico nutricional
+    dx = models.CharField(max_length=255)
     edad = models.IntegerField()
     peso = models.FloatField()
     talla = models.FloatField()
