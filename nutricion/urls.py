@@ -7,6 +7,8 @@ from nutricion.views_cbv import (
     GestionUsuariosView, EliminarUsuarioView,
     RegistroNinoView, EditarNinoView, EliminarNinoView, HistorialNinoCambiosView,
     RegistroTrabajadorView, EditarTrabajadorView, EliminarTrabajadorView,
+    ReportePacienteView,
+    ReporteTrabajadorView,
     ReportesView,
     SeguimientosNinoView, SeguimientosTrabajadorView,
     ListaSeguimientosView, ListaSeguimientosGeneralView,
@@ -59,6 +61,8 @@ urlpatterns = [
 
     #Graficas
     path('reportes/graficas/', GraficasReferenciaView.as_view(), name='graficas_referencia'),
+    path('reporte/paciente/<int:paciente_id>/', ReportePacienteView.as_view(), name='reporte_paciente'),
+    path('reporte/trabajador/<int:trabajador_id>/', ReporteTrabajadorView.as_view(), name='reporte_trabajador'),
 
     # Extras
     path('cambios-recientes/', UltimosCambiosView.as_view(), name='ultimos_cambios'),

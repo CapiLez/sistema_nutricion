@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reporte de {{ trabajador.nombre }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'nutricion/css/reportes.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="reporte-individual">
+    <h2><i class="fas fa-user-md"></i> Reporte Nutricional: {{ trabajador.nombre }}</h2>
+
+    <div class="datos-basicos">
+        <h3>Datos Básicos</h3>
+        <p><strong>Edad:</strong> {{ trabajador.edad }} años</p>
+        <p><strong>Sexo:</strong> {{ trabajador.get_sexo_display }}</p>
+        <p><strong>Puesto:</strong> {{ trabajador.puesto|default:"-" }}</p>
+        <p><strong>Área:</strong> {{ trabajador.area|default:"-" }}</p>
+    </div>
+
+    <div class="graficas-evolucion">
+        <h3>Evolución Nutricional</h3>
+
+        <div class="grafica-container">
+            <canvas id="graficaPeso"></canvas>
+        </div>
+
+        <div class="grafica-container">
+            <canvas id="graficaIMC"></canvas>
+        </div>
+    </div>
+
+    <div class="tabla-seguimientos">
+        <h3>Historial de Seguimientos</h3>
+        {% if seguimientos %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Peso (kg)</th>
+                    <th>IMC</th>
+                    <th>Diagnóstico</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for seg in seguimientos %}
+                <tr>
+                    <td>{{ seg.fecha_valoracion|date:"d/m/Y" }}</td>
+                    <td>{{ seg.peso|floatformat:2 }}</td>
+                    <td>{{ seg.imc|floatformat:2 }}</td>
+                    <td>{{ seg.dx|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="no-data">No hay seguimientos registrados para este trabajador.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar que todos los elementos canvas existen
+    const elementosCanvas = {
+        peso: document.getElementById('graficaPeso'),
+        imc: document.getElementById('graficaIMC')
+    };
+
+    // Verificar que los datos existen y son válidos
+    try {
+        const datos = JSON.parse('{{ datos_json|escapejs }}');
+        
+        if (!datos.fechas || !datos.pesos || !datos.imcs) {
+            throw new Error('Datos incompletos');
+        }
+
+        // Script exacto como lo solicitaste
+        const crearGrafica = (canvasId, label, dataArray, color) => {
+            new Chart(document.getElementById(canvasId), {
+                type: 'line',
+                data: {
+                    labels: datos.fechas,
+                    datasets: [{
+                        label: label,
+                        data: dataArray,
+                        borderColor: color,
+                        backgroundColor: color + '33',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        };
+
+        // Solo crear gráficas si los elementos canvas existen
+        if (elementosCanvas.peso) {
+            crearGrafica('graficaPeso', 'Peso (kg)', datos.pesos, '#ff6384');
+        }
+        if (elementosCanvas.imc) {
+            crearGrafica('graficaIMC', 'IMC', datos.imcs, '#36a2eb');
+        }
+
+    } catch (error) {
+        console.error('Error al procesar los datos:', error);
+        // Mostrar mensaje de error en la interfaz si lo deseas
+        const contenedores = document.querySelectorAll('.grafica-container');
+        contenedores.forEach(contenedor => {
+            contenedor.innerHTML = '<p class="error-grafica">No se pudieron cargar los datos de la gráfica</p>';
+        });
+    }
+});
+</script>
+{% endblock %}

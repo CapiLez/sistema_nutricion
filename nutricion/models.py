@@ -39,15 +39,15 @@ class Usuario(AbstractUser):
 class Paciente(models.Model):
     nombre = models.CharField(max_length=255)
     edad = models.IntegerField()
+    curp = models.CharField(max_length=18, unique=True, blank=True, null=True)
     sexo = models.CharField(max_length=1, choices=[('M', 'Masculino'), ('F', 'Femenino')])
+    cai = models.CharField(max_length=100, choices=CAI_CHOICES)  # CAI asignado
     peso = models.FloatField()
     talla = models.FloatField()
     imc = models.FloatField()
-    curp = models.CharField(max_length=18, unique=True, blank=True, null=True)
     grado = models.CharField(max_length=50, blank=True, null=True)
     grupo = models.CharField(max_length=50, blank=True, null=True)
     fecha_nacimiento = models.DateField()
-    cai = models.CharField(max_length=100, choices=CAI_CHOICES)  # CAI asignado
 
     def __str__(self):
         return self.nombre
@@ -57,15 +57,16 @@ class Paciente(models.Model):
 class Trabajador(models.Model):
     nombre = models.CharField(max_length=255)
     curp = models.CharField(max_length=18, unique=True, blank=True, null=True)
+    cai = models.CharField(max_length=100, choices=CAI_CHOICES)  # CAI asignado
     cargo = models.CharField(max_length=255)
     departamento = models.CharField(max_length=255, blank=True, null=True)
     peso = models.FloatField()
     talla = models.FloatField()
     imc = models.FloatField()
+    circunferencia_abdominal = models.FloatField(null=True, blank=True)  # Campo adicional
     enfermedades_preexistentes = models.TextField(blank=True)
     observaciones = models.TextField(blank=True)
-    circunferencia_abdominal = models.FloatField(null=True, blank=True)  # Campo adicional
-    cai = models.CharField(max_length=100, choices=CAI_CHOICES)  # CAI asignado
+    
 
     def __str__(self):
         return self.nombre

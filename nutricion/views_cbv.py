@@ -7,6 +7,8 @@ from django.http import HttpResponse, JsonResponse
 from reversion.models import Version
 from django.db.models import Avg
 from django.core.paginator import Paginator
+from django.utils.safestring import mark_safe
+import json
 import pandas as pd
 from .utils import BaseDeleteViewConCancel
 from .models import Paciente, Trabajador, SeguimientoTrimestral, SeguimientoTrabajador, Usuario
@@ -352,6 +354,48 @@ class ReportesView(LoginRequiredMixin, TemplateView):
 
         return context
     
+# Vista para pacientes
+class ReportePacienteView(LoginRequiredMixin, View):
+    def get(self, request, paciente_id):
+        paciente = get_object_or_404(Paciente, id=paciente_id)
+        seguimientos = SeguimientoTrimestral.objects.filter(paciente=paciente).order_by('fecha_valoracion')
+        
+        # Preparar datos de manera segura para JSON
+        datos = {
+            'fechas': [s.fecha_valoracion.strftime('%Y-%m-%d') for s in seguimientos],
+            'pesos': [float(s.peso) if s.peso else None for s in seguimientos],
+            'tallas': [float(s.talla) if s.talla else None for s in seguimientos],
+            'imcs': [float(s.imc) if s.imc else None for s in seguimientos],
+        }
+        
+        # Convertir a JSON seguro
+        datos_json = mark_safe(json.dumps(datos))
+        
+        return render(request, 'reporte_paciente.html', {
+            'paciente': paciente,
+            'seguimientos': seguimientos,
+            'datos_json': datos_json,
+        })
+    
+class ReporteTrabajadorView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        trabajador = get_object_or_404(Trabajador, pk=pk)
+        seguimientos = SeguimientoTrabajador.objects.filter(trabajador=trabajador).order_by('fecha_valoracion')
+
+        datos = {
+            'fechas': [seg.fecha_valoracion.strftime('%Y-%m-%d') for seg in seguimientos],
+            'pesos': [float(seg.peso) if seg.peso else None for seg in seguimientos],
+            'imcs': [float(seg.imc) if seg.imc else None for seg in seguimientos],
+        }
+
+        datos_json = mark_safe(json.dumps(datos))
+
+        return render(request, 'reporte_trabajador.html', {
+            'trabajador': trabajador,
+            'seguimientos': seguimientos,
+            'datos_json': datos_json,
+        })
+
 #-------------------
 # Graficación de IMC
 #-------------------
@@ -363,7 +407,6 @@ class GraficasReferenciaView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         # Aquí cargaríamos los datos para niños y trabajadores si se requiere
         return context
-
     
 #-------------------
 # Extras
