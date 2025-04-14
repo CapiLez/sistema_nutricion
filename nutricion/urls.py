@@ -26,6 +26,7 @@ urlpatterns = [
     path('', LoginView.as_view(template_name='login.html', redirect_authenticated_user=True), name='login'),
     path('logout/', LogoutView.as_view(next_page='login'), name='logout'),
     path('home/', HomeView.as_view(), name='home'),
+    path('api/filtrar-por-cai/', HomeView.as_view(), name='filtrar_por_cai'),
 
     # Gestión de usuarios
     path('usuarios/', GestionUsuariosView.as_view(), name='gestionar_usuarios'),
@@ -58,6 +59,8 @@ urlpatterns = [
 
     # Reportes
     path('reportes/', ReportesView.as_view(), name='reportes'),
+    path('reporte/paciente/<int:pk>/', ReportePacienteView.as_view(), name='reporte_paciente'),
+    path('reporte/trabajador/<int:pk>/', ReporteTrabajadorView.as_view(), name='reporte_trabajador'),
 
     #Graficas
     path('reportes/graficas/', GraficasReferenciaView.as_view(), name='graficas_referencia'),

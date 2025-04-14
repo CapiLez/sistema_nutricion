@@ -6,32 +6,130 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'nutricion/css/reportes.css' %}">
 <style>
+    .reportes-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
     .seccion {
         margin-bottom: 40px;
-        padding: 20px;
+        padding: 25px;
         background: #f9f9f9;
-        border-radius: 8px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     .seccion h2 {
         border-bottom: 2px solid #3e95cd;
         padding-bottom: 10px;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
+        color: #2a6496;
     }
     .switch-seccion {
-        margin-bottom: 20px;
+        margin-bottom: 25px;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
     }
     .switch-seccion button {
-        padding: 10px 15px;
-        margin-right: 10px;
+        padding: 12px 20px;
         background: #3e95cd;
         color: white;
         border: none;
-        border-radius: 4px;
+        border-radius: 6px;
         cursor: pointer;
+        transition: all 0.3s;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .switch-seccion button:hover {
+        background: #2a6496;
+        transform: translateY(-2px);
     }
     .switch-seccion button.active {
         background: #2a6496;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
+    .lista-tarjetas {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 25px;
+    }
+    .tarjeta {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        transition: transform 0.3s, box-shadow 0.3s;
+        border-left: 4px solid #3e95cd;
+    }
+    .tarjeta:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .tarjeta h3 {
+        color: #2a6496;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    .tarjeta p {
+        margin-bottom: 10px;
+        color: #555;
+    }
+    .btn-ver {
+        display: inline-block;
+        padding: 8px 15px;
+        background: #3e95cd;
+        color: white;
+        border-radius: 4px;
+        text-decoration: none;
+        margin-top: 10px;
+        transition: background 0.3s;
+    }
+    .btn-ver:hover {
+        background: #2a6496;
+    }
+    .paginacion {
+        margin-top: 30px;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .paginacion a {
+        padding: 8px 15px;
+        background: #3e95cd;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background 0.3s;
+    }
+    .paginacion a:hover {
+        background: #2a6496;
+    }
+    .paginacion a.active {
+        background: #2a6496;
+        font-weight: bold;
+    }
+    .no-data {
+        text-align: center;
+        padding: 30px;
+        color: #666;
+        font-size: 18px;
+    }
+    .badge-imc {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+        margin-left: 5px;
+    }
+    .imc-bajo { background-color: #ffc107; color: #333; }
+    .imc-normal { background-color: #28a745; color: white; }
+    .imc-sobrepeso { background-color: #fd7e14; color: white; }
+    .imc-obesidad { background-color: #dc3545; color: white; }
 </style>
 {% endblock %}
 
@@ -40,28 +138,78 @@
     <h1><i class="fas fa-chart-line"></i> Reportes Nutricionales</h1>
 
     <div class="switch-seccion">
-        <button class="active" onclick="mostrarSeccion('ninos')">Niños</button>
-        <button onclick="mostrarSeccion('trabajadores')">Trabajadores</button>
+        <button class="active" onclick="mostrarSeccion('ninos')">
+            <i class="fas fa-child"></i> Niños
+        </button>
+        <button onclick="mostrarSeccion('trabajadores')">
+            <i class="fas fa-user-tie"></i> Trabajadores
+        </button>
     </div>
 
     <!-- SECCIÓN NIÑOS -->
     <div id="seccion-ninos" class="seccion">
         <h2><i class="fas fa-child"></i> Reportes de Niños</h2>
         
-        {% if ninos %}
-        <div class="lista-pacientes">
-            {% for paciente in ninos %}
-            <div class="paciente-card">
+        {% if ninos_page %}
+        <div class="lista-tarjetas">
+            {% for paciente in ninos_page %}
+            <div class="tarjeta">
                 <h3>{{ paciente.nombre }}</h3>
-                <p>Edad: {{ paciente.edad }} años | CAI: {{ paciente.cai }}</p>
-                <a href="{% url 'reporte_paciente' paciente.id %}" class="btn btn-ver">
+                <p><strong><i class="fas fa-birthday-cake"></i> Edad:</strong> {{ paciente.edad }} años</p>
+                <p><strong><i class="fas fa-home"></i> CAI:</strong> {{ paciente.cai }}</p>
+                <p>
+                    <strong><i class="fas fa-weight"></i> IMC:</strong> 
+                    {% if paciente.imc %}
+                        {{ paciente.imc|floatformat:2 }}
+                        <span class="badge-imc 
+                            {% if paciente.imc < 18.5 %}imc-bajo
+                            {% elif paciente.imc < 25 %}imc-normal
+                            {% elif paciente.imc < 30 %}imc-sobrepeso
+                            {% else %}imc-obesidad
+                            {% endif %}">
+                            {% if paciente.imc < 18.5 %}Bajo peso
+                            {% elif paciente.imc < 25 %}Normal
+                            {% elif paciente.imc < 30 %}Sobrepeso
+                            {% else %}Obesidad
+                            {% endif %}
+                        </span>
+                    {% else %}
+                        No calculado
+                    {% endif %}
+                </p>
+                <p><strong><i class="fas fa-school"></i> Grado/Grupo:</strong> 
+                   {{ paciente.grado|default:"-" }} / {{ paciente.grupo|default:"-" }}</p>
+                <a href="{% url 'reporte_paciente' paciente.id %}" class="btn-ver">
                     <i class="fas fa-file-alt"></i> Ver Reporte Completo
                 </a>
             </div>
             {% endfor %}
         </div>
+        
+        <div class="paginacion">
+            {% if ninos_page.has_previous %}
+                <a href="?page_pacientes=1">&laquo; Primera</a>
+                <a href="?page_pacientes={{ ninos_page.previous_page_number }}">Anterior</a>
+            {% endif %}
+
+            {% for num in ninos_page.paginator.page_range %}
+                {% if num == ninos_page.number %}
+                    <a href="?page_pacientes={{ num }}" class="active">{{ num }}</a>
+                {% elif num > ninos_page.number|add:'-3' and num < ninos_page.number|add:'3' %}
+                    <a href="?page_pacientes={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if ninos_page.has_next %}
+                <a href="?page_pacientes={{ ninos_page.next_page_number }}">Siguiente</a>
+                <a href="?page_pacientes={{ ninos_page.paginator.num_pages }}">Última &raquo;</a>
+            {% endif %}
+        </div>
         {% else %}
-        <p class="no-data">No hay niños registrados.</p>
+        <div class="no-data">
+            <i class="fas fa-exclamation-circle fa-2x"></i>
+            <p>No hay niños registrados.</p>
+        </div>
         {% endif %}
     </div>
 
@@ -69,20 +217,71 @@
     <div id="seccion-trabajadores" class="seccion" style="display: none;">
         <h2><i class="fas fa-user-tie"></i> Reportes de Trabajadores</h2>
         
-        {% if trabajadores %}
-        <div class="lista-trabajadores">
-            {% for trabajador in trabajadores %}
-            <div class="trabajador-card">
+        {% if trabajadores_page %}
+        <div class="lista-tarjetas">
+            {% for trabajador in trabajadores_page %}
+            <div class="tarjeta">
                 <h3>{{ trabajador.nombre }}</h3>
-                <p>Puesto: {{ trabajador.puesto }} | Área: {{ trabajador.area }}</p>
-                <a href="{% url 'reporte_trabajador' trabajador.id %}" class="btn btn-ver">
+                <p><strong><i class="fas fa-id-badge"></i> Puesto:</strong> {{ trabajador.cargo }}</p>
+                <p><strong><i class="fas fa-building"></i> Departamento:</strong> {{ trabajador.departamento|default:"-" }}</p>
+                <p>
+                    <strong><i class="fas fa-weight"></i> IMC:</strong> 
+                    {% if trabajador.imc %}
+                        {{ trabajador.imc|floatformat:2 }}
+                        <span class="badge-imc 
+                            {% if trabajador.imc < 18.5 %}imc-bajo
+                            {% elif trabajador.imc < 25 %}imc-normal
+                            {% elif trabajador.imc < 30 %}imc-sobrepeso
+                            {% else %}imc-obesidad
+                            {% endif %}">
+                            {% if trabajador.imc < 18.5 %}Bajo peso
+                            {% elif trabajador.imc < 25 %}Normal
+                            {% elif trabajador.imc < 30 %}Sobrepeso
+                            {% else %}Obesidad
+                            {% endif %}
+                        </span>
+                    {% else %}
+                        No calculado
+                    {% endif %}
+                </p>
+                <p><strong><i class="fas fa-calendar-day"></i> Fecha Ingreso:</strong> 
+                   {% if trabajador.fecha_ingreso %}
+                       {{ trabajador.fecha_ingreso|date:"d/m/Y" }}
+                   {% else %}
+                       -
+                   {% endif %}
+                </p>
+                <a href="{% url 'reporte_trabajador' trabajador.id %}" class="btn-ver">
                     <i class="fas fa-file-alt"></i> Ver Reporte Completo
                 </a>
             </div>
             {% endfor %}
         </div>
+        
+        <div class="paginacion">
+            {% if trabajadores_page.has_previous %}
+                <a href="?page_trabajadores=1">&laquo; Primera</a>
+                <a href="?page_trabajadores={{ trabajadores_page.previous_page_number }}">Anterior</a>
+            {% endif %}
+
+            {% for num in trabajadores_page.paginator.page_range %}
+                {% if num == trabajadores_page.number %}
+                    <a href="?page_trabajadores={{ num }}" class="active">{{ num }}</a>
+                {% elif num > trabajadores_page.number|add:'-3' and num < trabajadores_page.number|add:'3' %}
+                    <a href="?page_trabajadores={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if trabajadores_page.has_next %}
+                <a href="?page_trabajadores={{ trabajadores_page.next_page_number }}">Siguiente</a>
+                <a href="?page_trabajadores={{ trabajadores_page.paginator.num_pages }}">Última &raquo;</a>
+            {% endif %}
+        </div>
         {% else %}
-        <p class="no-data">No hay trabajadores registrados.</p>
+        <div class="no-data">
+            <i class="fas fa-exclamation-circle fa-2x"></i>
+            <p>No hay trabajadores registrados.</p>
+        </div>
         {% endif %}
     </div>
 </div>
@@ -102,6 +301,28 @@ function mostrarSeccion(seccion) {
         btn.classList.remove('active');
     });
     event.target.classList.add('active');
+    
+    // Actualizar la URL sin recargar
+    history.pushState(null, null, `#${seccion}`);
+    
+    // Guardar preferencia en localStorage
+    localStorage.setItem('ultimaSeccionReportes', seccion);
 }
+
+// Mostrar sección basada en hash o localStorage al cargar
+window.addEventListener('DOMContentLoaded', () => {
+    const hash = window.location.hash.substring(1);
+    const seccionGuardada = localStorage.getItem('ultimaSeccionReportes');
+    
+    if (hash === 'trabajadores' || seccionGuardada === 'trabajadores') {
+        document.querySelector('.switch-seccion button:nth-child(2)').click();
+    }
+    
+    // Configurar tooltips para los badges de IMC
+    const badges = document.querySelectorAll('.badge-imc');
+    badges.forEach(badge => {
+        badge.title = 'Clasificación según OMS';
+    });
+});
 </script>
 {% endblock %}

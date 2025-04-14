@@ -30,48 +30,64 @@
         <div class="stat-card">
             <i class="fas fa-user-plus"></i>
             <p>Pacientes Activos</p>
-            <span>{{ total_pacientes }}</span>
+            <span id="total-pacientes">{{ total_pacientes }}</span>
         </div>
         <div class="stat-card">
             <i class="fas fa-user-tie"></i> 
             <p>Trabajadores</p>
-            <span>{{ total_trabajadores }}</span>
+            <span id="total-trabajadores">{{ total_trabajadores }}</span>
         </div>
         <div class="stat-card">
             <i class="fas fa-child"></i>
             <p>Niños Registrados</p>
-            <span>{{ total_ninos }}</span>
+            <span id="total-ninos">{{ total_ninos }}</span>
         </div>
     </div>
 
-    <!-- Sección de CAIs -->
-
-<h2 class="cai-section-title">Centros de Atención Infantil del DIF Tabasco</h2>
+    <h2 class="cai-section-title">Centros de Atención Infantil del DIF Tabasco</h2>
     <div class="cai-container">
-        <div class="cai-card">
+        {% for cai in cais %}
+        <div class="cai-card" onclick="filtrarPorCAI('{{ cai.0 }}', this)">
             <i class="fas fa-school"></i>
-            <p>CAI Marina Cortázar Viuda de Escobar</p>
+            <p>{{ cai.1 }}</p>
         </div>
-        <div class="cai-card">
-            <i class="fas fa-school"></i>
-            <p>CAI Eva Sámano de López Mateos</p>
-        </div>
-        <div class="cai-card">
-            <i class="fas fa-school"></i>
-            <p>CAI Josefina Vicens</p>
-        </div>
-        <div class="cai-card">
-            <i class="fas fa-school"></i>
-            <p>CAI José María Pino Suárez</p>
-        </div>
-        <div class="cai-card">
-            <i class="fas fa-school"></i>
-            <p>CAI Estefanía Castañeda Núñez</p>
-        </div>
-        <div class="cai-card">
-            <i class="fas fa-school"></i>
-            <p>CAI Julieta Campos de González Pedrero</p>
-        </div>
+        {% endfor %}
+    </div>
+    <div id="loadingIndicator">
+        <i class="fas fa-spinner fa-spin"></i> Cargando...
     </div>
 </div>
+
+<script>
+function filtrarPorCAI(cai, element) {
+    // Mostrar carga
+    document.getElementById('loadingIndicator').style.display = 'block';
+    
+    // Remover clase active de todos los cards
+    document.querySelectorAll('.cai-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    
+    // Añadir clase active al card seleccionado
+    element.classList.add('active');
+    
+    // Realizar petición AJAX
+    fetch(`/api/filtrar-por-cai/?cai=${encodeURIComponent(cai)}`)
+        .then(response => response.json())
+        .then(data => {
+            // Actualizar los contadores
+            document.getElementById('total-pacientes').textContent = data.total_pacientes;
+            document.getElementById('total-trabajadores').textContent = data.total_trabajadores;
+            document.getElementById('total-ninos').textContent = data.total_ninos;
+            
+            // Ocultar indicador de carga
+            document.getElementById('loadingIndicator').style.display = 'none';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('loadingIndicator').style.display = 'none';
+            alert('Error al cargar los datos del CAI');
+        });
+}
+</script>
 {% endblock %}

@@ -3,7 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from reversion.models import Version
 from django.db.models import Avg
 from django.core.paginator import Paginator
@@ -28,15 +28,43 @@ class AdminRequiredMixin(UserPassesTestMixin):
         return self.request.user.is_authenticated and self.request.user.is_admin
 
 class HomeView(LoginRequiredMixin, View):
+    CAI_CHOICES = [
+        ("ESTEFANÍA CASTAÑEDA NUÑEZ", "CAI Estefanía Castañeda Núñez"),
+        ("JOSEFINA VICENS", "CAI Josefina Vicens"),
+        ("JULIETA CAMPOS DE GONZÁLEZ PEDRERO", "CAI Julieta Campos de González Pedrero"),
+        ("JOSÉ MARÍA PINO SUÁREZ", "CAI José María Pino Suárez"),
+        ("MARINA CORTAZAR VDA. DE ESCOBAR", "CAI Marina Cortázar Viuda de Escobar"),
+        ("EVA SÁMANO DE LÓPEZ MATEOS", "CAI Eva Sámano de López Mateos"),
+    ]
+
     def get(self, request):
+        # Determinar si es una petición AJAX para filtrar
+        if 'cai' in request.GET:
+            return self.filtrar_por_cai(request)
+            
         total_ninos = Paciente.objects.count()
         total_trabajadores = Trabajador.objects.count()
         total_pacientes = total_ninos + total_trabajadores
+        
         return render(request, 'home.html', {
             'usuario': request.user,
             'total_ninos': total_ninos,
             'total_trabajadores': total_trabajadores,
             'total_pacientes': total_pacientes,
+            'cais': self.CAI_CHOICES
+        })
+
+    def filtrar_por_cai(self, request):
+        cai = request.GET.get('cai', '')
+        
+        total_ninos = Paciente.objects.filter(cai=cai).count()
+        total_trabajadores = Trabajador.objects.filter(cai=cai).count()
+        total_pacientes = total_ninos + total_trabajadores
+        
+        return JsonResponse({
+            'total_pacientes': total_pacientes,
+            'total_trabajadores': total_trabajadores,
+            'total_ninos': total_ninos
         })
     
 #-------------------
@@ -346,55 +374,116 @@ class ReportesView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        pacientes = Paciente.objects.all()
-
-        # Extraer listas para el gráfico
-        context['nombres'] = [p.nombre for p in pacientes]
-        context['imcs'] = [p.imc for p in pacientes]
-
+        
+        # Pacientes (niños) con paginación
+        pacientes = Paciente.objects.all().order_by('nombre')
+        paginator_pacientes = Paginator(pacientes, 10)
+        page_pacientes = self.request.GET.get('page_pacientes', 1)
+        context['ninos_page'] = paginator_pacientes.get_page(page_pacientes)
+        
+        # Trabajadores con paginación
+        trabajadores = Trabajador.objects.all().order_by('nombre')
+        paginator_trabajadores = Paginator(trabajadores, 10)
+        page_trabajadores = self.request.GET.get('page_trabajadores', 1)
+        context['trabajadores_page'] = paginator_trabajadores.get_page(page_trabajadores)
+        
         return context
+
+class ReporteBaseView(LoginRequiredMixin, View):
+    """Vista base para reportes individuales"""
+    template_name = None
+    model = None
+    seguimiento_model = None
+    id_kwarg = 'pk'
     
-# Vista para pacientes
-class ReportePacienteView(LoginRequiredMixin, View):
-    def get(self, request, paciente_id):
-        paciente = get_object_or_404(Paciente, id=paciente_id)
-        seguimientos = SeguimientoTrimestral.objects.filter(paciente=paciente).order_by('fecha_valoracion')
+    def get(self, request, *args, **kwargs):
+        obj_id = kwargs.get(self.id_kwarg)
+        try:
+            obj = self.model.objects.get(pk=obj_id)
+            print(f"Objeto encontrado: {obj}")  # Debug
+            
+            # Determinar el campo de relación
+            filter_field = 'paciente' if isinstance(obj, Paciente) else 'trabajador'
+            seguimientos = self.seguimiento_model.objects.filter(
+                **{filter_field: obj}
+            ).order_by('fecha_valoracion')
+            print(f"Seguimientos encontrados: {seguimientos.count()}")  # Debug
+            
+            # Preparar datos para gráficos
+            datos = {
+                'fechas': [s.fecha_valoracion.strftime('%Y-%m-%d') for s in seguimientos],
+                'pesos': [float(s.peso) if s.peso else None for s in seguimientos],
+                'imcs': [float(s.imc) if s.imc else None for s in seguimientos],
+            }
+            
+            # Añadir tallas solo para pacientes
+            if hasattr(self.seguimiento_model, 'talla'):
+                datos['tallas'] = [float(s.talla) if s.talla else None for s in seguimientos]
+            
+            context = {
+                'paciente' if isinstance(obj, Paciente) else 'trabajador': obj,
+                'seguimientos': seguimientos,
+                'datos_json': json.dumps(datos),
+                'debug_mode': True  # Para mostrar info de debug en template
+            }
+            
+            return render(request, self.template_name, context)
+            
+        except self.model.DoesNotExist:
+            raise Http404("El registro solicitado no existe")
+        except Exception as e:
+            print(f"Error en ReporteBaseView: {str(e)}")  # Debug
+            raise
+
+class ReportePacienteView(ReporteBaseView):
+    template_name = 'reporte_paciente.html'
+    model = Paciente
+    seguimiento_model = SeguimientoTrimestral
+    id_kwarg = 'pk'  # O usa 'paciente_id' si prefieres mantener ese nombre
+
+class ReporteTrabajadorView(ReporteBaseView):
+    template_name = 'reporte_trabajador.html'
+    model = Trabajador
+    seguimiento_model = SeguimientoTrabajador
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        trabajador = self.get_object()
         
-        # Preparar datos de manera segura para JSON
-        datos = {
-            'fechas': [s.fecha_valoracion.strftime('%Y-%m-%d') for s in seguimientos],
-            'pesos': [float(s.peso) if s.peso else None for s in seguimientos],
-            'tallas': [float(s.talla) if s.talla else None for s in seguimientos],
-            'imcs': [float(s.imc) if s.imc else None for s in seguimientos],
+        # Datos para debug
+        debug_data = {
+            'id': trabajador.id,
+            'nombre': trabajador.nombre,
+            'edad': trabajador.edad,
+            'sexo': trabajador.get_sexo_display(),
+            'cargo': trabajador.cargo,
+            'departamento': trabajador.departamento,
+            'fecha_ingreso': trabajador.fecha_ingreso,
+            'imc': trabajador.imc
         }
         
-        # Convertir a JSON seguro
-        datos_json = mark_safe(json.dumps(datos))
-        
-        return render(request, 'reporte_paciente.html', {
-            'paciente': paciente,
-            'seguimientos': seguimientos,
-            'datos_json': datos_json,
-        })
-    
-class ReporteTrabajadorView(LoginRequiredMixin, View):
-    def get(self, request, pk):
-        trabajador = get_object_or_404(Trabajador, pk=pk)
-        seguimientos = SeguimientoTrabajador.objects.filter(trabajador=trabajador).order_by('fecha_valoracion')
-
-        datos = {
-            'fechas': [seg.fecha_valoracion.strftime('%Y-%m-%d') for seg in seguimientos],
-            'pesos': [float(seg.peso) if seg.peso else None for seg in seguimientos],
-            'imcs': [float(seg.imc) if seg.imc else None for seg in seguimientos],
-        }
-
-        datos_json = mark_safe(json.dumps(datos))
-
-        return render(request, 'reporte_trabajador.html', {
+        context.update({
             'trabajador': trabajador,
-            'seguimientos': seguimientos,
-            'datos_json': datos_json,
+            'seguimientos': self.get_seguimientos(trabajador),
+            'ultimo_seguimiento': self.get_seguimientos(trabajador).first(),
+            'datos_json': self.get_datos_graficos(trabajador),
+            'debug_data': debug_data,  # Datos para debug
+            'debug_mode': True
         })
+        return context
+
+    def get_seguimientos(self, trabajador):
+        return self.seguimiento_model.objects.filter(
+            trabajador=trabajador
+        ).order_by('fecha_valoracion')
+
+    def get_datos_graficos(self, trabajador):
+        seguimientos = self.get_seguimientos(trabajador)
+        return {
+            'fechas': [s.fecha_valoracion.strftime('%Y-%m-%d') for s in seguimientos],
+            'pesos': [float(s.peso) for s in seguimientos],
+            'imcs': [float(s.imc) for s in seguimientos]
+        }
 
 #-------------------
 # Graficación de IMC

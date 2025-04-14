@@ -5,120 +5,338 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'nutricion/css/reportes.css' %}">
+<style>
+    .reporte-container {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    .datos-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    .grafica-container {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .seguimientos-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    .seguimientos-table th, 
+    .seguimientos-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    .seguimientos-table th {
+        background-color: #4e73df;
+        color: white;
+        position: sticky;
+        top: 0;
+    }
+    .seguimientos-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    .seguimientos-table tr:hover {
+        background-color: #f1f8ff;
+    }
+    .no-data {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+        font-style: italic;
+    }
+    .recomendaciones-box {
+        background-color: #e8f4fc;
+        border-left: 4px solid #4e73df;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 4px;
+    }
+    .table-responsive {
+        overflow-x: auto;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    .badge-imc {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    .imc-bajo { background-color: #ffc107; color: #333; }
+    .imc-normal { background-color: #28a745; color: white; }
+    .imc-sobrepeso { background-color: #fd7e14; color: white; }
+    .imc-obesidad { background-color: #dc3545; color: white; }
+    .salud-table {
+        width: 100%;
+        margin-top: 15px;
+    }
+    .salud-table th {
+        background-color: #6c757d;
+        color: white;
+        padding: 10px;
+    }
+    .salud-table td {
+        padding: 10px;
+        border-bottom: 1px solid #dee2e6;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="reporte-individual">
-    <h2><i class="fas fa-user-md"></i> Reporte Nutricional: {{ trabajador.nombre }}</h2>
-
-    <div class="datos-basicos">
-        <h3>Datos Básicos</h3>
-        <p><strong>Edad:</strong> {{ trabajador.edad }} años</p>
-        <p><strong>Sexo:</strong> {{ trabajador.get_sexo_display }}</p>
-        <p><strong>Puesto:</strong> {{ trabajador.puesto|default:"-" }}</p>
-        <p><strong>Área:</strong> {{ trabajador.area|default:"-" }}</p>
+<div class="container reporte-container">
+    <!-- Encabezado del Reporte -->
+    <div class="header-section text-center mb-4">
+        <h1><i class="fas fa-file-medical-alt"></i> Reporte Nutricional Laboral</h1>
+        <h2 class="text-primary">{{ trabajador.nombre }}</h2>
+        <p class="text-muted">CURP: {{ trabajador.curp|default:"No proporcionada" }}</p>
     </div>
 
-    <div class="graficas-evolucion">
-        <h3>Evolución Nutricional</h3>
-
-        <div class="grafica-container">
-            <canvas id="graficaPeso"></canvas>
-        </div>
-
-        <div class="grafica-container">
-            <canvas id="graficaIMC"></canvas>
-        </div>
-    </div>
-
-    <div class="tabla-seguimientos">
-        <h3>Historial de Seguimientos</h3>
-        {% if seguimientos %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Peso (kg)</th>
-                    <th>IMC</th>
-                    <th>Diagnóstico</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for seg in seguimientos %}
-                <tr>
-                    <td>{{ seg.fecha_valoracion|date:"d/m/Y" }}</td>
-                    <td>{{ seg.peso|floatformat:2 }}</td>
-                    <td>{{ seg.imc|floatformat:2 }}</td>
-                    <td>{{ seg.dx|default:"-" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
+    <!-- Sección de Datos Básicos -->
+    <div class="datos-section">
+        <h3><i class="fas fa-info-circle"></i> Datos Laborales</h3>
+        
+        <table class="salud-table">
+            <tr>
+                <th colspan="2">Información Personal</th>
+                <th colspan="2">Datos Laborales</th>
+            </tr>
+            <tr>
+                <td><strong><i class="fas fa-id-card"></i> CAI:</strong></td>
+                <td>{{ trabajador.cai }}</td>
+                <td><strong><i class="fas fa-id-badge"></i> Cargo:</strong></td>
+                <td>{{ trabajador.cargo }}</td>
+            </tr>
+            <tr>
+                <td><strong><i class="fas fa-birthday-cake"></i> Edad:</strong></td>
+                <td>{% if trabajador.edad %}{{ trabajador.edad }} años{% else %}No especificada{% endif %}</td>
+                <td><strong><i class="fas fa-building"></i> Departamento:</strong></td>
+                <td>{{ trabajador.departamento|default:"No especificado" }}</td>
+            </tr>
+            <tr>
+                <td><strong><i class="fas fa-venus-mars"></i> Sexo:</strong></td>
+                <td>{% if trabajador.sexo %}{{ trabajador.get_sexo_display }}{% else %}No especificado{% endif %}</td>
+                <td><strong><i class="fas fa-calendar-day"></i> Fecha Ingreso:</strong></td>
+                <td>{% if trabajador.fecha_ingreso %}{{ trabajador.fecha_ingreso|date:"d/m/Y" }}{% else %}No especificada{% endif %}</td>
+            </tr>
+            <tr>
+                <td><strong><i class="fas fa-ruler"></i> Circ. Abdominal:</strong></td>
+                <td>{% if trabajador.circunferencia_abdominal %}{{ trabajador.circunferencia_abdominal|floatformat:2 }} cm{% else %}No medida{% endif %}</td>
+                <td><strong><i class="fas fa-weight"></i> IMC:</strong></td>
+                <td>
+                    {{ trabajador.imc|floatformat:2 }}
+                    <span class="badge-imc 
+                        {% if trabajador.imc < 18.5 %}imc-bajo
+                        {% elif trabajador.imc < 25 %}imc-normal
+                        {% elif trabajador.imc < 30 %}imc-sobrepeso
+                        {% else %}imc-obesidad
+                        {% endif %}">
+                        {% if trabajador.imc < 18.5 %}Bajo peso
+                        {% elif trabajador.imc < 25 %}Normal
+                        {% elif trabajador.imc < 30 %}Sobrepeso
+                        {% else %}Obesidad
+                        {% endif %}
+                    </span>
+                </td>
+            </tr>
         </table>
+    </div>
+
+    <!-- Sección de Salud -->
+    <div class="salud-section mt-4">
+        <h3><i class="fas fa-heartbeat"></i> Estado de Salud</h3>
+        <table class="salud-table">
+            <tr>
+                <th style="width: 50%;">Enfermedades Preexistentes</th>
+                <th style="width: 50%;">Observaciones</th>
+            </tr>
+            <tr>
+                <td>{{ trabajador.enfermedades_preexistentes|default:"Ninguna registrada"|linebreaks }}</td>
+                <td>{{ trabajador.observaciones|default:"Ninguna observación"|linebreaks }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Sección de Evolución Nutricional -->
+    <div class="graficas-section mt-5">
+        <h3><i class="fas fa-chart-line"></i> Evolución Nutricional</h3>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="grafica-container">
+                    <h4>Evolución de Peso (kg)</h4>
+                    <canvas id="graficaPeso" height="250"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="grafica-container">
+                    <h4>Evolución de IMC</h4>
+                    <canvas id="graficaIMC" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Historial de Seguimientos -->
+    <div class="seguimientos-section mt-5">
+        <h3><i class="fas fa-history"></i> Historial de Evaluaciones</h3>
+        
+        {% if seguimientos %}
+        <div class="table-responsive">
+            <table class="seguimientos-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Peso (kg)</th>
+                        <th>IMC</th>
+                        <th>Circ. Abdominal (cm)</th>
+                        <th>Diagnóstico</th>
+                        <th>Recomendaciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for seg in seguimientos %}
+                    <tr>
+                        <td>{{ seg.fecha_valoracion|date:"d/m/Y" }}</td>
+                        <td>{{ seg.peso|floatformat:2 }}</td>
+                        <td>
+                            {{ seg.imc|floatformat:2 }}
+                            <span class="badge-imc 
+                                {% if seg.imc < 18.5 %}imc-bajo
+                                {% elif seg.imc < 25 %}imc-normal
+                                {% elif seg.imc < 30 %}imc-sobrepeso
+                                {% else %}imc-obesidad
+                                {% endif %}">
+                                {% if seg.imc < 18.5 %}Bajo
+                                {% elif seg.imc < 25 %}Normal
+                                {% elif seg.imc < 30 %}Sobrepeso
+                                {% else %}Obesidad
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>{% if seg.circunferencia_abdominal %}{{ seg.circunferencia_abdominal|floatformat:2 }}{% else %}-{% endif %}</td>
+                        <td>{{ seg.dx|default:"-" }}</td>
+                        <td>
+                            {% if seg.recomendaciones %}
+                            <div class="recomendaciones-box" title="Haz clic para ver completo">
+                                {{ seg.recomendaciones|truncatechars:100 }}
+                            </div>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% else %}
-        <p class="no-data">No hay seguimientos registrados para este trabajador.</p>
+        <div class="no-data">
+            <p><i class="fas fa-exclamation-circle"></i> No hay evaluaciones registradas para este trabajador.</p>
+        </div>
         {% endif %}
     </div>
-</div>
 
+    <!-- Botones de Acción -->
+    <div class="text-center mt-4">
+        <a href="{% url 'reportes' %}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Volver a Reportes
+        </a>
+        <button onclick="window.print()" class="btn btn-secondary ml-2">
+            <i class="fas fa-print"></i> Imprimir Reporte
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Verificar que todos los elementos canvas existen
-    const elementosCanvas = {
-        peso: document.getElementById('graficaPeso'),
-        imc: document.getElementById('graficaIMC')
-    };
+// Datos para los gráficos
+const datos = JSON.parse('{{ datos_json|escapejs }}');
 
-    // Verificar que los datos existen y son válidos
-    try {
-        const datos = JSON.parse('{{ datos_json|escapejs }}');
-        
-        if (!datos.fechas || !datos.pesos || !datos.imcs) {
-            throw new Error('Datos incompletos');
-        }
-
-        // Script exacto como lo solicitaste
-        const crearGrafica = (canvasId, label, dataArray, color) => {
-            new Chart(document.getElementById(canvasId), {
-                type: 'line',
-                data: {
-                    labels: datos.fechas,
-                    datasets: [{
-                        label: label,
-                        data: dataArray,
-                        borderColor: color,
-                        backgroundColor: color + '33',
-                        tension: 0.3,
-                        fill: true
-                    }]
+// Función para crear gráficos
+function crearGrafico(id, label, data, borderColor, backgroundColor) {
+    const ctx = document.getElementById(id).getContext('2d');
+    return new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: datos.fechas,
+            datasets: [{
+                label: label,
+                data: data,
+                borderColor: borderColor,
+                backgroundColor: backgroundColor,
+                borderWidth: 2,
+                tension: 0.1,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
                 },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
                 }
-            });
-        };
-
-        // Solo crear gráficas si los elementos canvas existen
-        if (elementosCanvas.peso) {
-            crearGrafica('graficaPeso', 'Peso (kg)', datos.pesos, '#ff6384');
+            },
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
         }
-        if (elementosCanvas.imc) {
-            crearGrafica('graficaIMC', 'IMC', datos.imcs, '#36a2eb');
-        }
+    });
+}
 
-    } catch (error) {
-        console.error('Error al procesar los datos:', error);
-        // Mostrar mensaje de error en la interfaz si lo deseas
-        const contenedores = document.querySelectorAll('.grafica-container');
-        contenedores.forEach(contenedor => {
-            contenedor.innerHTML = '<p class="error-grafica">No se pudieron cargar los datos de la gráfica</p>';
-        });
+// Crear gráficos cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de Peso
+    if (datos.pesos && datos.pesos.length > 0) {
+        crearGrafico(
+            'graficaPeso', 
+            'Peso (kg)', 
+            datos.pesos, 
+            'rgba(78, 115, 223, 1)', 
+            'rgba(78, 115, 223, 0.2)'
+        );
     }
+
+    // Gráfico de IMC
+    if (datos.imcs && datos.imcs.length > 0) {
+        crearGrafico(
+            'graficaIMC', 
+            'Índice de Masa Corporal', 
+            datos.imcs, 
+            'rgba(54, 185, 204, 1)', 
+            'rgba(54, 185, 204, 0.2)'
+        );
+    }
+    
+    // Mostrar recomendaciones completas en modal al hacer clic
+    document.querySelectorAll('.recomendaciones-box').forEach(box => {
+        box.addEventListener('click', function() {
+            const segId = this.closest('tr').getAttribute('data-seg-id');
+            const recomendacion = this.textContent.trim();
+            if (recomendacion && recomendacion !== '-') {
+                alert(`Recomendación completa del ${this.closest('tr').querySelector('td').textContent}:\n\n${recomendacion}`);
+            }
+        });
+    });
 });
 </script>
 {% endblock %}

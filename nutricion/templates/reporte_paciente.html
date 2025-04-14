@@ -5,132 +5,250 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'nutricion/css/reportes.css' %}">
+<style>
+    .reporte-container {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    .datos-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    .grafica-container {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .seguimientos-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .seguimientos-table th, 
+    .seguimientos-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    .seguimientos-table th {
+        background-color: #3e95cd;
+        color: white;
+    }
+    .seguimientos-table tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+    .seguimientos-table tr:hover {
+        background-color: #e9f7fe;
+    }
+    .no-data {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+        font-style: italic;
+    }
+    .debug-info {
+        background-color: #fff3cd;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        color: #856404;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="reporte-individual">
-    <h2><i class="fas fa-user"></i> Reporte Nutricional: {{ paciente.nombre }}</h2>
-
-    <div class="datos-basicos">
-        <h3>Datos Básicos</h3>
-        <p><strong>Edad:</strong> {{ paciente.edad }} años</p>
-        <p><strong>Sexo:</strong> {{ paciente.get_sexo_display }}</p>
-        <p><strong>CAI:</strong> {{ paciente.cai }}</p>
-        <p><strong>Grado/Grupo:</strong> {{ paciente.grado|default:"-" }} / {{ paciente.grupo|default:"-" }}</p>
+<div class="container reporte-container">
+    
+    <!-- Encabezado del Reporte -->
+    <div class="header-section text-center mb-4">
+        <h1><i class="fas fa-file-medical"></i> Reporte Nutricional Completo</h1>
+        <h2 class="text-primary">{{ paciente.nombre }}</h2>
     </div>
 
-    <div class="graficas-evolucion">
-        <h3>Evolución Nutricional</h3>
-
-        <div class="grafica-container">
-            <canvas id="graficaPeso"></canvas>
-        </div>
-
-        <div class="grafica-container">
-            <canvas id="graficaTalla"></canvas>
-        </div>
-
-        <div class="grafica-container">
-            <canvas id="graficaIMC"></canvas>
+    <!-- Sección de Datos Básicos -->
+    <div class="datos-section">
+        <h3><i class="fas fa-info-circle"></i> Datos Básicos</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong><i class="fas fa-birthday-cake"></i> Edad:</strong> {{ paciente.edad }} años</p>
+                <p><strong><i class="fas fa-venus-mars"></i> Sexo:</strong> {{ paciente.get_sexo_display }}</p>
+                <p><strong><i class="fas fa-home"></i> CAI:</strong> {{ paciente.cai }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong><i class="fas fa-graduation-cap"></i> Grado/Grupo:</strong> 
+                   {{ paciente.grado|default:"No especificado" }} / {{ paciente.grupo|default:"-" }}</p>
+                <p><strong><i class="fas fa-weight"></i> Último IMC:</strong> 
+                   {{ paciente.imc|floatformat:2|default:"No calculado" }}</p>
+                <p><strong><i class="fas fa-calendar-alt"></i> Fecha Registro:</strong> 
+                   {{ paciente.fecha_registro|date:"d/m/Y"|default:"-" }}</p>
+            </div>
         </div>
     </div>
 
-    <div class="tabla-seguimientos">
-        <h3>Historial de Seguimientos</h3>
+    <!-- Sección de Gráficas -->
+    <div class="graficas-section mt-5">
+        <h3><i class="fas fa-chart-line"></i> Evolución Nutricional</h3>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="grafica-container">
+                    <h4>Evolución de Peso (kg)</h4>
+                    <canvas id="graficaPeso" height="250"></canvas>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="grafica-container">
+                    <h4>Evolución de Talla (cm)</h4>
+                    <canvas id="graficaTalla" height="250"></canvas>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="grafica-container">
+                    <h4>Evolución de IMC</h4>
+                    <canvas id="graficaIMC" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Historial de Seguimientos -->
+    <div class="seguimientos-section mt-5">
+        <h3><i class="fas fa-history"></i> Historial de Seguimientos</h3>
+        
         {% if seguimientos %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Edad</th>
-                    <th>Peso (kg)</th>
-                    <th>Talla (cm)</th>
-                    <th>IMC</th>
-                    <th>Diagnóstico</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for seg in seguimientos %}
-                <tr>
-                    <td>{{ seg.fecha_valoracion|date:"d/m/Y" }}</td>
-                    <td>{{ seg.edad }}</td>
-                    <td>{{ seg.peso|floatformat:2 }}</td>
-                    <td>{{ seg.talla|floatformat:2 }}</td>
-                    <td>{{ seg.imc|floatformat:2 }}</td>
-                    <td>{{ seg.dx|default:"-" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="seguimientos-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Edad</th>
+                        <th>Peso (kg)</th>
+                        <th>Talla (cm)</th>
+                        <th>IMC</th>
+                        <th>Diagnóstico</th>
+                        <th>Observaciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for seg in seguimientos %}
+                    <tr>
+                        <td>{{ seg.fecha_valoracion|date:"d/m/Y" }}</td>
+                        <td>{{ seg.edad }}</td>
+                        <td>{{ seg.peso|floatformat:2 }}</td>
+                        <td>{{ seg.talla|floatformat:2 }}</td>
+                        <td>{{ seg.imc|floatformat:2 }}</td>
+                        <td>{{ seg.dx|default:"-" }}</td>
+                        <td>{{ seg.observaciones|truncatechars:30|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% else %}
-        <p class="no-data">No hay seguimientos registrados para este paciente.</p>
+        <div class="no-data">
+            <p><i class="fas fa-exclamation-circle"></i> No hay seguimientos registrados para este paciente.</p>
+        </div>
         {% endif %}
     </div>
-</div>
 
+    <!-- Botón de Regreso -->
+    <div class="text-center mt-4">
+        <a href="{% url 'reportes' %}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Volver a Reportes
+        </a>
+        <button onclick="window.print()" class="btn btn-secondary ml-2">
+            <i class="fas fa-print"></i> Imprimir Reporte
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Verificar que todos los elementos canvas existen
-    const elementosCanvas = {
-        peso: document.getElementById('graficaPeso'),
-        talla: document.getElementById('graficaTalla'),
-        imc: document.getElementById('graficaIMC')
-    };
+// Datos para los gráficos
+const datos = JSON.parse('{{ datos_json|escapejs }}');
 
-    // Verificar que los datos existen y son válidos
-    try {
-        const datos = JSON.parse('{{ datos_json|escapejs }}');
-        
-        if (!datos.fechas || !datos.pesos || !datos.tallas || !datos.imcs) {
-            throw new Error('Datos incompletos');
-        }
-
-        // Script exacto como lo solicitaste
-        const crearGrafica = (canvasId, label, dataArray, color) => {
-            new Chart(document.getElementById(canvasId), {
-                type: 'line',
-                data: {
-                    labels: datos.fechas,
-                    datasets: [{
-                        label: label,
-                        data: dataArray,
-                        borderColor: color,
-                        backgroundColor: color + '33',
-                        tension: 0.3,
-                        fill: true
-                    }]
+// Función para crear gráficos
+function crearGrafico(id, label, data, borderColor, backgroundColor) {
+    const ctx = document.getElementById(id).getContext('2d');
+    return new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: datos.fechas,
+            datasets: [{
+                label: label,
+                data: data,
+                borderColor: borderColor,
+                backgroundColor: backgroundColor,
+                borderWidth: 2,
+                tension: 0.1,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
                 },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
                 }
-            });
-        };
+            },
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
+        }
+    });
+}
 
-        // Solo crear gráficas si los elementos canvas existen
-        if (elementosCanvas.peso) {
-            crearGrafica('graficaPeso', 'Peso (kg)', datos.pesos, '#3e95cd');
-        }
-        if (elementosCanvas.talla) {
-            crearGrafica('graficaTalla', 'Talla (cm)', datos.tallas, '#8e5ea2');
-        }
-        if (elementosCanvas.imc) {
-            crearGrafica('graficaIMC', 'IMC', datos.imcs, '#3cba9f');
-        }
-
-    } catch (error) {
-        console.error('Error al procesar los datos:', error);
-        // Mostrar mensaje de error en la interfaz si lo deseas
-        const contenedores = document.querySelectorAll('.grafica-container');
-        contenedores.forEach(contenedor => {
-            contenedor.innerHTML = '<p class="error-grafica">No se pudieron cargar los datos de la gráfica</p>';
-        });
+// Crear gráficos cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de Peso
+    if (datos.pesos && datos.pesos.length > 0) {
+        crearGrafico(
+            'graficaPeso', 
+            'Peso (kg)', 
+            datos.pesos, 
+            'rgba(54, 162, 235, 1)', 
+            'rgba(54, 162, 235, 0.2)'
+        );
     }
+
+    // Gráfico de Talla
+    if (datos.tallas && datos.tallas.length > 0) {
+        crearGrafico(
+            'graficaTalla', 
+            'Talla (cm)', 
+            datos.tallas, 
+            'rgba(75, 192, 192, 1)', 
+            'rgba(75, 192, 192, 0.2)'
+        );
+    }
+
+    // Gráfico de IMC
+    if (datos.imcs && datos.imcs.length > 0) {
+        crearGrafico(
+            'graficaIMC', 
+            'Índice de Masa Corporal', 
+            datos.imcs, 
+            'rgba(255, 99, 132, 1)', 
+            'rgba(255, 99, 132, 0.2)'
+        );
+    }
+    
+    // Debug: Mostrar datos en consola
+    console.log('Datos para gráficos:', datos);
 });
 </script>
 {% endblock %}
