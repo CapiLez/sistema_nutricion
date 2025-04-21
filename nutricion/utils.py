@@ -4,67 +4,147 @@ from django.contrib import messages
 from reversion import create_revision, set_user, set_comment
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
+from django.core.exceptions import ImproperlyConfigured
 
 
-class RevisionCreateView(LoginRequiredMixin, CreateView):
+class RevisionMixin:
+    """
+    Mixin base para vistas con control de versiones.
+    """
     comment = ""
     success_message = ""
 
+    def get_comment(self):
+        """Obtiene el comentario para la revisión"""
+        return self.comment.format(
+            model=self.model.__name__,
+            object=str(self.object)
+        ) if hasattr(self, 'object') else self.comment
+
     def form_valid(self, form):
+        """Guarda el formulario con control de versiones"""
         with create_revision():
-            response = super().form_valid(form)
             set_user(self.request.user)
-            set_comment(self.comment)
-        messages.success(self.request, self.success_message)
+            set_comment(self.get_comment())
+            response = super().form_valid(form)
+        
+        if self.success_message:
+            messages.success(self.request, self.success_message)
         return response
 
 
-class RevisionUpdateView(LoginRequiredMixin, UpdateView):
-    comment = ""
-    success_message = ""
+class RevisionCreateView(LoginRequiredMixin, RevisionMixin, CreateView):
+    """
+    Vista para creación con control de versiones.
+    """
+    comment = "Nuevo {model} creado: {object}"
+    success_message = "Registro creado exitosamente"
 
-    def form_valid(self, form):
-        with create_revision():
-            response = super().form_valid(form)
-            set_user(self.request.user)
-            set_comment(self.comment)
-        messages.success(self.request, self.success_message)
-        return response
+
+class RevisionUpdateView(LoginRequiredMixin, RevisionMixin, UpdateView):
+    """
+    Vista para actualización con control de versiones.
+    """
+    comment = "{model} actualizado: {object}"
+    success_message = "Registro actualizado exitosamente"
+
 
 class CancelUrlMixin:
+    """
+    Mixin para manejar URLs de cancelación en formularios.
+    """
     cancel_url_default = None
     cancel_url_alt = None
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['cancel_url'] = self.cancel_url_alt if 'from' in self.request.GET else self.cancel_url_default
-        return context
-    
-class BaseDeleteViewConCancel(LoginRequiredMixin, DeleteView):
-    """
-    Esta clase ya incluye el LoginRequiredMixin.
-    Si necesitas admin check también, agrégalo donde la uses.
-    """
+    def get_cancel_url_default(self):
+        """Obtiene la URL de cancelación por defecto"""
+        if not self.cancel_url_default:
+            raise ImproperlyConfigured(
+                "CancelUrlMixin requires either a definition of "
+                "'cancel_url_default' or an implementation of 'get_cancel_url_default()'"
+            )
+        return reverse_lazy(self.cancel_url_default) if isinstance(self.cancel_url_default, str) else self.cancel_url_default
+
+    def get_cancel_url_alt(self):
+        """Obtiene la URL alternativa de cancelación"""
+        return self.request.GET.get('from', self.get_cancel_url_default())
 
     def get_context_data(self, **kwargs):
+        """Añade la URL de cancelación al contexto"""
         context = super().get_context_data(**kwargs)
-        context['cancel_url'] = self.get_cancel_url()
+        context['cancel_url'] = self.get_cancel_url_alt()
         return context
 
-    def get_cancel_url(self):
-        return reverse('home')
+
+class BaseDeleteViewConCancel(LoginRequiredMixin, CancelUrlMixin, DeleteView):
+    """
+    Vista base para eliminación con URL de cancelación.
+    Requiere definir cancel_url_default o implementar get_cancel_url_default().
+    """
+    success_message = "Registro eliminado exitosamente"
+
+    def delete(self, request, *args, **kwargs):
+        """Elimina el objeto y muestra mensaje de éxito"""
+        response = super().delete(request, *args, **kwargs)
+        messages.success(self.request, self.success_message)
+        return response
 
 
 class InitialFromModelMixin:
+    """
+    Mixin para obtener valores iniciales de un modelo relacionado.
+    """
     related_model = None
     related_model_class = None
     field_map = {}
 
+    def dispatch(self, request, *args, **kwargs):
+        """Valida la configuración del mixin"""
+        if not self.related_model and not self.related_model_class:
+            raise ImproperlyConfigured(
+                "InitialFromModelMixin requires either a definition of "
+                "'related_model' and 'related_model_class' or an implementation "
+                "of 'get_related_object()'"
+            )
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_related_object(self):
+        """Obtiene el objeto relacionado desde los parámetros GET"""
+        obj_id = self.request.GET.get(f'{self.related_model}_id') if self.related_model else None
+        if obj_id and self.related_model_class:
+            return get_object_or_404(self.related_model_class, id=obj_id)
+        return None
+
     def get_initial(self):
+        """Obtiene los valores iniciales del modelo relacionado"""
         initial = super().get_initial()
-        obj_id = self.request.GET.get(f'{self.related_model}_id')
-        if obj_id:
-            obj = get_object_or_404(self.related_model_class, id=obj_id)
+        related_obj = self.get_related_object()
+        
+        if related_obj and self.field_map:
             for field, attr in self.field_map.items():
-                initial[field] = getattr(obj, attr)
+                initial[field] = getattr(related_obj, attr)
+        
         return initial
+    
+# En utils.py o al inicio de vistas_cbv.py
+class FiltroCAIMixin:
+    """
+    Mixin para filtrar querysets según el CAI del usuario (para nutriólogos)
+    """
+    cai_field_name = 'cai'  # Nombre del campo CAI en los modelos
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        
+        # Administradores ven todo
+        if user.is_admin:
+            return queryset
+        
+        # Nutriólogos solo ven los registros de su CAI
+        if user.is_nutriologo and user.cai:
+            filter_kwargs = {self.cai_field_name: user.cai}
+            return queryset.filter(**filter_kwargs)
+        
+        # Jefes de departamento u otros roles (personalizar según necesidades)
+        return queryset

@@ -11,8 +11,8 @@ import json
 import pandas as pd
 
 from sistema_nutricion import settings
-from .utils import BaseDeleteViewConCancel
-from .models import Paciente, Trabajador, SeguimientoTrimestral, SeguimientoTrabajador, Usuario
+from .utils import BaseDeleteViewConCancel, FiltroCAIMixin
+from .models import CAI_CHOICES, Paciente, Trabajador, SeguimientoTrimestral, SeguimientoTrabajador, Usuario
 from .forms import (
     PacienteForm, TrabajadorForm,
     SeguimientoTrimestralForm, SeguimientoTrabajadorForm,
@@ -74,10 +74,19 @@ class HomeView(LoginRequiredMixin, View):
 
 class GestionUsuariosView(LoginRequiredMixin, AdminRequiredMixin, View):
     def get(self, request):
-        usuarios = Usuario.objects.all()
+        usuarios = Usuario.objects.all().order_by('username')
         editar = False
         user_id = request.GET.get('edit')
         usuario_a_editar = None
+
+        # Aplicar filtros
+        rol_filter = request.GET.get('rol')
+        cai_filter = request.GET.get('cai')
+        
+        if rol_filter:
+            usuarios = usuarios.filter(rol=rol_filter)
+        if cai_filter:
+            usuarios = usuarios.filter(cai=cai_filter)
 
         if user_id:
             usuario_a_editar = get_object_or_404(Usuario, id=user_id)
@@ -90,7 +99,10 @@ class GestionUsuariosView(LoginRequiredMixin, AdminRequiredMixin, View):
             'usuarios': usuarios,
             'form': form,
             'editar': editar,
-            'usuario': usuario_a_editar
+            'usuario': usuario_a_editar,
+            'cai_choices': CAI_CHOICES,
+            'filtro_rol': rol_filter,
+            'filtro_cai': cai_filter
         })
 
     def post(self, request):
@@ -104,17 +116,30 @@ class GestionUsuariosView(LoginRequiredMixin, AdminRequiredMixin, View):
             form = UsuarioCreacionForm(request.POST)
 
         if form.is_valid():
-            form.save()
+            usuario = form.save(commit=False)
+            
+            # Manejo especial del CAI
+            if form.cleaned_data.get('rol') == 'nutriologo':
+                usuario.cai = form.cleaned_data.get('cai')
+            else:
+                usuario.cai = None
+            
+            usuario.save()
+            
             mensaje = '[usuarios] Usuario actualizado exitosamente.' if editar else '[usuarios] Usuario agregado exitosamente.'
             messages.success(request, mensaje)
             return redirect('gestionar_usuarios')
 
-        usuarios = Usuario.objects.all()
+        # Si hay errores, volver a mostrar el formulario
+        usuarios = Usuario.objects.all().order_by('username')
         return render(request, 'gestionar_usuarios.html', {
             'usuarios': usuarios,
             'form': form,
             'editar': editar,
-            'usuario': usuario if editar else None
+            'usuario': usuario if editar else None,
+            'cai_choices': CAI_CHOICES,
+            'filtro_rol': request.GET.get('rol'),
+            'filtro_cai': request.GET.get('cai')
         })
 
 class EliminarUsuarioView(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
@@ -133,7 +158,7 @@ class EliminarUsuarioView(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
 # Views Niños
 #-------------------
 
-class RegistroNinoView(RevisionCreateView):
+class RegistroNinoView(FiltroCAIMixin, RevisionCreateView):
     model = Paciente
     form_class = PacienteForm
     template_name = 'registro_ninos.html'
@@ -141,9 +166,19 @@ class RegistroNinoView(RevisionCreateView):
     comment = "Registro de nuevo niño"
     success_message = "[ninos] Niño agregado exitosamente."
 
+    def form_valid(self, form):
+        # Para nutriólogos, asignar automáticamente su CAI
+        if self.request.user.is_nutriologo:
+            form.instance.cai = self.request.user.cai
+        return super().form_valid(form)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['ultimos_ninos'] = Paciente.objects.order_by('-id')[:5]
+        # Filtrar últimos niños por CAI
+        ultimos_ninos = Paciente.objects.all()
+        if self.request.user.is_nutriologo and self.request.user.cai:
+            ultimos_ninos = ultimos_ninos.filter(cai=self.request.user.cai)
+        context['ultimos_ninos'] = ultimos_ninos.order_by('-id')[:5]
         return context
 
 class EditarNinoView(CancelUrlMixin, RevisionUpdateView):
@@ -184,7 +219,7 @@ class EliminarNinoView(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
 # Views Trabajadores
 #-------------------
 
-class RegistroTrabajadorView(RevisionCreateView):
+class RegistroTrabajadorView(FiltroCAIMixin, RevisionCreateView):
     model = Trabajador
     form_class = TrabajadorForm
     template_name = 'registro_trabajadores.html'
@@ -192,9 +227,19 @@ class RegistroTrabajadorView(RevisionCreateView):
     success_message = '[trabajadores] Trabajador registrado exitosamente.'
     comment = "Registro de nuevo trabajador"
 
+    def form_valid(self, form):
+        # Para nutriólogos, asignar automáticamente su CAI
+        if self.request.user.is_nutriologo:
+            form.instance.cai = self.request.user.cai
+        return super().form_valid(form)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['ultimos_trabajadores'] = Trabajador.objects.order_by('-id')[:5]
+        # Filtrar últimos trabajadores por CAI
+        ultimos_trabajadores = Trabajador.objects.all()
+        if self.request.user.is_nutriologo and self.request.user.cai:
+            ultimos_trabajadores = ultimos_trabajadores.filter(cai=self.request.user.cai)
+        context['ultimos_trabajadores'] = ultimos_trabajadores.order_by('-id')[:5]
         return context
 
 class EditarTrabajadorView(LoginRequiredMixin, UpdateView):
@@ -245,7 +290,7 @@ class EliminarTrabajadorView(BaseDeleteViewConCancel, LoginRequiredMixin):
 # Views Seguimientos
 #-------------------
 
-class RegistrarSeguimientoNinoView(InitialFromModelMixin, RevisionCreateView):
+class RegistrarSeguimientoNinoView(FiltroCAIMixin, InitialFromModelMixin, RevisionCreateView):
     model = SeguimientoTrimestral
     form_class = SeguimientoTrimestralForm
     template_name = 'registrar_seguimiento.html'
@@ -262,7 +307,12 @@ class RegistrarSeguimientoNinoView(InitialFromModelMixin, RevisionCreateView):
         'imc': 'imc',
     }
 
-class RegistrarSeguimientoTrabajadorView(InitialFromModelMixin, RevisionCreateView):
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user  # Pasar el usuario al formulario
+        return kwargs
+
+class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, RevisionCreateView):
     model = SeguimientoTrabajador
     form_class = SeguimientoTrabajadorForm
     template_name = 'registrar_seguimiento_trabajador.html'
@@ -278,25 +328,11 @@ class RegistrarSeguimientoTrabajadorView(InitialFromModelMixin, RevisionCreateVi
         'talla': 'talla',
         'imc': 'imc',
     }
-    
-    def get_initial(self):
-        initial = super().get_initial()
-        trabajador_id = self.kwargs.get('trabajador_id')
-        if trabajador_id:
-            trabajador = Trabajador.objects.get(id=trabajador_id)
-            initial['trabajador'] = trabajador.id
-            
-            # Calcular edad
-            if 'edad' not in initial:
-                if trabajador.fecha_nacimiento:
-                    today = date.today()
-                    initial['edad'] = today.year - trabajador.fecha_nacimiento.year - (
-                        (today.month, today.day) < 
-                        (trabajador.fecha_nacimiento.month, trabajador.fecha_nacimiento.day)
-                    )
-                elif trabajador.edad:
-                    initial['edad'] = trabajador.edad
-        return initial
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user  # Pasar el usuario al formulario
+        return kwargs
 
 class ListaSeguimientosGeneralView(LoginRequiredMixin, View):
     def get(self, request):
@@ -329,12 +365,18 @@ class SeguimientosTrabajadorView(LoginRequiredMixin, View):
         seguimientos = SeguimientoTrabajador.objects.filter(trabajador=trabajador)
         return render(request, 'seguimientos_trabajador.html', {'trabajador': trabajador, 'seguimientos': seguimientos})
 
-class ListaSeguimientosView(LoginRequiredMixin, View):
+class ListaSeguimientosView(FiltroCAIMixin, LoginRequiredMixin, View):
     def get(self, request):
         q_nino = request.GET.get('q_nino', '')
         q_trabajador = request.GET.get('q_trabajador', '')
+        
+        # Obtener querysets base filtrados por CAI si es necesario
         seguimientos_ninos = SeguimientoTrimestral.objects.select_related('paciente')
         seguimientos_trabajadores = SeguimientoTrabajador.objects.select_related('trabajador')
+        
+        if hasattr(self, 'get_queryset'):
+            seguimientos_ninos = self.get_queryset().filter(model=SeguimientoTrimestral)
+            seguimientos_trabajadores = self.get_queryset().filter(model=SeguimientoTrabajador)
 
         if q_nino:
             seguimientos_ninos = seguimientos_ninos.filter(paciente__nombre__icontains=q_nino)
@@ -352,20 +394,29 @@ class ListaSeguimientosView(LoginRequiredMixin, View):
 # Views Historial
 #-------------------
 
-class HistorialView(LoginRequiredMixin, TemplateView):
+class HistorialView(FiltroCAIMixin, LoginRequiredMixin, TemplateView):
     template_name = 'historial.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         q_nino = self.request.GET.get('q_nino', '')
         q_trabajador = self.request.GET.get('q_trabajador', '')
+        
+        # Filtrar pacientes y trabajadores según CAI
+        pacientes = Paciente.objects.all()
+        trabajadores = Trabajador.objects.all()
+        
+        if hasattr(self, 'get_queryset'):  # Aplicar filtro CAI si está disponible
+            pacientes = self.get_queryset().filter(model=Paciente) if hasattr(self, 'model') else pacientes
+            trabajadores = self.get_queryset().filter(model=Trabajador) if hasattr(self, 'model') else trabajadores
+        
         context.update({
-            'pacientes': Paciente.objects.all(),
-            'trabajadores': Trabajador.objects.all(),
+            'pacientes': pacientes,
+            'trabajadores': trabajadores,
             'q_nino': q_nino,
             'q_trabajador': q_trabajador,
-            'resultados_ninos': Paciente.objects.filter(nombre__icontains=q_nino) if q_nino else [],
-            'resultados_trabajadores': Trabajador.objects.filter(nombre__icontains=q_trabajador) if q_trabajador else [],
+            'resultados_ninos': pacientes.filter(nombre__icontains=q_nino) if q_nino else [],
+            'resultados_trabajadores': trabajadores.filter(nombre__icontains=q_trabajador) if q_trabajador else [],
         })
         return context
 
@@ -402,20 +453,22 @@ class ExportarHistorialExcelView(LoginRequiredMixin, View):
 # Views Reportes
 #-------------------
 
-class ReportesView(LoginRequiredMixin, TemplateView):
+class ReportesView(FiltroCAIMixin, LoginRequiredMixin, TemplateView):
     template_name = 'reportes.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Pacientes (niños) con paginación
-        pacientes = Paciente.objects.all().order_by('nombre')
+        # Pacientes (niños) con paginación - ya filtrados por CAI
+        pacientes = self.get_queryset().filter(model=Paciente) if hasattr(self, 'model') else Paciente.objects.all()
+        pacientes = pacientes.order_by('nombre')
         paginator_pacientes = Paginator(pacientes, 10)
         page_pacientes = self.request.GET.get('page_pacientes', 1)
         context['ninos_page'] = paginator_pacientes.get_page(page_pacientes)
         
-        # Trabajadores con paginación
-        trabajadores = Trabajador.objects.all().order_by('nombre')
+        # Trabajadores con paginación - ya filtrados por CAI
+        trabajadores = self.get_queryset().filter(model=Trabajador) if hasattr(self, 'model') else Trabajador.objects.all()
+        trabajadores = trabajadores.order_by('nombre')
         paginator_trabajadores = Paginator(trabajadores, 10)
         page_trabajadores = self.request.GET.get('page_trabajadores', 1)
         context['trabajadores_page'] = paginator_trabajadores.get_page(page_trabajadores)
@@ -534,7 +587,13 @@ def buscar_ninos_ajax(request):
     term = request.GET.get('term', '')
     page = request.GET.get('page', 1)
 
-    ninos = Paciente.objects.filter(nombre__icontains=term).order_by('nombre')
+    ninos = Paciente.objects.filter(nombre__icontains=term)
+    
+    # Filtrar por CAI si es nutriólogo
+    if request.user.is_nutriologo and request.user.cai:
+        ninos = ninos.filter(cai=request.user.cai)
+    
+    ninos = ninos.order_by('nombre')
     paginator = Paginator(ninos, 10)
     pagina = paginator.get_page(page)
 
@@ -559,7 +618,13 @@ def buscar_trabajadores_ajax(request):
     term = request.GET.get('term', '')
     page = request.GET.get('page', 1)
 
-    trabajadores = Trabajador.objects.filter(nombre__icontains=term).order_by('nombre')
+    trabajadores = Trabajador.objects.filter(nombre__icontains=term)
+    
+    # Filtrar por CAI si es nutriólogo
+    if request.user.is_nutriologo and request.user.cai:
+        trabajadores = trabajadores.filter(cai=request.user.cai)
+    
+    trabajadores = trabajadores.order_by('nombre')
     paginator = Paginator(trabajadores, 10)
     pagina = paginator.get_page(page)
 

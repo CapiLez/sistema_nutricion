@@ -44,6 +44,22 @@
                     {% endfor %}
                 </div>
             {% endfor %}
+            
+            <!-- Campo CAI solo para nutriólogos -->
+            {% if form.instance.rol == 'nutriologo' or form.data.rol == 'nutriologo' or not form.instance.pk %}
+            <div class="form-group">
+                <select name="cai" id="id_cai" class="form-control">
+                    <option value="">Seleccione un CAI</option>
+                    {% for cai_value, cai_name in form.fields.cai.choices %}
+                        <option value="{{ cai_value }}" 
+                            {% if form.instance.cai == cai_value %}selected{% endif %}>
+                            {{ cai_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            
             <div class="form-buttons">
                 <button type="submit" class="btn btn-{% if editar %}warning{% else %}success{% endif %}">
                     <i class="fas {% if editar %}fa-edit{% else %}fa-plus-circle{% endif %}"></i>
@@ -61,34 +77,77 @@
     <!-- Tabla de usuarios -->
     <div class="tabla-usuarios">
         <h3>Usuarios Registrados</h3>
+        
+        <!-- Filtros -->
+        <div class="filtros-usuarios mb-3">
+            <form method="GET" class="form-inline">
+                <div class="form-group mr-2">
+                    <select name="rol" class="form-control">
+                        <option value="">Todos los roles</option>
+                        <option value="administrador" {% if request.GET.rol == 'administrador' %}selected{% endif %}>Administradores</option>
+                        <option value="nutriologo" {% if request.GET.rol == 'nutriologo' %}selected{% endif %}>Nutriólogos</option>
+                        <option value="jefe_departamento" {% if request.GET.rol == 'jefe_departamento' %}selected{% endif %}>Jefes de Departamento</option>
+                    </select>
+                </div>
+                <div class="form-group mr-2">
+                    <select name="cai" class="form-control">
+                        <option value="">Todos los CAIs</option>
+                        {% for cai_value, cai_name in cai_choices %}
+                            <option value="{{ cai_value }}" {% if request.GET.cai == cai_value %}selected{% endif %}>
+                                {{ cai_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+                <a href="{% url 'gestionar_usuarios' %}" class="btn btn-secondary ml-2">
+                    <i class="fas fa-times"></i> Limpiar
+                </a>
+            </form>
+        </div>
+        
         <div class="table-responsive">
             <table class="table">
                 <thead>
                     <tr>
                         <th>Nombre</th>
                         <th>Usuario</th>
-                        <th>Administrador</th>
+                        <th>Rol</th>
+                        <th>CAI</th>
                         <th class="acciones-cell">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for usuario in usuarios %}
                     <tr>
-                        <td>{{ usuario.get_full_name }}</td>
+                        <td>{{ usuario.get_full_name|default:usuario.username }}</td>
                         <td>{{ usuario.username }}</td>
-                        <td>{{ usuario.is_admin|yesno:"Sí,No" }}</td>
+                        <td>{{ usuario.get_rol_display }}</td>
+                        <td>
+                            {% if usuario.rol == 'nutriologo' %}
+                                {{ usuario.get_cai_display|default:"No asignado" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
                         <td class="acciones-cell">
-                            <a href="{% url 'gestionar_usuarios' %}?edit={{ usuario.id }}" class="btn btn-warning btn-sm">
-                                <i class="fas fa-edit"></i> Editar
-                            </a>
-                            <a href="{% url 'eliminar_usuario' usuario.id %}" class="btn btn-danger btn-sm">
-                                <i class="fas fa-trash"></i> Eliminar
-                            </a>                            
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'gestionar_usuarios' %}?edit={{ usuario.id }}" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if not usuario.is_superuser %}
+                                <a href="{% url 'eliminar_usuario' usuario.id %}" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4">No hay usuarios registrados.</td>
+                        <td colspan="5">No hay usuarios registrados.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -96,4 +155,33 @@
         </div>
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Mostrar/ocultar campo CAI según el rol seleccionado
+    function toggleCAIField() {
+        const rol = $('#id_rol').val();
+        if (rol === 'nutriologo') {
+            $('#id_cai').closest('.form-group').show();
+        } else {
+            $('#id_cai').closest('.form-group').hide();
+        }
+    }
+    
+    // Inicializar estado
+    toggleCAIField();
+    
+    // Escuchar cambios en el campo de rol
+    $('#id_rol').change(toggleCAIField);
+    
+    // Confirmación antes de eliminar
+    $('.btn-danger').click(function(e) {
+        if (!confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}
 {% endblock %}

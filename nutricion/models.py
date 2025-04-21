@@ -15,6 +15,7 @@ CAI_CHOICES = [
 # Usuario con roles personalizados
 class Usuario(AbstractUser):
     telefono = models.CharField(max_length=15, blank=True, null=True)
+    cai = models.CharField(max_length=100, choices=CAI_CHOICES, blank=True, null=True)
 
     ROLES = [
         ('administrador', 'Administrador'),
