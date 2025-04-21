@@ -110,9 +110,13 @@
                     <button type="submit" class="btn btn-save">
                         <i class="fas fa-save"></i> Guardar Cambios
                     </button>
-                    <a href="{% url cancel_url %}" class="btn btn-cancel">
-                        <i class="fas fa-times-circle"></i> Cancelar
-                    </a>
+                    
+                    {# Solución robusta para el botón de cancelar #}
+                    {% with cancel_url=cancel_url|default:'historial' %}
+                        <a href="{% url cancel_url %}" class="btn btn-cancel">
+                            <i class="fas fa-times-circle"></i> Cancelar
+                        </a>
+                    {% endwith %}
                 </div>
             </form>
         </div>

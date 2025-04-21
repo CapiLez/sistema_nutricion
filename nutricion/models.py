@@ -1,3 +1,4 @@
+from datetime import date
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
@@ -121,6 +122,12 @@ class SeguimientoTrabajador(models.Model):
     edad = models.IntegerField()
     peso = models.FloatField()
     talla = models.FloatField()
+    circunferencia_abdominal = models.FloatField(
+        verbose_name="Circunferencia abdominal (cm)",
+        null=True,
+        blank=True,
+        help_text="Medida de la circunferencia abdominal en centímetros"
+    )
     fecha_valoracion = models.DateField()
 
     def __str__(self):

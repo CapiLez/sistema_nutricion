@@ -1,15 +1,16 @@
-from django.views.generic import DeleteView, ListView, View, TemplateView
+from datetime import date
+from django.views.generic import DeleteView, ListView, View, TemplateView, UpdateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.http import Http404, HttpResponse, JsonResponse
 from reversion.models import Version
-from django.db.models import Avg
 from django.core.paginator import Paginator
-from django.utils.safestring import mark_safe
 import json
 import pandas as pd
+
+from sistema_nutricion import settings
 from .utils import BaseDeleteViewConCancel
 from .models import Paciente, Trabajador, SeguimientoTrimestral, SeguimientoTrabajador, Usuario
 from .forms import (
@@ -196,17 +197,29 @@ class RegistroTrabajadorView(RevisionCreateView):
         context['ultimos_trabajadores'] = Trabajador.objects.order_by('-id')[:5]
         return context
 
-class EditarTrabajadorView(CancelUrlMixin, RevisionUpdateView):
+class EditarTrabajadorView(LoginRequiredMixin, UpdateView):
     model = Trabajador
     form_class = TrabajadorForm
     template_name = 'editar_trabajador.html'
-    comment = "Edición de trabajador"
-    success_message = "[trabajadores] Trabajador actualizado correctamente."
-    cancel_url_default = 'registro_trabajadores'
-    cancel_url_alt = 'historial'
-
+    
     def get_success_url(self):
-        return reverse_lazy(self.cancel_url_alt if 'from' in self.request.GET else self.cancel_url_default)
+        # Redirige a 'historial' si viene de ahí, sino a 'reportes'
+        return reverse_lazy('historial') if 'from' in self.request.GET else reverse_lazy('reportes')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Define explícitamente la URL de cancelación
+        context['cancel_url'] = 'historial' if 'from' in self.request.GET else 'reportes'
+        return context
+    
+    def form_valid(self, form):
+        instance = form.save(commit=False)
+        # Calcula automáticamente el IMC
+        if instance.peso and instance.talla:
+            instance.imc = instance.peso / ((instance.talla/100) ** 2)
+        instance.save()
+        messages.success(self.request, "Trabajador actualizado correctamente")
+        return super().form_valid(form)
 
 class EliminarTrabajadorView(BaseDeleteViewConCancel, LoginRequiredMixin):
     model = Trabajador
@@ -260,10 +273,30 @@ class RegistrarSeguimientoTrabajadorView(InitialFromModelMixin, RevisionCreateVi
     related_model_class = Trabajador
     field_map = {
         'trabajador': 'id',
+        'edad': 'edad',
         'peso': 'peso',
         'talla': 'talla',
         'imc': 'imc',
     }
+    
+    def get_initial(self):
+        initial = super().get_initial()
+        trabajador_id = self.kwargs.get('trabajador_id')
+        if trabajador_id:
+            trabajador = Trabajador.objects.get(id=trabajador_id)
+            initial['trabajador'] = trabajador.id
+            
+            # Calcular edad
+            if 'edad' not in initial:
+                if trabajador.fecha_nacimiento:
+                    today = date.today()
+                    initial['edad'] = today.year - trabajador.fecha_nacimiento.year - (
+                        (today.month, today.day) < 
+                        (trabajador.fecha_nacimiento.month, trabajador.fecha_nacimiento.day)
+                    )
+                elif trabajador.edad:
+                    initial['edad'] = trabajador.edad
+        return initial
 
 class ListaSeguimientosGeneralView(LoginRequiredMixin, View):
     def get(self, request):
@@ -441,49 +474,37 @@ class ReportePacienteView(ReporteBaseView):
     seguimiento_model = SeguimientoTrimestral
     id_kwarg = 'pk'  # O usa 'paciente_id' si prefieres mantener ese nombre
 
-class ReporteTrabajadorView(ReporteBaseView):
-    template_name = 'reporte_trabajador.html'
+class ReporteTrabajadorView(LoginRequiredMixin, DetailView):
     model = Trabajador
-    seguimiento_model = SeguimientoTrabajador
+    template_name = 'reporte_trabajador.html'
+    context_object_name = 'trabajador'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        trabajador = self.get_object()
+        trabajador = self.object
         
-        # Datos para debug
-        debug_data = {
-            'id': trabajador.id,
-            'nombre': trabajador.nombre,
-            'edad': trabajador.edad,
-            'sexo': trabajador.get_sexo_display(),
-            'cargo': trabajador.cargo,
-            'departamento': trabajador.departamento,
-            'fecha_ingreso': trabajador.fecha_ingreso,
-            'imc': trabajador.imc
+        # Forzar la actualización de los datos desde la base de datos
+        trabajador.refresh_from_db()
+        
+        seguimientos = SeguimientoTrabajador.objects.filter(
+            trabajador=trabajador
+        ).order_by('fecha_valoracion')
+        
+        ultimo_seguimiento = seguimientos.last() if seguimientos.exists() else None
+        
+        datos = {
+            'fechas': [s.fecha_valoracion.strftime('%Y-%m-%d') for s in seguimientos],
+            'pesos': [float(s.peso) for s in seguimientos],
+            'imcs': [float(s.imc) for s in seguimientos],
         }
         
         context.update({
-            'trabajador': trabajador,
-            'seguimientos': self.get_seguimientos(trabajador),
-            'ultimo_seguimiento': self.get_seguimientos(trabajador).first(),
-            'datos_json': self.get_datos_graficos(trabajador),
-            'debug_data': debug_data,  # Datos para debug
-            'debug_mode': True
+            'seguimientos': seguimientos,
+            'ultimo_seguimiento': ultimo_seguimiento,
+            'datos_json': json.dumps(datos),
+            'debug_mode': settings.DEBUG  # Solo en modo desarrollo
         })
         return context
-
-    def get_seguimientos(self, trabajador):
-        return self.seguimiento_model.objects.filter(
-            trabajador=trabajador
-        ).order_by('fecha_valoracion')
-
-    def get_datos_graficos(self, trabajador):
-        seguimientos = self.get_seguimientos(trabajador)
-        return {
-            'fechas': [s.fecha_valoracion.strftime('%Y-%m-%d') for s in seguimientos],
-            'pesos': [float(s.peso) for s in seguimientos],
-            'imcs': [float(s.imc) for s in seguimientos]
-        }
 
 #-------------------
 # Graficación de IMC

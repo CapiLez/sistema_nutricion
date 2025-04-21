@@ -6,90 +6,266 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'nutricion/css/reportes.css' %}">
 <style>
+    /* Estilos para el reporte individual de niño (igual al de trabajadores) */
     .reporte-container {
-        background-color: #fff;
+        background-color: #f5f7fa;
+        padding: 25px;
+        margin: 20px auto;
+        max-width: 1200px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         border-radius: 10px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        padding: 30px;
-        margin-bottom: 30px;
+        color: #3a3a3a;
+        font-family: 'Poppins', 'Roboto', sans-serif;
     }
-    .datos-section {
-        background-color: #f8f9fa;
-        border-radius: 8px;
+
+    .header-section {
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e0e6ed;
+        text-align: center;
+    }
+
+    .header-section h1 {
+        color: #2c3e50;
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .header-section h2 {
+        color: #1abc9c;
+        font-size: 22px;
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+
+    /* Secciones del reporte */
+    .datos-section, 
+    .graficas-section, 
+    .seguimientos-section {
+        background-color: white;
         padding: 20px;
-        margin-bottom: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        margin-bottom: 25px;
+        border-left: 4px solid #1abc9c;
     }
+
+    .datos-section h3,
+    .graficas-section h3, 
+    .seguimientos-section h3 {
+        color: #2c3e50;
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f0f4f8;
+        display: flex;
+        align-items: center;
+    }
+
+    .datos-section h3 i,
+    .graficas-section h3 i, 
+    .seguimientos-section h3 i {
+        margin-right: 10px;
+        color: #1abc9c;
+    }
+
+    /* Datos básicos */
+    .datos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+    }
+
+    .dato-item {
+        display: flex;
+        align-items: center;
+    }
+
+    .dato-item i {
+        margin-right: 10px;
+        color: #3498db;
+        width: 20px;
+        text-align: center;
+    }
+
+    /* Tablas */
+    .table-responsive {
+        overflow-x: auto;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .seguimientos-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background-color: white;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .seguimientos-table th {
+        background: linear-gradient(to right, #2c3e50, #34495e);
+        color: white;
+        padding: 14px 16px;
+        text-align: left;
+        font-weight: 500;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .seguimientos-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f0f4f8;
+        text-align: left;
+        font-size: 14px;
+        color: #4a5568;
+    }
+
+    .seguimientos-table tr:nth-child(even) {
+        background-color: #f8fafc;
+    }
+
+    .seguimientos-table tr:hover {
+        background-color: #f0f7f5;
+    }
+
+    /* Gráficos */
+    .graficas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
     .grafica-container {
         background: white;
         border-radius: 8px;
         padding: 15px;
-        margin-bottom: 25px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     }
-    .seguimientos-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
+
+    .grafica-container h4 {
+        color: #2c3e50;
+        font-size: 16px;
+        margin-bottom: 15px;
+        text-align: center;
     }
-    .seguimientos-table th, 
-    .seguimientos-table td {
-        padding: 12px 15px;
-        text-align: left;
-        border-bottom: 1px solid #ddd;
-    }
-    .seguimientos-table th {
-        background-color: #4e73df;
-        color: white;
-        position: sticky;
-        top: 0;
-    }
-    .seguimientos-table tr:nth-child(even) {
-        background-color: #f9f9f9;
-    }
-    .seguimientos-table tr:hover {
-        background-color: #f1f8ff;
-    }
+
+    /* Sin datos */
     .no-data {
         text-align: center;
         padding: 20px;
-        color: #666;
+        color: #718096;
         font-style: italic;
+        background-color: #f8fafc;
+        border-radius: 8px;
+        margin: 20px 0;
+        border: 1px dashed #cbd5e0;
     }
-    .recomendaciones-box {
-        background-color: #e8f4fc;
-        border-left: 4px solid #4e73df;
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 4px;
+
+    .no-data i {
+        font-size: 24px;
+        margin-bottom: 10px;
+        color: #a0aec0;
     }
-    .table-responsive {
-        overflow-x: auto;
-        max-height: 500px;
-        overflow-y: auto;
+
+    /* Botones */
+    .action-buttons {
+        text-align: center;
+        margin: 30px 0 20px;
+        padding-top: 20px;
+        border-top: 1px solid #f0f4f8;
     }
-    .badge-imc {
-        display: inline-block;
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: bold;
-    }
-    .imc-bajo { background-color: #ffc107; color: #333; }
-    .imc-normal { background-color: #28a745; color: white; }
-    .imc-sobrepeso { background-color: #fd7e14; color: white; }
-    .imc-obesidad { background-color: #dc3545; color: white; }
-    .salud-table {
-        width: 100%;
-        margin-top: 15px;
-    }
-    .salud-table th {
-        background-color: #6c757d;
+
+    .action-buttons .btn {
+        padding: 10px 24px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         color: white;
-        padding: 10px;
+        border: none;
+        cursor: pointer;
     }
-    .salud-table td {
-        padding: 10px;
-        border-bottom: 1px solid #dee2e6;
+
+    .btn-primary {
+        background: linear-gradient(to right, #2c3e50, #34495e);
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(to right, #34495e, #2c3e50);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(to right, #1abc9c, #16a085);
+        margin-left: 10px;
+    }
+
+    .btn-secondary:hover {
+        background: linear-gradient(to right, #16a085, #1abc9c);
+        transform: translateY(-2px);
+    }
+
+    .action-buttons .btn i {
+        margin-right: 8px;
+        font-size: 14px;
+        transition: transform 0.3s;
+    }
+
+    .action-buttons .btn:hover i {
+        transform: translateX(-4px);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .reporte-container {
+            padding: 15px;
+            margin: 10px;
+        }
+        
+        .header-section h1 {
+            font-size: 20px;
+        }
+        
+        .header-section h2 {
+            font-size: 18px;
+        }
+        
+        .datos-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .graficas-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .seguimientos-table th, 
+        .seguimientos-table td {
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .btn-secondary {
+            margin-left: 0;
+            margin-top: 10px;
+        }
     }
 </style>
 {% endblock %}
@@ -97,99 +273,124 @@
 {% block content %}
 <div class="container reporte-container">
     <!-- Encabezado del Reporte -->
-    <div class="header-section text-center mb-4">
-        <h1><i class="fas fa-file-medical-alt"></i> Reporte Nutricional Laboral</h1>
-        <h2 class="text-primary">{{ trabajador.nombre }}</h2>
-        <p class="text-muted">CURP: {{ trabajador.curp|default:"No proporcionada" }}</p>
+    <div class="header-section">
+        <h1><i class="fas fa-file-medical"></i> Reporte Nutricional Laboral</h1>
+        <h2>{{ trabajador.nombre }}</h2>
     </div>
 
     <!-- Sección de Datos Básicos -->
     <div class="datos-section">
         <h3><i class="fas fa-info-circle"></i> Datos Laborales</h3>
         
-        <table class="salud-table">
-            <tr>
-                <th colspan="2">Información Personal</th>
-                <th colspan="2">Datos Laborales</th>
-            </tr>
-            <tr>
-                <td><strong><i class="fas fa-id-card"></i> CAI:</strong></td>
-                <td>{{ trabajador.cai }}</td>
-                <td><strong><i class="fas fa-id-badge"></i> Cargo:</strong></td>
-                <td>{{ trabajador.cargo }}</td>
-            </tr>
-            <tr>
-                <td><strong><i class="fas fa-birthday-cake"></i> Edad:</strong></td>
-                <td>{% if trabajador.edad %}{{ trabajador.edad }} años{% else %}No especificada{% endif %}</td>
-                <td><strong><i class="fas fa-building"></i> Departamento:</strong></td>
-                <td>{{ trabajador.departamento|default:"No especificado" }}</td>
-            </tr>
-            <tr>
-                <td><strong><i class="fas fa-venus-mars"></i> Sexo:</strong></td>
-                <td>{% if trabajador.sexo %}{{ trabajador.get_sexo_display }}{% else %}No especificado{% endif %}</td>
-                <td><strong><i class="fas fa-calendar-day"></i> Fecha Ingreso:</strong></td>
-                <td>{% if trabajador.fecha_ingreso %}{{ trabajador.fecha_ingreso|date:"d/m/Y" }}{% else %}No especificada{% endif %}</td>
-            </tr>
-            <tr>
-                <td><strong><i class="fas fa-ruler"></i> Circ. Abdominal:</strong></td>
-                <td>{% if trabajador.circunferencia_abdominal %}{{ trabajador.circunferencia_abdominal|floatformat:2 }} cm{% else %}No medida{% endif %}</td>
-                <td><strong><i class="fas fa-weight"></i> IMC:</strong></td>
-                <td>
-                    {{ trabajador.imc|floatformat:2 }}
-                    <span class="badge-imc 
-                        {% if trabajador.imc < 18.5 %}imc-bajo
-                        {% elif trabajador.imc < 25 %}imc-normal
-                        {% elif trabajador.imc < 30 %}imc-sobrepeso
-                        {% else %}imc-obesidad
-                        {% endif %}">
-                        {% if trabajador.imc < 18.5 %}Bajo peso
-                        {% elif trabajador.imc < 25 %}Normal
-                        {% elif trabajador.imc < 30 %}Sobrepeso
-                        {% else %}Obesidad
-                        {% endif %}
-                    </span>
-                </td>
-            </tr>
-        </table>
-    </div>
-
-    <!-- Sección de Salud -->
-    <div class="salud-section mt-4">
-        <h3><i class="fas fa-heartbeat"></i> Estado de Salud</h3>
-        <table class="salud-table">
-            <tr>
-                <th style="width: 50%;">Enfermedades Preexistentes</th>
-                <th style="width: 50%;">Observaciones</th>
-            </tr>
-            <tr>
-                <td>{{ trabajador.enfermedades_preexistentes|default:"Ninguna registrada"|linebreaks }}</td>
-                <td>{{ trabajador.observaciones|default:"Ninguna observación"|linebreaks }}</td>
-            </tr>
-        </table>
-    </div>
-
-    <!-- Sección de Evolución Nutricional -->
-    <div class="graficas-section mt-5">
-        <h3><i class="fas fa-chart-line"></i> Evolución Nutricional</h3>
-        
-        <div class="row">
-            <div class="col-md-6">
-                <div class="grafica-container">
-                    <h4>Evolución de Peso (kg)</h4>
-                    <canvas id="graficaPeso" height="250"></canvas>
+        <div class="datos-grid">
+            <div class="dato-item">
+                <i class="fas fa-id-card"></i>
+                <div>
+                    <strong>CAI:</strong> {{ trabajador.cai }}
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="grafica-container">
-                    <h4>Evolución de IMC</h4>
-                    <canvas id="graficaIMC" height="250"></canvas>
+            
+            <div class="dato-item">
+                <i class="fas fa-id-badge"></i>
+                <div>
+                    <strong>Puesto:</strong> {{ trabajador.cargo }}
+                </div>
+            </div>
+            
+            <div class="dato-item">
+                <i class="fas fa-building"></i>
+                <div>
+                    <strong>Departamento:</strong> {{ trabajador.departamento|default:"No especificado" }}
+                </div>
+            </div>
+            
+            <div class="dato-item">
+                <i class="fas fa-calendar-day"></i>
+                <div>
+                    <strong>Fecha Ingreso:</strong> 
+                    {{ trabajador.fecha_ingreso|date:"d/m/Y"|default:"No especificada" }}
+                </div>
+            </div>
+            
+            <div class="dato-item">
+                <i class="fas fa-weight"></i>
+                <div>
+                    <strong>Último IMC:</strong> 
+                    {{ trabajador.imc|floatformat:2|default:"No calculado" }}
+                    {% if trabajador.imc %}
+                        <span class="badge-imc 
+                            {% if trabajador.imc < 18.5 %}imc-bajo
+                            {% elif trabajador.imc < 25 %}imc-normal
+                            {% elif trabajador.imc < 30 %}imc-sobrepeso
+                            {% else %}imc-obesidad
+                            {% endif %}">
+                            {{ trabajador.get_clasificacion_imc }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="dato-item">
+                <i class="fas fa-calendar-alt"></i>
+                <div>
+                    <strong>Fecha Registro:</strong> 
+                    {{ trabajador.fecha_registro|date:"d/m/Y H:i" }}
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Sección de Salud -->
+    <div class="salud-section">
+        <h3><i class="fas fa-heartbeat"></i> Estado de Salud</h3>
+        
+        <div class="datos-grid">
+            <div class="dato-item">
+                <i class="fas fa-file-medical"></i>
+                <div>
+                    <strong>Circunferencia Abdominal:</strong> 
+                    {{ trabajador.circunferencia_abdominal|floatformat:2|default:"No medida" }} cm
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <h4><i class="fas fa-disease"></i> Enfermedades Preexistentes</h4>
+            <div class="health-info">
+                {{ trabajador.enfermedades_preexistentes|default:"Ninguna registrada"|linebreaks }}
+            </div>
+            
+            <h4 class="mt-3"><i class="fas fa-notes-medical"></i> Observaciones</h4>
+            <div class="health-info">
+                {{ trabajador.observaciones|default:"Ninguna observación"|linebreaks }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Gráficas -->
+    <div class="graficas-section">
+        <h3><i class="fas fa-chart-line"></i> Evolución Nutricional</h3>
+        
+        <div class="graficas-grid">
+            <div class="grafica-container">
+                <h4>Evolución de Peso (kg)</h4>
+                <canvas id="graficaPeso" height="250"></canvas>
+            </div>
+            
+            <div class="grafica-container">
+                <h4>Evolución de IMC</h4>
+                <canvas id="graficaIMC" height="250"></canvas>
+            </div>
+            
+            <div class="grafica-container">
+                <h4>Circunferencia Abdominal (cm)</h4>
+                <canvas id="graficaCircAbdominal" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
     <!-- Sección de Historial de Seguimientos -->
-    <div class="seguimientos-section mt-5">
+    <div class="seguimientos-section">
         <h3><i class="fas fa-history"></i> Historial de Evaluaciones</h3>
         
         {% if seguimientos %}
@@ -198,17 +399,18 @@
                 <thead>
                     <tr>
                         <th>Fecha</th>
+                        <th>Edad</th>
                         <th>Peso (kg)</th>
                         <th>IMC</th>
-                        <th>Circ. Abdominal (cm)</th>
+                        <th>Circ. Abdominal</th>
                         <th>Diagnóstico</th>
-                        <th>Recomendaciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for seg in seguimientos %}
                     <tr>
                         <td>{{ seg.fecha_valoracion|date:"d/m/Y" }}</td>
+                        <td>{{ seg.edad }}</td>
                         <td>{{ seg.peso|floatformat:2 }}</td>
                         <td>
                             {{ seg.imc|floatformat:2 }}
@@ -225,17 +427,8 @@
                                 {% endif %}
                             </span>
                         </td>
-                        <td>{% if seg.circunferencia_abdominal %}{{ seg.circunferencia_abdominal|floatformat:2 }}{% else %}-{% endif %}</td>
+                        <td>{{ seg.circunferencia_abdominal|floatformat:2|default:"-" }}</td>
                         <td>{{ seg.dx|default:"-" }}</td>
-                        <td>
-                            {% if seg.recomendaciones %}
-                            <div class="recomendaciones-box" title="Haz clic para ver completo">
-                                {{ seg.recomendaciones|truncatechars:100 }}
-                            </div>
-                            {% else %}
-                            -
-                            {% endif %}
-                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -249,11 +442,11 @@
     </div>
 
     <!-- Botones de Acción -->
-    <div class="text-center mt-4">
+    <div class="action-buttons">
         <a href="{% url 'reportes' %}" class="btn btn-primary">
             <i class="fas fa-arrow-left"></i> Volver a Reportes
         </a>
-        <button onclick="window.print()" class="btn btn-secondary ml-2">
+        <button onclick="window.print()" class="btn btn-secondary">
             <i class="fas fa-print"></i> Imprimir Reporte
         </button>
     </div>
@@ -305,38 +498,42 @@ function crearGrafico(id, label, data, borderColor, backgroundColor) {
 
 // Crear gráficos cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
-    // Gráfico de Peso
-    if (datos.pesos && datos.pesos.length > 0) {
-        crearGrafico(
-            'graficaPeso', 
-            'Peso (kg)', 
-            datos.pesos, 
-            'rgba(78, 115, 223, 1)', 
-            'rgba(78, 115, 223, 0.2)'
-        );
-    }
+    try {
+        // Gráfico de Peso
+        if (datos.pesos && datos.pesos.length > 0) {
+            crearGrafico(
+                'graficaPeso', 
+                'Peso (kg)', 
+                datos.pesos, 
+                'rgba(78, 115, 223, 1)', 
+                'rgba(78, 115, 223, 0.2)'
+            );
+        }
 
-    // Gráfico de IMC
-    if (datos.imcs && datos.imcs.length > 0) {
-        crearGrafico(
-            'graficaIMC', 
-            'Índice de Masa Corporal', 
-            datos.imcs, 
-            'rgba(54, 185, 204, 1)', 
-            'rgba(54, 185, 204, 0.2)'
-        );
+        // Gráfico de IMC
+        if (datos.imcs && datos.imcs.length > 0) {
+            crearGrafico(
+                'graficaIMC', 
+                'Índice de Masa Corporal', 
+                datos.imcs, 
+                'rgba(54, 185, 204, 1)', 
+                'rgba(54, 185, 204, 0.2)'
+            );
+        }
+        
+        // Gráfico de Circunferencia Abdominal
+        if (datos.circ_abdominal && datos.circ_abdominal.length > 0) {
+            crearGrafico(
+                'graficaCircAbdominal', 
+                'Circunferencia Abdominal (cm)', 
+                datos.circ_abdominal, 
+                'rgba(155, 89, 182, 1)', 
+                'rgba(155, 89, 182, 0.2)'
+            );
+        }
+    } catch (error) {
+        console.error('Error al cargar gráficos:', error);
     }
-    
-    // Mostrar recomendaciones completas en modal al hacer clic
-    document.querySelectorAll('.recomendaciones-box').forEach(box => {
-        box.addEventListener('click', function() {
-            const segId = this.closest('tr').getAttribute('data-seg-id');
-            const recomendacion = this.textContent.trim();
-            if (recomendacion && recomendacion !== '-') {
-                alert(`Recomendación completa del ${this.closest('tr').querySelector('td').textContent}:\n\n${recomendacion}`);
-            }
-        });
-    });
 });
 </script>
 {% endblock %}

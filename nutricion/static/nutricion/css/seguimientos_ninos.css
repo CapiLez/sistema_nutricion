@@ -1,85 +1,116 @@
-/* Estilo base de la página */
+/* Estilos para la página de seguimientos nutricionales */
 .seguimientos-page {
-    font-family: 'Arial', sans-serif;
-    background-color: #ffffff;
-    padding: 30px;
+    font-family: 'Poppins', 'Roboto', sans-serif;
+    background-color: #f5f7fa;
+    padding: 25px;
     margin: 20px auto;
     max-width: 1200px;
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     border-radius: 10px;
+    color: #3a3a3a;
 }
 
-/* Encabezados */
 .seguimientos-page h2 {
     color: #2c3e50;
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 600;
     margin-bottom: 25px;
-    text-align: center;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #eaeaea;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e0e6ed;
+    position: relative;
 }
 
-/* Tabla */
+.seguimientos-page h2:after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(to right, #1abc9c, #3498db);
+}
+
+/* Tabla de seguimientos */
 .table-responsive {
     overflow-x: auto;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
     border-radius: 8px;
-    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .data-table {
     width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .data-table th {
-    background-color: #3498db;
+    background: linear-gradient(to right, #2c3e50, #34495e);
     color: white;
-    padding: 12px 15px;
+    padding: 14px 16px;
     text-align: left;
     font-weight: 500;
-    position: sticky;
-    top: 0;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .data-table td {
-    padding: 12px 15px;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f4f8;
     text-align: left;
+    font-size: 14px;
+    color: #4a5568;
+    vertical-align: top;
 }
 
 .data-table tr:nth-child(even) {
-    background-color: #f8fafb;
+    background-color: #f8fafc;
 }
 
 .data-table tr:hover {
-    background-color: #f1f8fe;
+    background-color: #f0f7f5;
 }
 
-/* Clasificación nutricional */
+.data-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Estilos para la clasificación nutricional */
 .classification-list {
-    list-style: none;
-    padding: 0;
     margin: 0;
-    font-size: 13px;
+    padding: 0;
+    list-style: none;
 }
 
 .classification-list li {
     margin-bottom: 6px;
-    line-height: 1.4;
+    display: flex;
+    align-items: center;
 }
 
-/* Badges de estado */
+.classification-list li:last-child {
+    margin-bottom: 0;
+}
+
+.classification-list strong {
+    margin-right: 5px;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
 .badge {
     padding: 4px 8px;
-    border-radius: 12px;
+    border-radius: 4px;
     font-size: 12px;
     font-weight: 500;
-    display: inline-block;
+    margin-left: 8px;
 }
 
+/* Colores para los estados nutricionales */
 .badge.severe {
     background-color: #e74c3c;
     color: white;
@@ -96,8 +127,8 @@
 }
 
 .badge.overweight {
-    background-color: #ffc107;
-    color: #333;
+    background-color: #e67e22;
+    color: white;
 }
 
 .badge.high {
@@ -105,61 +136,73 @@
     color: white;
 }
 
-/* Mensaje sin resultados */
+/* Mensaje cuando no hay resultados */
 .no-results {
-    background-color: #f8f9fa;
+    color: #718096;
+    font-style: italic;
     padding: 20px;
-    border-radius: 6px;
     text-align: center;
-    color: #6c757d;
-    margin: 30px 0;
-    border-left: 4px solid #3498db;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    margin: 20px 0;
+    border: 1px dashed #cbd5e0;
 }
 
 .no-results i {
-    margin-right: 10px;
-    color: #3498db;
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #a0aec0;
 }
 
 /* Botón Volver */
 .back-button-container {
     text-align: center;
-    margin-top: 30px;
+    margin: 30px 0 20px;
     padding-top: 20px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid #f0f4f8;
 }
 
-.back-button {
-    padding: 10px 25px;
+.back-button-container .btn {
+    padding: 10px 24px;
     border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    background-color: #2980b9;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    background: linear-gradient(to right, #2c3e50, #34495e);
     color: white;
-    border: none;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.back-button:hover {
-    background-color: #2472a4;
+.back-button-container .btn:hover {
+    background: linear-gradient(to right, #34495e, #2c3e50);
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.back-button i {
+.back-button-container .btn i {
     margin-right: 8px;
     font-size: 14px;
+    transition: transform 0.3s;
 }
 
-/* Responsive */
+.back-button-container .btn:hover i {
+    transform: translateX(-4px);
+}
+
+/* Responsive para móviles */
 @media (max-width: 768px) {
     .seguimientos-page {
-        padding: 20px;
+        padding: 15px;
+        margin: 10px;
+    }
+    
+    .seguimientos-page h2 {
+        font-size: 20px;
+        margin-bottom: 15px;
     }
     
     .data-table th, 
@@ -168,9 +211,17 @@
         font-size: 13px;
     }
     
-    .back-button {
-        padding: 8px 20px;
-        width: 100%;
-        max-width: 250px;
+    .classification-list li {
+        flex-wrap: wrap;
+    }
+    
+    .badge {
+        margin-left: 0;
+        margin-top: 4px;
+    }
+    
+    .back-button-container .btn {
+        padding: 8px 16px;
+        font-size: 13px;
     }
 }

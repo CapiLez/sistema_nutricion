@@ -85,15 +85,13 @@ class TrabajadorForm(forms.ModelForm):
         model = Trabajador
         fields = '__all__'
         widgets = {
-            'fecha_nacimiento': forms.DateInput(
-                attrs={'type': 'date', 'max': datetime.date.today().isoformat()}
-            ),
-            'cai': forms.Select()  # Esto genera el select
+            'sexo': forms.Select(),
+            'fecha_ingreso': forms.DateInput(attrs={'type': 'date'}),
+            'fecha_nacimiento': forms.DateInput(attrs={'type': 'date'})
         }
-
-    def clean_curp(self):
-        curp = self.cleaned_data.get('curp')
-        return curp.upper() if curp else curp
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 ### -------------------- SEGUIMIENTOS NIÑOS --------------------
 
@@ -140,21 +138,39 @@ class SeguimientoTrimestralForm(forms.ModelForm):
 ### -------------------- SEGUIMIENTOS TRABAJADORES --------------------
 
 class SeguimientoTrabajadorForm(forms.ModelForm):
+    edad = forms.IntegerField(
+        label="Edad",
+        widget=forms.NumberInput(attrs={'readonly': 'readonly', 'class': 'form-control'}),
+        required=False
+    )
+
     class Meta:
         model = SeguimientoTrabajador
-        fields = [
-            'trabajador', 'edad', 'peso', 'talla', 'imc',
-            'dx', 'fecha_valoracion'
-        ]
-        labels = {
-            'trabajador': 'Trabajador',
-            'edad': 'Edad',
-            'peso': 'Peso (kg)',
-            'talla': 'Talla (cm)',
-            'imc': 'IMC',
-            'dx': 'Diagnóstico Nutricional',
-            'fecha_valoracion': 'Fecha de Valoración',
-        }
+        fields = ['trabajador', 'edad', 'peso', 'talla', 'circunferencia_abdominal', 'dx', 'fecha_valoracion']
         widgets = {
-            'fecha_valoracion': forms.DateInput(attrs={'type': 'date'})
+            'trabajador': forms.HiddenInput(),
+            'fecha_valoracion': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'peso': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'talla': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'circunferencia_abdominal': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'dx': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        trabajador_id = kwargs.pop('trabajador_id', None)
+        super().__init__(*args, **kwargs)
+        
+        if trabajador_id:
+            trabajador = Trabajador.objects.get(id=trabajador_id)
+            self.fields['trabajador'].initial = trabajador.id
+            
+            # Calcular edad
+            if trabajador.fecha_nacimiento:
+                today = datetime.date.today()
+                edad = today.year - trabajador.fecha_nacimiento.year - (
+                    (today.month, today.day) < 
+                    (trabajador.fecha_nacimiento.month, trabajador.fecha_nacimiento.day)
+                )
+                self.fields['edad'].initial = edad
+            elif trabajador.edad:
+                self.fields['edad'].initial = trabajador.edad
