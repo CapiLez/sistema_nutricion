@@ -1,17 +1,20 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Editar Niño - {{ form.instance.nombre }}{% endblock %}
+{% block title %}Editar Niño - {{ paciente.nombre|default:"Nuevo Niño" }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'nutricion/css/editar_nino.css' %}">
+<style>
+    /* Tus estilos personalizados aquí */
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="editar-nino-container">
     <div class="card">
         <div class="card-header">
-            <h2><i class="fas fa-child"></i> Editar Niño: {{ form.instance.nombre }}</h2>
+            <h2><i class="fas fa-child"></i> Editar Niño: {{ paciente.nombre|default:"Nuevo Niño" }}</h2>
         </div>
         
         <div class="card-body">
@@ -35,7 +38,7 @@
                     <button type="submit" class="btn btn-save">
                         <i class="fas fa-save"></i> Guardar Cambios
                     </button>
-                    <a href="{% url cancel_url %}" class="btn btn-cancel">
+                    <a href="{% url 'registro_ninos' %}" class="btn btn-cancel">
                         <i class="fas fa-times-circle"></i> Cancelar
                     </a>
                 </div>

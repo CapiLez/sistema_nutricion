@@ -192,6 +192,11 @@ class EditarNinoView(CancelUrlMixin, RevisionUpdateView):
 
     def get_success_url(self):
         return reverse_lazy(self.cancel_url_alt if 'from' in self.request.GET else self.cancel_url_default)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['cancel_url'] = self.request.GET.get('from', 'lista_pacientes')
+        return context
 
 class EliminarNinoView(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
     model = Paciente
