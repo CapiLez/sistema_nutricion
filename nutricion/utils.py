@@ -130,8 +130,9 @@ class InitialFromModelMixin:
 class FiltroCAIMixin:
     """
     Mixin para filtrar querysets según el CAI del usuario (para nutriólogos)
+    Versión mejorada que maneja tanto modelos directos como relacionados
     """
-    cai_field_name = 'cai'  # Nombre del campo CAI en los modelos
+    cai_field_name = 'cai'  # Nombre del campo CAI en los modelos principales
     
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -143,8 +144,23 @@ class FiltroCAIMixin:
         
         # Nutriólogos solo ven los registros de su CAI
         if user.is_nutriologo and user.cai:
-            filter_kwargs = {self.cai_field_name: user.cai}
-            return queryset.filter(**filter_kwargs)
+            model = getattr(self, 'model', None)
+            
+            # Caso 1: Modelo tiene campo CAI directo (Paciente, Trabajador)
+            if hasattr(model, self.cai_field_name):
+                filter_kwargs = {self.cai_field_name: user.cai}
+                return queryset.filter(**filter_kwargs)
+            
+            # Caso 2: Modelo de seguimiento con relación a Paciente
+            elif hasattr(model, 'paciente'):
+                return queryset.filter(paciente__cai=user.cai)
+            
+            # Caso 3: Modelo de seguimiento con relación a Trabajador
+            elif hasattr(model, 'trabajador'):
+                return queryset.filter(trabajador__cai=user.cai)
+            
+            # Caso 4: Modelo no reconocido - no filtrar o bloquear según necesidad
+            return queryset.none() if user.is_nutriologo else queryset
         
-        # Jefes de departamento u otros roles (personalizar según necesidades)
+        # Jefes de departamento u otros roles
         return queryset

@@ -226,15 +226,34 @@ class SeguimientoTrimestralForm(forms.ModelForm):
             'indicador_talla_edad', 'dx', 'fecha_valoracion'
         ]
         widgets = {
-            'fecha_valoracion': forms.DateInput(attrs={'type': 'date'})
+            'fecha_valoracion': forms.DateInput(attrs={'type': 'date'}),
+            'paciente': forms.Select(attrs={'class': 'form-control'})
         }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filtramos pacientes por CAI si es nutriólogo
+        if self.user and self.user.is_nutriologo and self.user.cai:
+            self.fields['paciente'].queryset = Paciente.objects.filter(cai=self.user.cai)
+        
+        # Establecer valores iniciales para campos calculados
+        if self.instance.pk:
+            self.fields['edad'].initial = self.instance.edad
+            self.fields['imc'].initial = self.instance.imc
 
     def clean(self):
         cleaned_data = super().clean()
+        paciente = cleaned_data.get('paciente')
         peso = cleaned_data.get('peso')
         talla = cleaned_data.get('talla')
         edad = cleaned_data.get('edad')
         
+        # Verificación de CAI para nutriólogos
+        if self.user and self.user.is_nutriologo and paciente and paciente.cai != self.user.cai:
+            raise forms.ValidationError("No tienes permiso para registrar seguimiento de este paciente.")
+
         # Validaciones básicas
         if peso is not None and (peso < 1 or peso > 150):
             self.add_error('peso', "El peso debe estar entre 1 y 150 kg")
@@ -271,13 +290,31 @@ class SeguimientoTrabajadorForm(forms.ModelForm):
         fields = ['trabajador', 'edad', 'peso', 'talla', 'circunferencia_abdominal', 'dx', 'fecha_valoracion']
         widgets = {
             'fecha_valoracion': forms.DateInput(attrs={'type': 'date'}),
+            'trabajador': forms.Select(attrs={'class': 'form-control'})
         }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filtramos trabajadores por CAI si es nutriólogo
+        if self.user and self.user.is_nutriologo and self.user.cai:
+            self.fields['trabajador'].queryset = Trabajador.objects.filter(cai=self.user.cai)
+        
+        # Establecer edad inicial si ya existe la instancia
+        if self.instance.pk:
+            self.fields['edad'].initial = self.instance.edad
 
     def clean(self):
         cleaned_data = super().clean()
+        trabajador = cleaned_data.get('trabajador')
         peso = cleaned_data.get('peso')
         talla = cleaned_data.get('talla')
         
+        # Verificación de CAI para nutriólogos
+        if self.user and self.user.is_nutriologo and trabajador and trabajador.cai != self.user.cai:
+            raise forms.ValidationError("No tienes permiso para registrar seguimiento de este trabajador.")
+
         # Validaciones básicas
         if peso is not None and (peso < 30 or peso > 300):
             self.add_error('peso', "El peso debe estar entre 30 y 300 kg")

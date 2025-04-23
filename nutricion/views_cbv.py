@@ -4,7 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from reversion.models import Version
 from django.core.paginator import Paginator
 import json
@@ -314,8 +314,15 @@ class RegistrarSeguimientoNinoView(FiltroCAIMixin, InitialFromModelMixin, Revisi
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user  # Pasar el usuario al formulario
+        kwargs['user'] = self.request.user
         return kwargs
+
+    def form_valid(self, form):
+        paciente = form.cleaned_data.get('paciente')
+        if self.request.user.is_nutriologo and paciente.cai != self.request.user.cai:
+            return HttpResponseForbidden("No tienes permiso para registrar seguimiento de este paciente.")
+        return super().form_valid(form)
+
 
 class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, RevisionCreateView):
     model = SeguimientoTrabajador
@@ -336,16 +343,28 @@ class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, 
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user  # Pasar el usuario al formulario
+        kwargs['user'] = self.request.user
         return kwargs
 
-class ListaSeguimientosGeneralView(LoginRequiredMixin, View):
+    def form_valid(self, form):
+        trabajador = form.cleaned_data.get('trabajador')
+        if self.request.user.is_nutriologo and trabajador.cai != self.request.user.cai:
+            return HttpResponseForbidden("No tienes permiso para registrar seguimiento de este trabajador.")
+        return super().form_valid(form)
+
+
+class ListaSeguimientosGeneralView(FiltroCAIMixin, LoginRequiredMixin, View):
+    model = SeguimientoTrimestral  # Necesario para que el mixin sepa qué modelo usar
+    
     def get(self, request):
         q_nino = request.GET.get('q_nino', '')
         q_trabajador = request.GET.get('q_trabajador', '')
-        seguimientos_ninos = SeguimientoTrimestral.objects.select_related('paciente')
-        seguimientos_trabajadores = SeguimientoTrabajador.objects.select_related('trabajador')
-
+        
+        # Querysets ya filtrados por CAI gracias al mixin
+        seguimientos_ninos = SeguimientoTrimestral.objects.select_related('paciente').all()
+        seguimientos_trabajadores = SeguimientoTrabajador.objects.select_related('trabajador').all()
+        
+        # Filtros de búsqueda adicionales
         if q_nino:
             seguimientos_ninos = seguimientos_ninos.filter(paciente__nombre__icontains=q_nino)
         if q_trabajador:
@@ -358,43 +377,147 @@ class ListaSeguimientosGeneralView(LoginRequiredMixin, View):
             'q_trabajador': q_trabajador
         })
 
-class SeguimientosNinoView(LoginRequiredMixin, View):
+class SeguimientosNinoView(FiltroCAIMixin, LoginRequiredMixin, View):
+    model = SeguimientoTrimestral
+    
     def get(self, request, nino_id):
-        nino = get_object_or_404(Paciente, id=nino_id)
-        seguimientos = SeguimientoTrimestral.objects.filter(paciente=nino)
-        return render(request, 'seguimientos_nino.html', {'nino': nino, 'seguimientos': seguimientos})
+        # Primero verificamos el paciente
+        paciente = get_object_or_404(Paciente, id=nino_id)
+        
+        # Verificación explícita de CAI
+        if request.user.is_nutriologo and paciente.cai != request.user.cai:
+            raise Http404("No encontrado")
+        
+        # Los seguimientos ya se filtrarán por CAI gracias al mixin
+        seguimientos = SeguimientoTrimestral.objects.filter(paciente=paciente)
+        return render(request, 'seguimientos_nino.html', {
+            'nino': paciente,
+            'seguimientos': seguimientos
+        })
 
 class SeguimientosTrabajadorView(LoginRequiredMixin, View):
     def get(self, request, trabajador_id):
         trabajador = get_object_or_404(Trabajador, id=trabajador_id)
+
+        if request.user.is_nutriologo and trabajador.cai != request.user.cai:
+            return HttpResponseForbidden("No tienes acceso a este trabajador.")
+
         seguimientos = SeguimientoTrabajador.objects.filter(trabajador=trabajador)
         return render(request, 'seguimientos_trabajador.html', {'trabajador': trabajador, 'seguimientos': seguimientos})
+    
+class EditarSeguimientoNinoView(FiltroCAIMixin, LoginRequiredMixin, View):
+    model = SeguimientoTrimestral
+    
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        # Verificación adicional
+        if self.request.user.is_nutriologo and obj.paciente.cai != self.request.user.cai:
+            raise Http404("No encontrado")
+        return obj
+    
+    def get(self, request, id):
+        seguimiento = self.get_object()
+        form = SeguimientoTrimestralForm(instance=seguimiento, user=request.user)
+        return render(request, 'editar_seguimiento_nino.html', {
+            'form': form,
+            'seguimiento': seguimiento
+        })
 
-class ListaSeguimientosView(FiltroCAIMixin, LoginRequiredMixin, View):
+class EditarSeguimientoTrabajadorView(LoginRequiredMixin, View):
+    def get(self, request, id):
+        seguimiento = get_object_or_404(SeguimientoTrabajador, id=id)
+        
+        if request.user.is_nutriologo and seguimiento.trabajador.cai != request.user.cai:
+            return HttpResponseForbidden("No tienes permiso para editar este seguimiento.")
+            
+        form = SeguimientoTrabajadorForm(instance=seguimiento, user=request.user)
+        return render(request, 'editar_seguimiento_trabajador.html', {'form': form, 'seguimiento': seguimiento})
+
+    def post(self, request, id):
+        seguimiento = get_object_or_404(SeguimientoTrabajador, id=id)
+        
+        if request.user.is_nutriologo and seguimiento.trabajador.cai != request.user.cai:
+            return HttpResponseForbidden("No tienes permiso para editar este seguimiento.")
+            
+        form = SeguimientoTrabajadorForm(request.POST, instance=seguimiento, user=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('seguimientos_trabajador', trabajador_id=seguimiento.trabajador.id)
+        return render(request, 'editar_seguimiento_trabajador.html', {'form': form, 'seguimiento': seguimiento})
+
+
+class ListaSeguimientosView(LoginRequiredMixin, View):
     def get(self, request):
-        q_nino = request.GET.get('q_nino', '')
-        q_trabajador = request.GET.get('q_trabajador', '')
+        # Si es una solicitud AJAX, manejarla diferente
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return self.handle_ajax(request)
         
-        # Obtener querysets base filtrados por CAI si es necesario
-        seguimientos_ninos = SeguimientoTrimestral.objects.select_related('paciente')
-        seguimientos_trabajadores = SeguimientoTrabajador.objects.select_related('trabajador')
-        
-        if hasattr(self, 'get_queryset'):
-            seguimientos_ninos = self.get_queryset().filter(model=SeguimientoTrimestral)
-            seguimientos_trabajadores = self.get_queryset().filter(model=SeguimientoTrabajador)
-
-        if q_nino:
-            seguimientos_ninos = seguimientos_ninos.filter(paciente__nombre__icontains=q_nino)
-        if q_trabajador:
-            seguimientos_trabajadores = seguimientos_trabajadores.filter(trabajador__nombre__icontains=q_trabajador)
-
-        return render(request, 'lista_seguimientos.html', {
-            'seguimientos_ninos': seguimientos_ninos,
-            'seguimientos_trabajadores': seguimientos_trabajadores,
-            'q_nino': q_nino,
-            'q_trabajador': q_trabajador
+        # Cargar datos iniciales para renderizar el template
+        return render(request, 'seguimientos_general.html', {  # Sin prefijo de app
+            'initial_data': {
+                'ninos': self.get_seguimientos_ninos(request),
+                'trabajadores': self.get_seguimientos_trabajadores(request)
+            }
         })
     
+    def handle_ajax(self, request):
+        # Determinar si es búsqueda de niños o trabajadores
+        if 'term' in request.GET and 'type' in request.GET:
+            if request.GET['type'] == 'nino':
+                data = self.get_seguimientos_ninos(request, search_term=request.GET['term'])
+            else:
+                data = self.get_seguimientos_trabajadores(request, search_term=request.GET['term'])
+            
+            return JsonResponse({
+                'resultados': data,
+                'has_next': False  # Puedes implementar paginación si es necesario
+            })
+        return JsonResponse({'error': 'Solicitud inválida'}, status=400)
+    
+    def get_seguimientos_ninos(self, request, search_term=None):
+        seguimientos = SeguimientoTrimestral.objects.select_related('paciente')
+        
+        # Filtrado por CAI si es nutriólogo
+        if request.user.is_nutriologo and request.user.cai:
+            seguimientos = seguimientos.filter(paciente__cai=request.user.cai)
+        
+        # Filtro de búsqueda
+        if search_term:
+            seguimientos = seguimientos.filter(paciente__nombre__icontains=search_term)
+        
+        return [{
+            'id': s.id,
+            'nombre': s.paciente.nombre,
+            'fecha': s.fecha_valoracion.strftime('%d/%m/%Y'),
+            'edad': s.edad,
+            'peso': s.peso,
+            'talla': s.talla,
+            'imc': f"{s.imc:.2f}" if s.imc else '',
+            'dx': s.dx or ''
+        } for s in seguimientos]
+    
+    def get_seguimientos_trabajadores(self, request, search_term=None):
+        seguimientos = SeguimientoTrabajador.objects.select_related('trabajador')
+        
+        # Filtrado por CAI si es nutriólogo
+        if request.user.is_nutriologo and request.user.cai:
+            seguimientos = seguimientos.filter(trabajador__cai=request.user.cai)
+        
+        # Filtro de búsqueda
+        if search_term:
+            seguimientos = seguimientos.filter(trabajador__nombre__icontains=search_term)
+        
+        return [{
+            'id': s.id,
+            'nombre': s.trabajador.nombre,
+            'fecha': s.fecha_valoracion.strftime('%d/%m/%Y'),
+            'edad': s.edad,
+            'peso': s.peso,
+            'talla': s.talla,
+            'imc': f"{s.imc:.2f}" if s.imc else '',
+            'dx': s.dx or ''
+        } for s in seguimientos]
+
 #-------------------
 # Views Historial
 #-------------------
@@ -463,22 +586,26 @@ class ReportesView(FiltroCAIMixin, LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
-        # Pacientes (niños) con paginación - ya filtrados por CAI
-        pacientes = self.get_queryset().filter(model=Paciente) if hasattr(self, 'model') else Paciente.objects.all()
+        user = self.request.user
+
+        if user.is_admin:
+            pacientes = Paciente.objects.all()
+            trabajadores = Trabajador.objects.all()
+        else:
+            pacientes = Paciente.objects.filter(cai=user.cai)
+            trabajadores = Trabajador.objects.filter(cai=user.cai)
+
         pacientes = pacientes.order_by('nombre')
-        paginator_pacientes = Paginator(pacientes, 10)
-        page_pacientes = self.request.GET.get('page_pacientes', 1)
-        context['ninos_page'] = paginator_pacientes.get_page(page_pacientes)
-        
-        # Trabajadores con paginación - ya filtrados por CAI
-        trabajadores = self.get_queryset().filter(model=Trabajador) if hasattr(self, 'model') else Trabajador.objects.all()
         trabajadores = trabajadores.order_by('nombre')
+
+        paginator_pacientes = Paginator(pacientes, 10)
         paginator_trabajadores = Paginator(trabajadores, 10)
-        page_trabajadores = self.request.GET.get('page_trabajadores', 1)
-        context['trabajadores_page'] = paginator_trabajadores.get_page(page_trabajadores)
-        
+
+        context['ninos_page'] = paginator_pacientes.get_page(self.request.GET.get('page_pacientes', 1))
+        context['trabajadores_page'] = paginator_trabajadores.get_page(self.request.GET.get('page_trabajadores', 1))
+
         return context
+
 
 class ReporteBaseView(LoginRequiredMixin, View):
     """Vista base para reportes individuales"""
