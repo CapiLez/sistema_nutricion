@@ -453,7 +453,7 @@ class ListaSeguimientosView(LoginRequiredMixin, View):
             return self.handle_ajax(request)
         
         # Cargar datos iniciales para renderizar el template
-        return render(request, 'seguimientos_general.html', {  # Sin prefijo de app
+        return render(request, 'seguimientos_general.html', {
             'initial_data': {
                 'ninos': self.get_seguimientos_ninos(request),
                 'trabajadores': self.get_seguimientos_trabajadores(request)

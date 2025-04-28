@@ -126,7 +126,7 @@ class InitialFromModelMixin:
         
         return initial
     
-# En utils.py o al inicio de vistas_cbv.py
+    
 class FiltroCAIMixin:
     """
     Mixin para filtrar querysets según el CAI del usuario (para nutriólogos)

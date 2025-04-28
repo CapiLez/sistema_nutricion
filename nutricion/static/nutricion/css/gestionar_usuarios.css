@@ -107,6 +107,69 @@
     outline: none;
 }
 
+/* ===== SELECTORES PERSONALIZADOS ===== */
+.filtros-usuarios .form-control {
+    border: 1px solid #dbe1e8;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #4a5568;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    height: 40px;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234a5568' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    min-width: 180px;
+}
+
+.filtros-usuarios .form-control:focus {
+    border-color: #1abc9c;
+    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.1);
+    outline: none;
+}
+
+/* ===== BOTONES DE FILTRADO ===== */
+.filtros-usuarios .btn-primary {
+    background: linear-gradient(to right, #3498db, #2980b9);
+    border: none;
+    padding: 10px 20px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.filtros-usuarios .btn-primary:hover {
+    background: linear-gradient(to right, #2980b9, #3498db);
+    transform: translateY(-2px);
+}
+
+.filtros-usuarios .btn-secondary {
+    background: linear-gradient(to right, #95a5a6, #7f8c8d);
+    border: none;
+    padding: 5px 20px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.filtros-usuarios .btn-secondary:hover {
+    background: linear-gradient(to right, #7f8c8d, #95a5a6);
+    transform: translateY(-2px);
+}
+
+.filtros-usuarios .form-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
 /* ===== BOTONES ===== */
 .btn {
     padding: 10px 20px;
@@ -169,6 +232,17 @@
     transform: translateY(-2px);
 }
 
+.btn-info {
+    background: linear-gradient(to right, #3498db, #2980b9);
+    color: white;
+}
+
+.btn-info:hover {
+    background: linear-gradient(to right, #2980b9, #3498db);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
 .btn-sm {
     padding: 8px 15px;
     font-size: 13px;
@@ -229,7 +303,106 @@
     white-space: nowrap;
 }
 
+/* ===== BADGES DE ESTADO ===== */
+.badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 13px;
+    display: inline-block;
+    text-align: center;
+    min-width: 70px;
+}
+
+.badge-success {
+    background: linear-gradient(to right, #2ecc71, #27ae60);
+    color: white;
+}
+
+.badge-danger {
+    background: linear-gradient(to right, #e74c3c, #c0392b);
+    color: white;
+}
+
+/* ===== PAGINACIÓN ===== */
+.pagination-container {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.page-item {
+    margin: 0;
+}
+
+.page-link {
+    padding: 10px 15px;
+    background-color: white;
+    color: #2c3e50;
+    border: 1px solid #e0e6ed;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.page-item:first-child .page-link {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.page-item:last-child .page-link {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.page-item.active .page-link {
+    background: linear-gradient(to right, #2c3e50, #34495e);
+    color: white;
+    border-color: #2c3e50;
+}
+
+.page-link:hover {
+    background-color: #f8f9fa;
+}
+
+/* ===== AJUSTES PARA TABLA CON MÁS COLUMNAS ===== */
+.table th:nth-child(6),
+.table td:nth-child(6) {
+    text-align: center;
+}
+
 /* ===== RESPONSIVE ===== */
+@media (max-width: 992px) {
+    .table th, 
+    .table td {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .btn-sm {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+    
+    .badge {
+        padding: 3px 8px;
+        font-size: 12px;
+        min-width: 60px;
+    }
+
+    .filtros-usuarios .form-control {
+        min-width: 150px;
+    }
+}
+
 @media (max-width: 768px) {
     .gestionar-usuarios-page {
         padding: 20px 15px;
@@ -259,5 +432,54 @@
     .table td .btn {
         width: auto;
         margin-bottom: 5px;
+    }
+
+    .table-responsive {
+        border: 1px solid #e0e6ed;
+    }
+    
+    .table thead {
+        display: none;
+    }
+    
+    .table tr {
+        display: block;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #e0e6ed;
+    }
+    
+    .table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 10px;
+        border-bottom: 1px solid #f0f4f8;
+    }
+    
+    .table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #2c3e50;
+        margin-right: 15px;
+    }
+    
+    .acciones-cell {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .filtros-usuarios .form-inline {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filtros-usuarios .form-group {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+
+    .filtros-usuarios .btn {
+        width: 100%;
+        margin-left: 0;
     }
 }
