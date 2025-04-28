@@ -16,6 +16,25 @@
         border-radius: 10px;
         color: #3a3a3a;
         font-family: 'Poppins', 'Roboto', sans-serif;
+        position: relative;
+    }
+
+    /* Icono de niño/niña */
+    .child-icon {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        font-size: 80px;
+        opacity: 0.2;
+        z-index: 0;
+    }
+    
+    .child-icon.boy {
+        color: #3498db;
+    }
+    
+    .child-icon.girl {
+        color: #e91e63;
     }
 
     .header-section {
@@ -23,6 +42,8 @@
         padding-bottom: 15px;
         border-bottom: 1px solid #e0e6ed;
         text-align: center;
+        position: relative;
+        z-index: 1;
     }
 
     .header-section h1 {
@@ -49,8 +70,11 @@
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         margin-bottom: 25px;
         border-left: 4px solid #1abc9c;
+        position: relative;
+        z-index: 1;
     }
 
+    /* Resto del CSS se mantiene igual... */
     .datos-section h3,
     .graficas-section h3, 
     .seguimientos-section h3 {
@@ -234,6 +258,12 @@
             margin: 10px;
         }
         
+        .child-icon {
+            font-size: 60px;
+            right: 15px;
+            top: 15px;
+        }
+        
         .header-section h1 {
             font-size: 20px;
         }
@@ -272,12 +302,18 @@
 
 {% block content %}
 <div class="container reporte-container">
+    <!-- Icono de niño/niña -->
+    <div class="child-icon {% if paciente.sexo == 'M' %}boy{% else %}girl{% endif %}">
+        <i class="fas fa-{% if paciente.sexo == 'M' %}male{% else %}female{% endif %}"></i>
+    </div>
+
     <!-- Encabezado del Reporte -->
     <div class="header-section">
         <h1><i class="fas fa-file-medical"></i> Reporte Nutricional Pediátrico</h1>
         <h2>{{ paciente.nombre }}</h2>
     </div>
 
+    <!-- Resto del contenido se mantiene igual... -->
     <!-- Sección de Datos Básicos -->
     <div class="datos-section">
         <h3><i class="fas fa-info-circle"></i> Datos Básicos</h3>

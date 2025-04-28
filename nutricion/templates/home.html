@@ -44,6 +44,8 @@
         </div>
     </div>
 
+    {% if cais|length > 1 %}
+    <!-- Mostrar sección de CAIs solo si hay más de uno -->
     <h2 class="cai-section-title">Centros de Atención Infantil del DIF Tabasco</h2>
     <div class="cai-container">
         {% for cai in cais %}
@@ -53,9 +55,7 @@
         </div>
         {% endfor %}
     </div>
-    <div id="loadingIndicator">
-        <i class="fas fa-spinner fa-spin"></i> Cargando...
-    </div>
+    {% endif %}
 </div>
 
 <script>
@@ -69,7 +69,9 @@ function filtrarPorCAI(cai, element) {
     });
     
     // Añadir clase active al card seleccionado
-    element.classList.add('active');
+    if (element) {
+        element.classList.add('active');
+    }
     
     // Realizar petición AJAX
     fetch(`/api/filtrar-por-cai/?cai=${encodeURIComponent(cai)}`)

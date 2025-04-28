@@ -42,9 +42,17 @@ class HomeView(LoginRequiredMixin, View):
         # Determinar si es una petición AJAX para filtrar
         if 'cai' in request.GET:
             return self.filtrar_por_cai(request)
-            
-        total_ninos = Paciente.objects.count()
-        total_trabajadores = Trabajador.objects.count()
+        
+        # Si el usuario es nutriólogo, filtrar por su CAI
+        if request.user.is_nutriologo and request.user.cai:
+            total_ninos = Paciente.objects.filter(cai=request.user.cai).count()
+            total_trabajadores = Trabajador.objects.filter(cai=request.user.cai).count()
+            cais = [(request.user.cai, dict(self.CAI_CHOICES).get(request.user.cai, request.user.cai))]
+        else:
+            total_ninos = Paciente.objects.count()
+            total_trabajadores = Trabajador.objects.count()
+            cais = self.CAI_CHOICES
+        
         total_pacientes = total_ninos + total_trabajadores
         
         return render(request, 'home.html', {
@@ -52,7 +60,7 @@ class HomeView(LoginRequiredMixin, View):
             'total_ninos': total_ninos,
             'total_trabajadores': total_trabajadores,
             'total_pacientes': total_pacientes,
-            'cais': self.CAI_CHOICES
+            'cais': cais
         })
 
     def filtrar_por_cai(self, request):
@@ -355,27 +363,34 @@ class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, 
 
 class ListaSeguimientosGeneralView(FiltroCAIMixin, LoginRequiredMixin, View):
     model = SeguimientoTrimestral  # Necesario para que el mixin sepa qué modelo usar
-    
+
     def get(self, request):
         q_nino = request.GET.get('q_nino', '')
         q_trabajador = request.GET.get('q_trabajador', '')
-        
-        # Querysets ya filtrados por CAI gracias al mixin
-        seguimientos_ninos = SeguimientoTrimestral.objects.select_related('paciente').all()
-        seguimientos_trabajadores = SeguimientoTrabajador.objects.select_related('trabajador').all()
-        
-        # Filtros de búsqueda adicionales
+
+        # Base de datos inicial
+        seguimientos_ninos = SeguimientoTrimestral.objects.select_related('paciente')
+        seguimientos_trabajadores = SeguimientoTrabajador.objects.select_related('trabajador')
+
+        # 🔥 Filtro por CAI si es nutriólogo
+        if request.user.is_nutriologo and request.user.cai:
+            seguimientos_ninos = seguimientos_ninos.filter(paciente__cai=request.user.cai)
+            seguimientos_trabajadores = seguimientos_trabajadores.filter(trabajador__cai=request.user.cai)
+
+        # 🔍 Filtros de búsqueda adicionales
         if q_nino:
             seguimientos_ninos = seguimientos_ninos.filter(paciente__nombre__icontains=q_nino)
         if q_trabajador:
             seguimientos_trabajadores = seguimientos_trabajadores.filter(trabajador__nombre__icontains=q_trabajador)
 
+        # 🔎 Renderiza el template con los seguimientos filtrados
         return render(request, 'seguimientos_general.html', {
             'seguimientos_ninos': seguimientos_ninos,
             'seguimientos_trabajadores': seguimientos_trabajadores,
             'q_nino': q_nino,
             'q_trabajador': q_trabajador
         })
+
 
 class SeguimientosNinoView(FiltroCAIMixin, LoginRequiredMixin, View):
     model = SeguimientoTrimestral
@@ -779,13 +794,22 @@ def buscar_trabajadores_ajax(request):
 def buscar_seguimientos_nino_ajax(request):
     termino = request.GET.get('term', '')
     page = int(request.GET.get('page', 1))
-    queryset = SeguimientoTrimestral.objects.select_related('paciente').filter(paciente__nombre__icontains=termino).order_by('-fecha_valoracion')
+
+    queryset = SeguimientoTrimestral.objects.select_related('paciente').filter(
+        paciente__nombre__icontains=termino
+    )
+
+    # Filtrar por CAI si es nutriólogo
+    if request.user.is_nutriologo and request.user.cai:
+        queryset = queryset.filter(paciente__cai=request.user.cai)
+
+    queryset = queryset.order_by('-fecha_valoracion')
     paginator = Paginator(queryset, 10)
     page_obj = paginator.get_page(page)
 
     data = [{
         'nombre': s.paciente.nombre,
-        'fecha': s.fecha_valoracion.strftime('%d/%m/%Y'),
+        'fecha': s.fecha_valoracion.strftime('%d/%m/%Y') if s.fecha_valoracion else '',
         'edad': s.edad,
         'peso': s.peso,
         'talla': s.talla,
@@ -798,13 +822,22 @@ def buscar_seguimientos_nino_ajax(request):
 def buscar_seguimientos_trabajador_ajax(request):
     termino = request.GET.get('term', '')
     page = int(request.GET.get('page', 1))
-    queryset = SeguimientoTrabajador.objects.select_related('trabajador').filter(trabajador__nombre__icontains=termino).order_by('-fecha_valoracion')
+
+    queryset = SeguimientoTrabajador.objects.select_related('trabajador').filter(
+        trabajador__nombre__icontains=termino
+    )
+
+    # Filtrar por CAI si es nutriólogo
+    if request.user.is_nutriologo and request.user.cai:
+        queryset = queryset.filter(trabajador__cai=request.user.cai)
+
+    queryset = queryset.order_by('-fecha_valoracion')
     paginator = Paginator(queryset, 10)
     page_obj = paginator.get_page(page)
 
     data = [{
         'nombre': s.trabajador.nombre,
-        'fecha': s.fecha_valoracion.strftime('%d/%m/%Y'),
+        'fecha': s.fecha_valoracion.strftime('%d/%m/%Y') if s.fecha_valoracion else '',
         'edad': s.edad,
         'peso': s.peso,
         'talla': s.talla,
