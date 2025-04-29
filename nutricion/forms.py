@@ -85,8 +85,13 @@ class UsuarioEdicionForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance.rol != 'nutriologo':
+        
+        # Verificamos si viene del formulario (POST) o del modelo (GET)
+        rol = self.data.get('rol') if self.data else self.instance.rol
+
+        if rol != 'nutriologo':
             self.fields['cai'].widget = forms.HiddenInput()
+
 
     def clean(self):
         cleaned_data = super().clean()

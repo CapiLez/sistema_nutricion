@@ -4,7 +4,8 @@ from django.contrib.auth.views import LoginView, LogoutView
 from nutricion.views_cbv import (
     EditarSeguimientoNinoView,
     EditarSeguimientoTrabajadorView,
-    GraficasReferenciaView,
+    EliminarSeguimientoNinoView,
+    EliminarSeguimientoTrabajadorView,
     HomeView,
     GestionUsuariosView, EliminarUsuarioView,
     RegistroNinoView, EditarNinoView, EliminarNinoView, HistorialNinoCambiosView,
@@ -54,8 +55,17 @@ urlpatterns = [
     path('lista_seguimientos/', ListaSeguimientosView.as_view(), name='lista_seguimientos'),
     path('seguimientos/nino/<int:nino_id>/', SeguimientosNinoView.as_view(), name='seguimientos_nino'),
     path('seguimientos/trabajador/<int:trabajador_id>/', SeguimientosTrabajadorView.as_view(), name='seguimientos_trabajador'),
+    
+    # Seguimientos editar
     path('seguimiento/nino/editar/<int:id>/', EditarSeguimientoNinoView.as_view(), name='editar_seguimiento_nino'),
     path('seguimiento/trabajador/editar/<int:id>/', EditarSeguimientoTrabajadorView.as_view(), name='editar_seguimiento_trabajador'),
+
+    # Seguimientos eliminar
+    path('seguimiento/nino/eliminar/<int:pk>/', EliminarSeguimientoNinoView.as_view(), name='eliminar_seguimiento_nino'),
+    path('seguimiento/trabajador/eliminar/<int:pk>/', EliminarSeguimientoTrabajadorView.as_view(), name='eliminar_seguimiento_trabajador'),
+
+
+    
 
     # Historial
     path('historial/', HistorialView.as_view(), name='historial'),
@@ -67,7 +77,6 @@ urlpatterns = [
     path('reporte/trabajador/<int:pk>/', ReporteTrabajadorView.as_view(), name='reporte_trabajador'),
 
     #Graficas
-    path('reportes/graficas/', GraficasReferenciaView.as_view(), name='graficas_referencia'),
     path('reporte/paciente/<int:paciente_id>/', ReportePacienteView.as_view(), name='reporte_paciente'),
     path('reporte/trabajador/<int:trabajador_id>/', ReporteTrabajadorView.as_view(), name='reporte_trabajador'),
 

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Eliminar Seguimiento{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'nutricion/css/eliminar_seguimiento.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="eliminar-seguimiento-page">
+    <h2>¿Estás seguro de que deseas eliminar este seguimiento?</h2>
+
+    <p><strong>Nombre:</strong> {{ seguimiento.nombre }}</p>
+    <p><strong>Fecha:</strong> {{ seguimiento.fecha_valoracion|date:"d/m/Y" }}</p>
+    <p><strong>Edad:</strong> {{ seguimiento.edad }}</p>
+    <p><strong>Peso:</strong> {{ seguimiento.peso }} kg</p>
+    <p><strong>Talla:</strong> {{ seguimiento.talla }} cm</p>
+    <p><strong>IMC:</strong> {{ seguimiento.imc }}</p>
+    <p><strong>Diagnóstico:</strong> {{ seguimiento.dx }}</p>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="buttons">
+            <button type="submit" class="btn btn-danger">Confirmar Eliminación</button>
+            <a href="{% url 'seguimientos_general' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

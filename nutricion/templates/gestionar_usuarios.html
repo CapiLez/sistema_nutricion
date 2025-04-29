@@ -33,6 +33,7 @@
         <form method="POST">
             {% csrf_token %}
             {% for field in form %}
+                {% if field.name != 'cai' %}
                 <div class="form-group">
                     {{ field.label_tag }}
                     {{ field }}
@@ -43,23 +44,27 @@
                         <div class="alert alert-danger">{{ error }}</div>
                     {% endfor %}
                 </div>
+                {% endif %}
             {% endfor %}
-            
-            <!-- Campo CAI solo para nutriólogos -->
-            {% if form.instance.rol == 'nutriologo' or form.data.rol == 'nutriologo' or not form.instance.pk %}
-            <div class="form-group">
+
+            <!-- Campo CAI (solo visible si el rol es nutriólogo) -->
+            <div class="form-group" id="cai-field"
+                {% if form.initial.rol != 'nutriologo' and form.data.rol != 'nutriologo' %}style="display:none;"{% endif %}>
+                <label for="id_cai">CAI Asignado</label>
                 <select name="cai" id="id_cai" class="form-control">
                     <option value="">Seleccione un CAI</option>
                     {% for cai_value, cai_name in form.fields.cai.choices %}
-                        <option value="{{ cai_value }}" 
-                            {% if form.instance.cai == cai_value %}selected{% endif %}>
+                        <option value="{{ cai_value }}"
+                            {% if form.data.cai == cai_value or form.initial.cai == cai_value %}selected{% endif %}>
                             {{ cai_name }}
                         </option>
                     {% endfor %}
                 </select>
+                {% for error in form.errors.cai %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endfor %}
             </div>
-            {% endif %}
-            
+
             <div class="form-buttons">
                 <button type="submit" class="btn btn-{% if editar %}warning{% else %}success{% endif %}">
                     <i class="fas {% if editar %}fa-edit{% else %}fa-plus-circle{% endif %}"></i>
@@ -77,10 +82,10 @@
     <!-- Tabla de usuarios -->
     <div class="tabla-usuarios">
         <h3>Usuarios Registrados</h3>
-        
+
         <!-- Filtros -->
         <div class="filtros-usuarios mb-3">
-            <form method="GET" class="form-inline">
+            <form method="GET" class="form-inline" id="filtros-form">
                 <div class="form-group mr-2">
                     <select name="rol" class="form-control">
                         <option value="">Todos los roles</option>
@@ -102,13 +107,13 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-filter"></i> Filtrar
                 </button>
-                <a href="{% url 'gestionar_usuarios' %}" class="btn btn-secondary ml-2">
+                <a href="{% url 'gestionar_usuarios' %}" class="btn btn-secondary ml-2 btn-limpiar">
                     <i class="fas fa-times"></i> Limpiar
                 </a>
             </form>
         </div>
-        
-        <div class="table-responsive">
+
+        <div class="table-responsive" id="usuarios-table-container">
             <table class="table">
                 <thead>
                     <tr>
@@ -155,33 +160,102 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
 {% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
-    // Mostrar/ocultar campo CAI según el rol seleccionado
+    // Función para mostrar/ocultar campo CAI
     function toggleCAIField() {
-        const rol = $('#id_rol').val();
+        var rol = $('#id_rol').val();
         if (rol === 'nutriologo') {
-            $('#id_cai').closest('.form-group').show();
+            $('#cai-field').show();
         } else {
-            $('#id_cai').closest('.form-group').hide();
+            $('#cai-field').hide();
         }
     }
-    
-    // Inicializar estado
+
+    // Inicializar estado del campo CAI
     toggleCAIField();
     
     // Escuchar cambios en el campo de rol
-    $('#id_rol').change(toggleCAIField);
-    
-    // Confirmación antes de eliminar
-    $('.btn-danger').click(function(e) {
+    $('#id_rol').on('change', toggleCAIField);
+
+    // Confirmación antes de eliminar usuario
+    $(document).on('click', '.btn-danger', function(e) {
         if (!confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
             e.preventDefault();
         }
     });
+
+    // Manejar el envío del formulario de filtros (AJAX)
+    $('#filtros-form').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        var url = form.attr('action') || window.location.pathname;
+        var scrollPosition = $(window).scrollTop();
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            data: form.serialize(),
+            success: function(data) {
+                // Extraer solo la tabla de la respuesta
+                var newContent = $(data).find('#usuarios-table-container').html();
+                $('#usuarios-table-container').html(newContent);
+                
+                // Mantener la posición del scroll
+                $(window).scrollTop(scrollPosition);
+                
+                // Actualizar URL en el navegador sin recargar
+                window.history.pushState({}, '', url + '?' + form.serialize());
+            },
+            error: function() {
+                console.error('Error al filtrar usuarios');
+            }
+        });
+    });
+
+    // Manejar el botón limpiar (AJAX)
+    $('.btn-limpiar').on('click', function(e) {
+        e.preventDefault();
+        var scrollPosition = $(window).scrollTop();
+
+        $.ajax({
+            url: "{% url 'gestionar_usuarios' %}",
+            type: 'GET',
+            success: function(data) {
+                // Extraer solo la tabla de la respuesta
+                var newContent = $(data).find('#usuarios-table-container').html();
+                $('#usuarios-table-container').html(newContent);
+                
+                // Mantener la posición del scroll
+                $(window).scrollTop(scrollPosition);
+                
+                // Limpiar parámetros de la URL
+                window.history.pushState({}, '', "{% url 'gestionar_usuarios' %}");
+                
+                // Resetear los selects del formulario
+                $('#filtros-form')[0].reset();
+            },
+            error: function() {
+                console.error('Error al limpiar filtros');
+            }
+        });
+    });
+
+    // Manejar el popstate (navegación con el historial)
+    window.addEventListener('popstate', function() {
+        $.ajax({
+            url: window.location.href,
+            type: 'GET',
+            success: function(data) {
+                var newContent = $(data).find('#usuarios-table-container').html();
+                $('#usuarios-table-container').html(newContent);
+            }
+        });
+    });
 });
 </script>
-{% endblock %}
 {% endblock %}

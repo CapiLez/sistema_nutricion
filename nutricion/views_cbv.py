@@ -1,10 +1,13 @@
 from django.views.generic import DeleteView, ListView, View, TemplateView, UpdateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import permission_required
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from reversion.models import Version
+from reversion import create_revision, set_user, set_comment
+from django.utils.decorators import method_decorator
 from django.core.paginator import Paginator
 import json
 import pandas as pd
@@ -278,26 +281,33 @@ class EditarTrabajadorView(LoginRequiredMixin, UpdateView):
         messages.success(self.request, "Trabajador actualizado correctamente")
         return super().form_valid(form)
 
-class EliminarTrabajadorView(BaseDeleteViewConCancel, LoginRequiredMixin):
+class EliminarTrabajadorView(LoginRequiredMixin, DeleteView):
     model = Trabajador
-    pk_url_kwarg = 'trabajador_id'
+    pk_url_kwarg = 'trabajador_id'  # Coincide con tu URL pattern
     template_name = 'eliminar_trabajador.html'
 
     def get_success_url(self):
-        return reverse_lazy('historial') if 'from' in self.request.GET else reverse_lazy('registro_trabajadores')
-
-    def get_cancel_url(self):
-        return 'historial' if 'from' in self.request.GET else 'registro_trabajadores'
+        # Redirige a registro_trabajadores por defecto o a historial si viene de ahí
+        return reverse_lazy('registro_trabajadores' if 'from' not in self.request.GET else 'historial')
 
     def form_valid(self, form):
-        from reversion import create_revision, set_user, set_comment
+        # Registra la eliminación en el historial de cambios
         with create_revision():
             set_user(self.request.user)
             set_comment("Eliminación de trabajador")
-            self.object.save()
+            self.object.save()  # Guarda antes de eliminar para el historial
+        
         messages.success(self.request, '[trabajadores] Trabajador eliminado correctamente.')
         return super().form_valid(form)
-    
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Determina la URL de cancelación basada en el origen
+        context['cancel_url'] = 'historial' if 'from' in self.request.GET else 'registro_trabajadores'
+        # Añade el objeto trabajador al contexto
+        context['trabajador'] = self.object
+        return context
+
 #-------------------
 # Views Seguimientos
 #-------------------
@@ -420,18 +430,26 @@ class SeguimientosTrabajadorView(LoginRequiredMixin, View):
         return render(request, 'seguimientos_trabajador.html', {'trabajador': trabajador, 'seguimientos': seguimientos})
     
 class EditarSeguimientoNinoView(FiltroCAIMixin, LoginRequiredMixin, View):
-    model = SeguimientoTrimestral
-    
-    def get_object(self, queryset=None):
-        obj = super().get_object(queryset)
-        # Verificación adicional
-        if self.request.user.is_nutriologo and obj.paciente.cai != self.request.user.cai:
-            raise Http404("No encontrado")
-        return obj
-    
     def get(self, request, id):
-        seguimiento = self.get_object()
+        seguimiento = get_object_or_404(SeguimientoTrimestral, id=id)
+        if request.user.is_nutriologo and seguimiento.paciente.cai != request.user.cai:
+            return HttpResponseForbidden("No tienes permiso para editar este seguimiento.")
+
         form = SeguimientoTrimestralForm(instance=seguimiento, user=request.user)
+        return render(request, 'editar_seguimiento_nino.html', {
+            'form': form,
+            'seguimiento': seguimiento
+        })
+
+    def post(self, request, id):
+        seguimiento = get_object_or_404(SeguimientoTrimestral, id=id)
+        if request.user.is_nutriologo and seguimiento.paciente.cai != request.user.cai:
+            return HttpResponseForbidden("No tienes permiso para editar este seguimiento.")
+
+        form = SeguimientoTrimestralForm(request.POST, instance=seguimiento, user=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect('seguimientos_nino', nino_id=seguimiento.paciente.id)
         return render(request, 'editar_seguimiento_nino.html', {
             'form': form,
             'seguimiento': seguimiento
@@ -531,6 +549,26 @@ class ListaSeguimientosView(LoginRequiredMixin, View):
             'imc': f"{s.imc:.2f}" if s.imc else '',
             'dx': s.dx or ''
         } for s in seguimientos]
+    
+class EliminarSeguimientoNinoView(DeleteView):
+    model = SeguimientoTrimestral
+    template_name = 'nutricion/eliminar_seguimiento.html' 
+    context_object_name = 'seguimiento'
+    success_url = reverse_lazy('seguimientos_general')  
+
+    
+    def get_queryset(self):
+        return SeguimientoTrimestral.objects.filter(paciente__cai=self.request.user.cai)
+    
+class EliminarSeguimientoTrabajadorView(DeleteView):
+    model = SeguimientoTrabajador
+    template_name = 'nutricion/eliminar_seguimiento.html' 
+    context_object_name = 'seguimiento'
+    success_url = reverse_lazy('seguimientos_general')  
+
+    
+    def get_queryset(self):
+        return SeguimientoTrabajador.objects.filter(trabajador__cai=self.request.user.cai)
 
 #-------------------
 # Views Historial
@@ -704,19 +742,7 @@ class ReporteTrabajadorView(LoginRequiredMixin, DetailView):
             'debug_mode': settings.DEBUG  # Solo en modo desarrollo
         })
         return context
-
-#-------------------
-# Graficación de IMC
-#-------------------
-
-class GraficasReferenciaView(LoginRequiredMixin, TemplateView):
-    template_name = 'graficas_referencia.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Aquí cargaríamos los datos para niños y trabajadores si se requiere
-        return context
-    
+ 
 #-------------------
 # Extras
 #-------------------
@@ -798,7 +824,6 @@ def buscar_seguimientos_nino_ajax(request):
         paciente__nombre__icontains=termino
     )
 
-    # Filtrar por CAI si es nutriólogo
     if request.user.is_nutriologo and request.user.cai:
         queryset = queryset.filter(paciente__cai=request.user.cai)
 
@@ -807,6 +832,7 @@ def buscar_seguimientos_nino_ajax(request):
     page_obj = paginator.get_page(page)
 
     data = [{
+        'id': s.id,
         'nombre': s.paciente.nombre,
         'fecha': s.fecha_valoracion.strftime('%d/%m/%Y') if s.fecha_valoracion else '',
         'edad': s.edad,
@@ -826,7 +852,6 @@ def buscar_seguimientos_trabajador_ajax(request):
         trabajador__nombre__icontains=termino
     )
 
-    # Filtrar por CAI si es nutriólogo
     if request.user.is_nutriologo and request.user.cai:
         queryset = queryset.filter(trabajador__cai=request.user.cai)
 
@@ -835,6 +860,7 @@ def buscar_seguimientos_trabajador_ajax(request):
     page_obj = paginator.get_page(page)
 
     data = [{
+        'id': s.id,
         'nombre': s.trabajador.nombre,
         'fecha': s.fecha_valoracion.strftime('%d/%m/%Y') if s.fecha_valoracion else '',
         'edad': s.edad,

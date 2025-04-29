@@ -33,9 +33,12 @@
                             <th>Talla (cm)</th>
                             <th>IMC</th>
                             <th>Diagnóstico</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-seguimientos-ninos"></tbody>
+                    <tbody id="tabla-seguimientos-ninos">
+                        <!-- AJAX -->
+                    </tbody>
                 </table>
             </div>
             <div class="pagination-buttons text-center mt-2">
@@ -67,9 +70,12 @@
                             <th>Talla (cm)</th>
                             <th>IMC</th>
                             <th>Diagnóstico</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-seguimientos-trabajadores"></tbody>
+                    <tbody id="tabla-seguimientos-trabajadores">
+                        <!-- AJAX -->
+                    </tbody>
                 </table>
             </div>
             <div class="pagination-buttons text-center mt-2">
@@ -116,10 +122,14 @@ $(document).ready(function() {
                                 <td>${s.talla}</td>
                                 <td>${s.imc}</td>
                                 <td>${s.dx}</td>
+                                <td>
+                                    <a href="/seguimiento/nino/editar/${s.id}/" class="btn btn-warning btn-sm">Editar</a>
+                                    <a href="/seguimiento/nino/eliminar/${s.id}/" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar este seguimiento?')">Eliminar</a>
+                                </td>
                             </tr>`;
                     });
                 } else {
-                    html = `<tr><td colspan="7">⚠ No se encontraron seguimientos.</td></tr>`;
+                    html = `<tr><td colspan="8">⚠ No se encontraron seguimientos.</td></tr>`;
                 }
                 $('#tabla-seguimientos-ninos').html(html);
                 $('#btn-anterior-nino').toggle(paginaNino > 1);
@@ -146,10 +156,14 @@ $(document).ready(function() {
                                 <td>${s.talla}</td>
                                 <td>${s.imc}</td>
                                 <td>${s.dx}</td>
+                                <td>
+                                    <a href="/seguimiento/trabajador/editar/${s.id}/" class="btn btn-warning btn-sm">Editar</a>
+                                    <a href="/seguimiento/trabajador/eliminar/${s.id}/" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar este seguimiento?')">Eliminar</a>
+                                </td>
                             </tr>`;
                     });
                 } else {
-                    html = `<tr><td colspan="7">⚠ No se encontraron seguimientos.</td></tr>`;
+                    html = `<tr><td colspan="8">⚠ No se encontraron seguimientos.</td></tr>`;
                 }
                 $('#tabla-seguimientos-trabajadores').html(html);
                 $('#btn-anterior-trabajador').toggle(paginaTrabajador > 1);
@@ -192,7 +206,6 @@ $(document).ready(function() {
         cargarSeguimientosTrabajador();
     });
 
-    // Carga inicial
     cargarSeguimientosNino();
     cargarSeguimientosTrabajador();
 });

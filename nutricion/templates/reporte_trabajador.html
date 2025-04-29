@@ -15,7 +15,11 @@
         {% if trabajador.sexo == 'M' %}male
         {% elif trabajador.sexo == 'F' %}female
         {% else %}default{% endif %}">
-        <i class="fas fa-user-tie"></i>
+        {% if trabajador.sexo == 'F' %}
+            <i class="fas fa-female"></i>  <!-- Ícono de mujer -->
+        {% else %}
+            <i class="fas fa-user-tie"></i>  <!-- Ícono de hombre con corbata -->
+        {% endif %}
     </div>
 
     <!-- Encabezado del Reporte -->
