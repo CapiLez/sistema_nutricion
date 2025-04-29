@@ -10,6 +10,14 @@
 
 {% block content %}
 <div class="container reporte-container">
+    <!-- Icono de trabajador profesional -->
+    <div class="worker-icon 
+        {% if trabajador.sexo == 'M' %}male
+        {% elif trabajador.sexo == 'F' %}female
+        {% else %}default{% endif %}">
+        <i class="fas fa-user-tie"></i>
+    </div>
+
     <!-- Encabezado del Reporte -->
     <div class="header-section">
         <h1><i class="fas fa-file-medical"></i> Reporte Nutricional Laboral</h1>

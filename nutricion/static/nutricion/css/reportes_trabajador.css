@@ -1,4 +1,4 @@
-/* Estilos para el reporte individual de niño (igual al de trabajadores) */
+/* Estilos para el reporte individual de trabajadores */
 .reporte-container {
     background-color: #f5f7fa;
     padding: 25px;
@@ -8,6 +8,29 @@
     border-radius: 10px;
     color: #3a3a3a;
     font-family: 'Poppins', 'Roboto', sans-serif;
+    position: relative;
+}
+
+/* Icono de trabajador profesional */
+.worker-icon {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 80px;
+    opacity: 0.2;
+    z-index: 0;
+}
+
+.worker-icon.male {
+    color: #3498db; /* Azul corporativo */
+}
+
+.worker-icon.female {
+    color: #e91e63; /* Rosa corporativo */
+}
+
+.worker-icon.default {
+    color: #1abc9c; /* Verde corporativo */
 }
 
 .header-section {
@@ -15,6 +38,8 @@
     padding-bottom: 15px;
     border-bottom: 1px solid #e0e6ed;
     text-align: center;
+    position: relative;
+    z-index: 1;
 }
 
 .header-section h1 {
@@ -34,18 +59,52 @@
 /* Secciones del reporte */
 .datos-section, 
 .graficas-section, 
-.seguimientos-section {
+.seguimientos-section,
+.salud-section {
     background-color: white;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     margin-bottom: 25px;
     border-left: 4px solid #1abc9c;
+    position: relative;
+    z-index: 1;
 }
 
+/* Estilos para badges de IMC */
+.badge-imc {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+.imc-bajo {
+    background-color: #3498db;
+    color: white;
+}
+
+.imc-normal {
+    background-color: #2ecc71;
+    color: white;
+}
+
+.imc-sobrepeso {
+    background-color: #f39c12;
+    color: white;
+}
+
+.imc-obesidad {
+    background-color: #e74c3c;
+    color: white;
+}
+
+/* Resto del CSS... */
 .datos-section h3,
 .graficas-section h3, 
-.seguimientos-section h3 {
+.seguimientos-section h3,
+.salud-section h3 {
     color: #2c3e50;
     font-size: 18px;
     font-weight: 500;
@@ -58,7 +117,8 @@
 
 .datos-section h3 i,
 .graficas-section h3 i, 
-.seguimientos-section h3 i {
+.seguimientos-section h3 i,
+.salud-section h3 i {
     margin-right: 10px;
     color: #1abc9c;
 }
@@ -224,6 +284,12 @@
     .reporte-container {
         padding: 15px;
         margin: 10px;
+    }
+    
+    .worker-icon {
+        font-size: 60px;
+        right: 15px;
+        top: 15px;
     }
     
     .header-section h1 {
