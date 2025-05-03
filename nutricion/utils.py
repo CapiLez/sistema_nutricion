@@ -35,10 +35,14 @@ class RevisionMixin:
 
 class RevisionCreateView(LoginRequiredMixin, RevisionMixin, CreateView):
     """
-    Vista para creación con control de versiones.
+    Vista base para crear registros con control de revisiones y mensajes de éxito.
     """
     comment = "Nuevo {model} creado: {object}"
     success_message = "Registro creado exitosamente"
+
+    def form_valid(self, form):
+        self.object = form.save()  # 🔴 Guardar explícitamente
+        return super().form_valid(form)
 
 
 class RevisionUpdateView(LoginRequiredMixin, RevisionMixin, UpdateView):

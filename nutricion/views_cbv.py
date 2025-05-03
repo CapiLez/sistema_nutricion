@@ -1,3 +1,4 @@
+from datetime import date
 from django.views.generic import DeleteView, ListView, View, TemplateView, UpdateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import permission_required
@@ -5,6 +6,7 @@ from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse
+from matplotlib.dates import relativedelta
 from reversion.models import Version
 from reversion import create_revision, set_user, set_comment
 from django.utils.decorators import method_decorator
@@ -177,18 +179,36 @@ class RegistroNinoView(FiltroCAIMixin, RevisionCreateView):
     success_message = "[ninos] Niño agregado exitosamente."
 
     def form_valid(self, form):
-        # Para nutriólogos, asignar automáticamente su CAI
+        # Asignar CAI automáticamente si es nutriólogo
         if self.request.user.is_nutriologo:
             form.instance.cai = self.request.user.cai
+
+        self.object = form.save()  # 🔴 Guarda el niño correctamente
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Filtrar últimos niños por CAI
         ultimos_ninos = Paciente.objects.all()
         if self.request.user.is_nutriologo and self.request.user.cai:
             ultimos_ninos = ultimos_ninos.filter(cai=self.request.user.cai)
         context['ultimos_ninos'] = ultimos_ninos.order_by('-id')[:5]
+
+        # Info IMC para mostrar si se requiere
+        context['info_imc'] = {
+            'menores_5': {
+                'bajo_peso': '<14.0',
+                'normal': '14.0-16.9',
+                'sobrepeso': '17.0-17.9',
+                'obesidad': '≥18.0'
+            },
+            'mayores_5': {
+                'bajo_peso': 'Percentil <5',
+                'normal': 'Percentil 5-85',
+                'sobrepeso': 'Percentil 85-95',
+                'obesidad': 'Percentil ≥95'
+            }
+        }
+
         return context
 
 class EditarNinoView(CancelUrlMixin, RevisionUpdateView):
@@ -323,7 +343,6 @@ class RegistrarSeguimientoNinoView(FiltroCAIMixin, InitialFromModelMixin, Revisi
     related_model_class = Paciente
     field_map = {
         'paciente': 'id',
-        'edad': 'edad',
         'peso': 'peso',
         'talla': 'talla',
         'imc': 'imc',
@@ -339,6 +358,12 @@ class RegistrarSeguimientoNinoView(FiltroCAIMixin, InitialFromModelMixin, Revisi
         if self.request.user.is_nutriologo and paciente.cai != self.request.user.cai:
             return HttpResponseForbidden("No tienes permiso para registrar seguimiento de este paciente.")
         return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        print("❌ Formulario inválido:")
+        print(form.errors)
+        return super().form_invalid(form)
+
 
 
 class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, RevisionCreateView):
@@ -508,20 +533,20 @@ class ListaSeguimientosView(LoginRequiredMixin, View):
     
     def get_seguimientos_ninos(self, request, search_term=None):
         seguimientos = SeguimientoTrimestral.objects.select_related('paciente')
-        
+
         # Filtrado por CAI si es nutriólogo
         if request.user.is_nutriologo and request.user.cai:
             seguimientos = seguimientos.filter(paciente__cai=request.user.cai)
-        
+
         # Filtro de búsqueda
         if search_term:
             seguimientos = seguimientos.filter(paciente__nombre__icontains=search_term)
-        
+
         return [{
             'id': s.id,
             'nombre': s.paciente.nombre,
             'fecha': s.fecha_valoracion.strftime('%d/%m/%Y'),
-            'edad': s.edad,
+            'edad': edad_textual(s.paciente.fecha_nacimiento, s.fecha_valoracion),  # <-- ¡Aquí!
             'peso': s.peso,
             'talla': s.talla,
             'imc': f"{s.imc:.2f}" if s.imc else '',
@@ -757,15 +782,15 @@ class UltimosCambiosView(LoginRequiredMixin, AdminRequiredMixin, ListView):
     
 def buscar_ninos_ajax(request):
     term = request.GET.get('term', '')
-    page = request.GET.get('page', 1)
+    page = int(request.GET.get('page', 1))
 
     ninos = Paciente.objects.filter(nombre__icontains=term)
-    
-    # Filtrar por CAI si es nutriólogo
+
+    # Filtro por CAI si es nutriólogo
     if request.user.is_nutriologo and request.user.cai:
         ninos = ninos.filter(cai=request.user.cai)
-    
-    ninos = ninos.order_by('nombre')
+
+    ninos = ninos.order_by('-id')
     paginator = Paginator(ninos, 10)
     pagina = paginator.get_page(page)
 
@@ -773,13 +798,14 @@ def buscar_ninos_ajax(request):
         {
             'id': n.id,
             'nombre': n.nombre,
-            'edad': n.edad,
+            'edad': n.edad_detallada,
             'curp': n.curp,
             'grado': n.grado,
             'grupo': n.grupo,
-            'cai': n.cai,
+            'cai': str(n.cai),
         } for n in pagina
     ]
+
 
     return JsonResponse({
         'resultados': resultados,
@@ -816,6 +842,13 @@ def buscar_trabajadores_ajax(request):
         'has_next': pagina.has_next()
     })
 
+def calcular_edad_detallada(nacimiento, valoracion):
+    if not nacimiento or not valoracion:
+        return "0 años, 0 meses"
+    diferencia = relativedelta(valoracion, nacimiento)
+    return f"{diferencia.years} años, {diferencia.months} meses"
+
+
 def buscar_seguimientos_nino_ajax(request):
     termino = request.GET.get('term', '')
     page = int(request.GET.get('page', 1))
@@ -835,7 +868,7 @@ def buscar_seguimientos_nino_ajax(request):
         'id': s.id,
         'nombre': s.paciente.nombre,
         'fecha': s.fecha_valoracion.strftime('%d/%m/%Y') if s.fecha_valoracion else '',
-        'edad': s.edad,
+        'edad': calcular_edad_detallada(s.paciente.fecha_nacimiento, s.fecha_valoracion),
         'peso': s.peso,
         'talla': s.talla,
         'imc': s.imc,
@@ -871,3 +904,9 @@ def buscar_seguimientos_trabajador_ajax(request):
     } for s in page_obj]
 
     return JsonResponse({'resultados': data, 'has_next': page_obj.has_next()})
+
+def edad_textual(nacimiento, fecha_valoracion):
+    if not nacimiento or not fecha_valoracion:
+        return "0 años, 0 meses"
+    diferencia = relativedelta(fecha_valoracion, nacimiento)
+    return f"{diferencia.years} años, {diferencia.months} meses"

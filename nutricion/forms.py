@@ -1,4 +1,6 @@
+import re
 from django import forms
+from matplotlib.dates import relativedelta
 from .models import (
     CAI_CHOICES, Usuario, Paciente, Trabajador,
     SeguimientoTrimestral, SeguimientoTrabajador
@@ -120,51 +122,56 @@ class UsuarioEdicionForm(forms.ModelForm):
 ### -------------------- PACIENTES --------------------
 
 class PacienteForm(forms.ModelForm):
+    edad_mostrar = forms.CharField(
+        required=False,
+        label='Edad (años y meses)',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control readonly-field',
+            'readonly': True,
+            'id': 'id_edad_mostrar'
+        })
+    )
+
     class Meta:
         model = Paciente
-        fields = '__all__'
+        fields = [
+            'nombre', 'curp', 'fecha_nacimiento', 'edad',  # solo 'edad' real
+            'sexo', 'cai', 'peso', 'talla',
+            'imc', 'imc_categoria', 'grado', 'grupo'
+        ]
         widgets = {
-            'fecha_nacimiento': forms.DateInput(
-                attrs={'type': 'date', 'max': datetime.date.today().isoformat()}
-            ),
-            'cai': forms.Select()
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'curp': forms.TextInput(attrs={'class': 'form-control'}),
+            'fecha_nacimiento': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'max': datetime.date.today().isoformat()
+            }),
+            'edad': forms.HiddenInput(),
+            'sexo': forms.Select(attrs={'class': 'form-control'}),
+            'cai': forms.Select(attrs={'class': 'form-control'}),
+            'peso': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+            'talla': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+            'imc': forms.NumberInput(attrs={'class': 'form-control readonly-field', 'readonly': True}),
+            'imc_categoria': forms.TextInput(attrs={'class': 'form-control readonly-field', 'readonly': True}),
+            'grado': forms.TextInput(attrs={'class': 'form-control'}),
+            'grupo': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
-    def clean_curp(self):
-        curp = self.cleaned_data.get('curp')
-        if curp and len(curp) != 18:
-            raise forms.ValidationError("La CURP debe tener exactamente 18 caracteres")
-        return curp.upper() if curp else curp
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def clean_edad(self):
-        edad = self.cleaned_data.get('edad')
-        if edad is not None and (edad < 0 or edad > 18):
-            raise forms.ValidationError("La edad debe estar entre 0 y 18 años")
-        return edad
+        # Mostrar edad detallada si ya existe
+        if self.instance.pk:
+            self.fields['edad_mostrar'].initial = self.instance.edad_detallada
 
-    def clean_peso(self):
-        peso = self.cleaned_data.get('peso')
-        if peso is not None and (peso < 1 or peso > 150):
-            raise forms.ValidationError("El peso debe estar entre 1 y 150 kg")
-        return peso
-
-    def clean_talla(self):
-        talla = self.cleaned_data.get('talla')
-        if talla is not None and (talla < 30 or talla > 200):
-            raise forms.ValidationError("La talla debe estar entre 30 y 200 cm")
-        return talla
-
-    def clean(self):
-        cleaned_data = super().clean()
-        peso = cleaned_data.get('peso')
-        talla = cleaned_data.get('talla')
-        
-        if peso and talla:
-            # Convertir talla de cm a metros para cálculo de IMC
-            talla_m = talla / 100
-            cleaned_data['imc'] = round(peso / (talla_m ** 2), 2)
-        
-        return cleaned_data
+        # Reordenar campos para mostrar la edad visible primero
+        self.order_fields([
+            'nombre', 'curp', 'fecha_nacimiento',
+            'edad_mostrar', 'edad',
+            'sexo', 'cai', 'peso', 'talla',
+            'imc', 'imc_categoria', 'grado', 'grupo'
+        ])
 
 ### -------------------- TRABAJADORES --------------------
 
@@ -223,62 +230,158 @@ class TrabajadorForm(forms.ModelForm):
 ### -------------------- SEGUIMIENTOS NIÑOS --------------------
 
 class SeguimientoTrimestralForm(forms.ModelForm):
+    edad_mostrar = forms.CharField(
+        required=False,
+        label='Edad (años y meses)',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Ej: 4 años, 3 meses',
+            'id': 'id_edad_mostrar'
+        })
+    )
+
     class Meta:
         model = SeguimientoTrimestral
         fields = [
-            'paciente', 'edad', 'peso', 'talla', 'imc',
+            'paciente', 'fecha_valoracion',
+            'edad_mostrar', 'edad', 'peso', 'talla', 'imc',
             'indicador_peso_edad', 'indicador_peso_talla',
-            'indicador_talla_edad', 'dx', 'fecha_valoracion'
+            'indicador_talla_edad', 'dx'
         ]
         widgets = {
-            'fecha_valoracion': forms.DateInput(attrs={'type': 'date'}),
-            'paciente': forms.Select(attrs={'class': 'form-control'})
+            'fecha_valoracion': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'paciente': forms.Select(attrs={'class': 'form-control'}),
+            'edad': forms.HiddenInput(),
+            'imc': forms.NumberInput(attrs={'class': 'form-control readonly-field', 'readonly': True}),
+            'indicador_peso_edad': forms.TextInput(attrs={'class': 'form-control readonly-field', 'readonly': True}),
+            'indicador_peso_talla': forms.TextInput(attrs={'class': 'form-control readonly-field', 'readonly': True}),
+            'indicador_talla_edad': forms.TextInput(attrs={'class': 'form-control readonly-field', 'readonly': True}),
+            'peso': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+            'talla': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+            'dx': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        
-        # Filtramos pacientes por CAI si es nutriólogo
+
         if self.user and self.user.is_nutriologo and self.user.cai:
             self.fields['paciente'].queryset = Paciente.objects.filter(cai=self.user.cai)
-        
-        # Establecer valores iniciales para campos calculados
-        if self.instance.pk:
-            self.fields['edad'].initial = self.instance.edad
-            self.fields['imc'].initial = self.instance.imc
+
+        self.fields['imc'].disabled = True
+
+        paciente_id = self.initial.get('paciente') or self.data.get('paciente')
+        try:
+            paciente = Paciente.objects.get(id=paciente_id)
+            self.fields['edad_mostrar'].initial = paciente.edad_detallada
+            self.fields['edad'].initial = paciente.edad
+        except (Paciente.DoesNotExist, TypeError, ValueError):
+            self.fields['edad_mostrar'].initial = ''
+            self.fields['edad'].initial = 0
+
+        self.order_fields([
+            'paciente',
+            'edad_mostrar', 'edad', 'peso', 'talla', 'imc',
+            'indicador_peso_edad', 'indicador_peso_talla',
+            'indicador_talla_edad', 'dx', 'fecha_valoracion',
+        ])
+
+    def edad_texto_a_decimal(self, texto):
+        """
+        Convierte 'X años, Y meses' a un número decimal de años (float).
+        Ej: '4 años, 6 meses' → 4.5
+        """
+        match = re.match(r"(\d+)\s*años?,\s*(\d+)\s*mes(?:es)?", texto.strip().lower())
+        if match:
+            anios = int(match.group(1))
+            meses = int(match.group(2))
+            return round(anios + meses / 12, 2)
+        return 0.0
 
     def clean(self):
         cleaned_data = super().clean()
         paciente = cleaned_data.get('paciente')
+        fecha_valoracion = cleaned_data.get('fecha_valoracion')
+
+        # Procesar edad textual
+        edad_texto = cleaned_data.get('edad_mostrar', '').strip()
+        edad_num = self.edad_texto_a_decimal(edad_texto)
+        cleaned_data['edad'] = edad_num
+
         peso = cleaned_data.get('peso')
         talla = cleaned_data.get('talla')
-        edad = cleaned_data.get('edad')
-        
-        # Verificación de CAI para nutriólogos
-        if self.user and self.user.is_nutriologo and paciente and paciente.cai != self.user.cai:
-            raise forms.ValidationError("No tienes permiso para registrar seguimiento de este paciente.")
 
-        # Validaciones básicas
-        if peso is not None and (peso < 1 or peso > 150):
-            self.add_error('peso', "El peso debe estar entre 1 y 150 kg")
-        
-        if talla is not None and (talla < 30 or talla > 200):
-            self.add_error('talla', "La talla debe estar entre 30 y 200 cm")
-        
-        if edad is not None and (edad < 0 or edad > 18):
-            self.add_error('edad', "La edad debe estar entre 0 y 18 años")
-        
-        # Cálculos automáticos
-        if peso and talla and edad:
+        # IMC
+        imc = None
+        if peso and talla:
             talla_m = talla / 100
-            cleaned_data['imc'] = round(peso / (talla_m ** 2), 2)
-            
-            # Cálculo de indicadores nutricionales (fórmulas de ejemplo)
-            cleaned_data['indicador_peso_edad'] = round((peso / (edad + 0.1)) * 100, 2) if edad > 0 else 0
-            cleaned_data['indicador_peso_talla'] = round((peso / talla) * 100, 2) if talla > 0 else 0
-            cleaned_data['indicador_talla_edad'] = round((talla / (edad + 0.1)) * 100, 2) if edad > 0 else 0
-        
+            imc = round(peso / (talla_m ** 2), 2)
+            cleaned_data['imc'] = imc
+        else:
+            cleaned_data['imc'] = 0
+
+        # Clasificaciones
+        def clasificar_indicador_peso_edad(valor):
+            if valor < 80:
+                return "Bajo peso"
+            elif valor <= 120:
+                return "Adecuado"
+            elif valor <= 140:
+                return "Sobrepeso"
+            else:
+                return "Obesidad"
+
+        def clasificar_indicador_peso_talla(valor):
+            if valor < 40:
+                return "Bajo peso"
+            elif valor <= 70:
+                return "Normal"
+            else:
+                return "Sobrepeso"
+
+        def clasificar_indicador_talla_edad(valor):
+            if valor < 50:
+                return "Baja talla"
+            elif valor <= 100:
+                return "Adecuada"
+            else:
+                return "Alta talla"
+
+        if peso and talla and edad_num:
+            peso_edad = round((peso / (edad_num + 0.1)) * 100, 2)
+            peso_talla = round((peso / talla) * 100, 2)
+            talla_edad = round((talla / (edad_num + 0.1)) * 100, 2)
+
+            cleaned_data['indicador_peso_edad'] = clasificar_indicador_peso_edad(peso_edad)
+            cleaned_data['indicador_peso_talla'] = clasificar_indicador_peso_talla(peso_talla)
+            cleaned_data['indicador_talla_edad'] = clasificar_indicador_talla_edad(talla_edad)
+
+        # Diagnóstico automático por IMC
+        if imc is not None:
+            if edad_num < 5:
+                if imc < 14:
+                    dx = "Desnutrición"
+                elif imc < 17:
+                    dx = "Normal"
+                elif imc < 19:
+                    dx = "Sobrepeso"
+                else:
+                    dx = "Obesidad"
+            else:
+                if imc < 18.5:
+                    dx = "Bajo peso"
+                elif imc < 25:
+                    dx = "Normal"
+                elif imc < 30:
+                    dx = "Sobrepeso"
+                elif imc < 35:
+                    dx = "Obesidad I"
+                elif imc < 40:
+                    dx = "Obesidad II"
+                else:
+                    dx = "Obesidad III"
+            cleaned_data['dx'] = dx
+
         return cleaned_data
 
 

@@ -1,11 +1,24 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load widget_tweaks %}
 
 {% block title %}Editar Niño - {{ paciente.nombre|default:"Nuevo Niño" }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'nutricion/css/editar_nino.css' %}">
-
+<style>
+    .readonly-field {
+        background-color: #f8f9fa;
+        cursor: not-allowed;
+    }
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    .error-message {
+        color: red;
+        font-size: 0.9rem;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -14,29 +27,72 @@
         <div class="card-header">
             <h2><i class="fas fa-child"></i> Editar Niño: {{ paciente.nombre|default:"Nuevo Niño" }}</h2>
         </div>
-        
+
         <div class="card-body">
             <form method="POST" class="nino-form">
                 {% csrf_token %}
-                
-                {% for field in form %}
+
+                <!-- NOMBRE -->
                 <div class="form-group">
-                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.help_text %}
-                    <small class="form-text text-muted">{{ field.help_text }}</small>
-                    {% endif %}
-                    {% for error in field.errors %}
-                    <div class="error-message">{{ error }}</div>
+                    {{ form.nombre.label_tag }}
+                    {{ form.nombre|add_class:"form-control" }}
+                    {% for error in form.nombre.errors %}
+                        <div class="error-message">{{ error }}</div>
                     {% endfor %}
                 </div>
+
+                <!-- CURP -->
+                <div class="form-group">
+                    {{ form.curp.label_tag }}
+                    {{ form.curp|add_class:"form-control" }}
+                    {% for error in form.curp.errors %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <!-- FECHA DE NACIMIENTO -->
+                <div class="form-group">
+                    {{ form.fecha_nacimiento.label_tag }}
+                    {{ form.fecha_nacimiento|add_class:"form-control" }}
+                    {% for error in form.fecha_nacimiento.errors %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <!-- EDAD DETALLADA (VISIBLE) -->
+                <div class="form-group">
+                    {{ form.edad_mostrar.label_tag }}
+                    {{ form.edad_mostrar }}
+                    {% for error in form.edad_mostrar.errors %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <!-- EDAD REAL (OCULTA) -->
+                {{ form.edad }}
+
+                <!-- RESTO DE CAMPOS -->
+                {% for field in form %}
+                    {% if field.name not in 'nombre curp fecha_nacimiento edad edad_mostrar' %}
+                        <div class="form-group">
+                            {{ field.label_tag }}
+                            {% if field.name in 'imc imc_categoria' %}
+                                {{ field|add_class:"form-control readonly-field" }}
+                            {% else %}
+                                {{ field|add_class:"form-control" }}
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="error-message">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 {% endfor %}
 
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-save">
+                <div class="form-actions mt-4">
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i> Guardar Cambios
                     </button>
-                    <a href="{% url 'registro_ninos' %}" class="btn btn-cancel">
+                    <a href="{% url 'registro_ninos' %}" class="btn btn-secondary">
                         <i class="fas fa-times-circle"></i> Cancelar
                     </a>
                 </div>
@@ -44,4 +100,83 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        function calcularEdad() {
+            const fechaNacimiento = $('#id_fecha_nacimiento').val();
+            if (fechaNacimiento) {
+                const fnac = new Date(fechaNacimiento);
+                const hoy = new Date();
+
+                let edadMeses = (hoy.getFullYear() - fnac.getFullYear()) * 12 + hoy.getMonth() - fnac.getMonth();
+                if (hoy.getDate() < fnac.getDate()) edadMeses--;
+
+                const anios = Math.floor(edadMeses / 12);
+                const meses = edadMeses % 12;
+
+                $('#edad_visible').val(`${anios} años, ${meses} meses`);
+                $('#id_edad').val((edadMeses / 12).toFixed(2));
+            } else {
+                $('#edad_visible').val('');
+                $('#id_edad').val('');
+            }
+        }
+
+        function calcularIMCCompleto() {
+            const peso = parseFloat($('#id_peso').val()) || 0;
+            const talla = parseFloat($('#id_talla').val()) || 0;
+            const fechaNacimiento = $('#id_fecha_nacimiento').val();
+
+            if (peso > 0 && talla > 0 && fechaNacimiento) {
+                const tallaM = talla / 100;
+                const imc = peso / (tallaM * tallaM);
+                $('#id_imc').val(imc.toFixed(2));
+
+                const fnac = new Date(fechaNacimiento);
+                const hoy = new Date();
+                let edadMeses = (hoy.getFullYear() - fnac.getFullYear()) * 12 + hoy.getMonth() - fnac.getMonth();
+                if (hoy.getDate() < fnac.getDate()) edadMeses--;
+                const edadAnios = edadMeses / 12;
+
+                let categoria = '';
+                if (edadAnios < 5) {
+                    if (imc < 14.0) categoria = 'Bajo peso';
+                    else if (imc < 17.0) categoria = 'Normal';
+                    else if (imc < 18.0) categoria = 'Sobrepeso';
+                    else categoria = 'Obesidad';
+                } else {
+                    if (imc < 18.5) categoria = 'Bajo peso';
+                    else if (imc < 25) categoria = 'Normal';
+                    else if (imc < 30) categoria = 'Sobrepeso';
+                    else if (imc < 35) categoria = 'Obesidad I';
+                    else if (imc < 40) categoria = 'Obesidad II';
+                    else categoria = 'Obesidad III';
+                }
+
+                $('#id_imc_categoria').val(categoria);
+            } else {
+                $('#id_imc').val('');
+                $('#id_imc_categoria').val('');
+            }
+        }
+
+        $('#id_fecha_nacimiento').on('change', function () {
+            calcularEdad();
+            calcularIMCCompleto();
+        });
+
+        $('#id_peso, #id_talla').on('input', calcularIMCCompleto);
+
+        calcularEdad();
+        calcularIMCCompleto();
+
+        $('input[name="curp"]').on('input', function () {
+            this.value = this.value.toUpperCase();
+        });
+    });
+</script>
 {% endblock %}

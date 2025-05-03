@@ -1,10 +1,20 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load widget_tweaks %}
 
 {% block title %}Registro de Niños{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'nutricion/css/registro_nino.css' %}">
+<style>
+    .readonly-field {
+        background-color: #f8f9fa;
+        cursor: not-allowed;
+    }
+    .form-group {
+        margin-bottom: 1rem;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -13,13 +23,13 @@
         <h2>Registro de Evaluación Nutricional - Niños</h2>
 
         {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                    {% if "[ninos]" in message %}
-                        <li class="alert {{ message.tags }}">{{ message|cut:"[ninos]" }}</li>
-                    {% endif %}
-                {% endfor %}
-            </ul>
+        <ul class="messages">
+            {% for message in messages %}
+                {% if "[ninos]" in message %}
+                    <li class="alert {{ message.tags }}">{{ message|cut:"[ninos]" }}</li>
+                {% endif %}
+            {% endfor %}
+        </ul>
         {% endif %}
 
         <div class="acciones-container">
@@ -28,25 +38,63 @@
             </button>
         </div>
 
-        <div id="formulario-nino" class="hidden">
+        <div id="formulario-nino" class="hidden mt-4">
             <h3>Agregar Nuevo Niño</h3>
             <form method="POST">
                 {% csrf_token %}
+
+                <div class="form-group">
+                    {{ form.nombre.label_tag }}
+                    {{ form.nombre|add_class:"form-control" }}
+                    {% for error in form.nombre.errors %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.curp.label_tag }}
+                    {{ form.curp|add_class:"form-control" }}
+                    {% for error in form.curp.errors %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <!-- FECHA DE NACIMIENTO -->
+                <div class="form-group">
+                    {{ form.fecha_nacimiento.label_tag }}
+                    {{ form.fecha_nacimiento|add_class:"form-control" }}
+                    {% for error in form.fecha_nacimiento.errors %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                {{ form.edad }}
+
+                <!-- Edad Mostrar ÚNICA -->
+                <div class="form-group">
+                    {{ form.edad_mostrar.label_tag }}
+                    {{ form.edad_mostrar }}
+                    {% for error in form.edad_mostrar.errors %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
                 {% for field in form %}
+                    {% if field.name not in 'nombre curp fecha_nacimiento edad edad_mostrar' %}
                     <div class="form-group">
                         {{ field.label_tag }}
-                        {{ field }}
-                        {% if field.help_text %}
-                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                        {% if field.name in 'imc imc_categoria' %}
+                            {{ field|add_class:"form-control readonly-field" }}
+                        {% else %}
+                            {{ field|add_class:"form-control" }}
                         {% endif %}
                         {% for error in field.errors %}
                             <div class="alert alert-danger">{{ error }}</div>
                         {% endfor %}
-                        {% if field.name == 'imc' %}
-                            <div id="imc-category" class="imc-category"></div>
-                        {% endif %}
                     </div>
+                    {% endif %}
                 {% endfor %}
+
                 <div class="form-buttons mt-3">
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-save"></i> Guardar
@@ -58,14 +106,15 @@
             </form>
         </div>
 
-        <div class="ultimos-ninos mt-4">
+        <div class="ultimos-ninos mt-5">
             <h3>Últimos Niños Agregados</h3>
-            <table class="table">
+            <table class="table table-bordered">
                 <thead>
                     <tr>
                         <th>Nombre</th>
                         <th>Edad</th>
                         <th>IMC</th>
+                        <th>Categoría IMC</th>
                         <th>CURP</th>
                         <th>Grado</th>
                         <th>Grupo</th>
@@ -76,13 +125,16 @@
                     {% for nino in ultimos_ninos %}
                         <tr>
                             <td>{{ nino.nombre }}</td>
-                            <td>{{ nino.edad }} años</td>
+                            <td>{{ nino.edad_detallada }}</td>
+                            <td>{{ nino.imc|floatformat:2|default:"-" }}</td>
                             <td>
-                                <span class="badge imc-badge" data-imc="{{ nino.imc }}">{{ nino.imc|default:"-" }}</span>
+                                <span class="badge imc-badge {{ nino.imc_categoria|lower|cut:' '|cut:'('|cut:')'|cut:'percentil' }}">
+                                    {{ nino.imc_categoria|default:"-" }}
+                                </span>
                             </td>
-                            <td>{{ nino.curp|upper }}</td>
-                            <td>{{ nino.grado }}</td>
-                            <td>{{ nino.grupo }}</td>
+                            <td>{{ nino.curp|upper|default:"-" }}</td>
+                            <td>{{ nino.grado|default:"-" }}</td>
+                            <td>{{ nino.grupo|default:"-" }}</td>
                             <td>
                                 <a href="{% url 'editar_nino' nino.id %}" class="btn btn-warning btn-sm">
                                     <i class="fas fa-edit"></i>
@@ -100,7 +152,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="7">No hay niños registrados recientemente.</td>
+                            <td colspan="8">No hay niños registrados recientemente.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -117,76 +169,106 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function () {
-        $("#formulario-nino").hide();
+$(document).ready(function () {
+    const $formulario = $("#formulario-nino");
+    const $btnMostrar = $("#mostrar-formulario");
+    const $btnCancelar = $("#cancelar-formulario");
 
-        $("#mostrar-formulario").on("click", function () {
-            $("#formulario-nino").slideDown();
-            $(this).hide();
-        });
+    $formulario.hide();
 
-        $("#cancelar-formulario").on("click", function () {
-            $("#formulario-nino form")[0].reset();
-            $("#formulario-nino").slideUp();
-            $("#mostrar-formulario").show();
-            $("#imc-category").text('');
-        });
-
-        $('input[name="curp"]').on('input', function () {
-            this.value = this.value.toUpperCase();
-        });
-
-        function calcularIMC() {
-            const peso = parseFloat($('#id_peso').val()) || 0;
-            const talla = parseFloat($('#id_talla').val()) || 0;
-            if (peso > 0 && talla > 0) {
-                const tallaM = talla / 100;
-                const imc = peso / (tallaM * tallaM);
-                $('#id_imc').val(imc.toFixed(2));
-                mostrarCategoriaIMC(imc);
-            }
-        }
-
-        function mostrarCategoriaIMC(imc) {
-            let categoria = '';
-            let clase = '';
-            if (imc < 18.5) {
-                categoria = 'Bajo peso';
-                clase = 'imc-low';
-            } else if (imc < 25) {
-                categoria = 'Normal';
-                clase = 'imc-normal';
-            } else if (imc < 30) {
-                categoria = 'Sobrepeso';
-                clase = 'imc-high';
-            } else {
-                categoria = 'Obesidad';
-                clase = 'imc-obese';
-            }
-            $('#imc-category').html(`<span class="${clase}">${categoria}</span>`);
-        }
-
-        $('#id_peso, #id_talla').on('input', calcularIMC);
-
-        $('.imc-badge').each(function () {
-            const imc = parseFloat($(this).data('imc'));
-            if (!isNaN(imc)) {
-                if (imc < 18.5) {
-                    $(this).addClass('imc-low');
-                } else if (imc < 25) {
-                    $(this).addClass('imc-normal');
-                } else if (imc < 30) {
-                    $(this).addClass('imc-high');
-                } else {
-                    $(this).addClass('imc-obese');
-                }
-            }
-        });
+    $btnMostrar.on("click", function () {
+        $formulario.slideDown();
+        $btnMostrar.hide();
+        calcularEdad();
+        calcularIMCCompleto();
     });
+
+    $btnCancelar.on("click", function () {
+        $formulario.find("form")[0].reset();
+        $formulario.slideUp();
+        $btnMostrar.show();
+        $("#id_imc").val('');
+        $("#id_imc_categoria").val('');
+        $("#id_edad").val('');
+        $("#id_edad_mostrar").val('');
+    });
+
+    $('input[name="curp"]').on('input', function () {
+        this.value = this.value.toUpperCase();
+    });
+
+    function calcularEdad() {
+        const fechaNacimiento = $('#id_fecha_nacimiento').val();
+        if (fechaNacimiento) {
+            const fnac = new Date(fechaNacimiento);
+            const hoy = new Date();
+
+            let edadMeses = (hoy.getFullYear() - fnac.getFullYear()) * 12 + hoy.getMonth() - fnac.getMonth();
+            if (hoy.getDate() < fnac.getDate()) edadMeses--;
+
+            const anios = Math.floor(edadMeses / 12);
+            const meses = edadMeses % 12;
+
+            $('#id_edad_mostrar').val(`${anios} años, ${meses} meses`);
+            $('#id_edad').val((edadMeses / 12).toFixed(2));
+        } else {
+            $('#id_edad_mostrar').val('');
+            $('#id_edad').val('');
+        }
+    }
+
+    function calcularIMCCompleto() {
+        const peso = parseFloat($('#id_peso').val()) || 0;
+        const talla = parseFloat($('#id_talla').val()) || 0;
+        const fechaNacimiento = $('#id_fecha_nacimiento').val();
+
+        if (peso > 0 && talla > 0 && fechaNacimiento) {
+            const tallaM = talla / 100;
+            const imc = peso / (tallaM * tallaM);
+            $('#id_imc').val(imc.toFixed(2));
+
+            const fnac = new Date(fechaNacimiento);
+            const hoy = new Date();
+            let edadMeses = (hoy.getFullYear() - fnac.getFullYear()) * 12 + hoy.getMonth() - fnac.getMonth();
+            if (hoy.getDate() < fnac.getDate()) edadMeses--;
+            const edadAnios = edadMeses / 12;
+
+            let categoria = '';
+            if (edadAnios < 5) {
+                if (imc < 14.0) categoria = 'Bajo peso';
+                else if (imc < 17.0) categoria = 'Normal';
+                else if (imc < 18.0) categoria = 'Sobrepeso';
+                else categoria = 'Obesidad';
+            } else {
+                if (imc < 18.5) categoria = 'Bajo peso';
+                else if (imc < 25) categoria = 'Normal';
+                else if (imc < 30) categoria = 'Sobrepeso';
+                else if (imc < 35) categoria = 'Obesidad I';
+                else if (imc < 40) categoria = 'Obesidad II';
+                else categoria = 'Obesidad III';
+            }
+
+            $('#id_imc_categoria').val(categoria);
+        } else {
+            $('#id_imc').val('');
+            $('#id_imc_categoria').val('');
+        }
+    }
+
+    $('#id_fecha_nacimiento').on('change', function () {
+        calcularEdad();
+        calcularIMCCompleto();
+    });
+
+    $('#id_peso, #id_talla').on('input', calcularIMCCompleto);
+
+    calcularEdad();
+    calcularIMCCompleto();
+});
 </script>
-{% endblock %}
 {% endblock %}

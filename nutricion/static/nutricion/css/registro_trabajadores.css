@@ -214,8 +214,9 @@ label {
 }
 
 .btn-sm {
-    padding: 6px 2px;
+    padding: 5px 2px;
     font-size: 12px;
+    margin-right: -1px;
 }
 
 /* ===== TABLA ===== */

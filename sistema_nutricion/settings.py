@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'reversion',
-    'nutricion'
+    'nutricion',
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [

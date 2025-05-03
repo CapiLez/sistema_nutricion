@@ -31,7 +31,7 @@
             <div class="dato-item">
                 <i class="fas fa-birthday-cake"></i>
                 <div>
-                    <strong>Edad:</strong> {{ paciente.edad }} años
+                    <strong>Edad:</strong> {{ paciente.edad_detallada }}
                 </div>
             </div>
             
@@ -90,10 +90,13 @@
                 <canvas id="graficaTalla" height="250"></canvas>
             </div>
             
+            {% if paciente.edad >= 5 %}
             <div class="grafica-container">
                 <h4>Evolución de IMC</h4>
                 <canvas id="graficaIMC" height="250"></canvas>
             </div>
+            {% endif %}
+
         </div>
     </div>
 
@@ -119,7 +122,7 @@
                     {% for seg in seguimientos %}
                     <tr>
                         <td>{{ seg.fecha_valoracion|date:"d/m/Y" }}</td>
-                        <td>{{ seg.edad }}</td>
+                        <td>{{ seg.edad|default:"-" }}</td>
                         <td>{{ seg.peso|floatformat:2 }}</td>
                         <td>{{ seg.talla|floatformat:2 }}</td>
                         <td>{{ seg.imc|floatformat:2 }}</td>
