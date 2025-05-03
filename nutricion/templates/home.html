@@ -6,287 +6,45 @@
 {% block extra_css %}
 <link href="{% static 'nutricion/css/home.css' %}" rel="stylesheet">
 <style>
-    /* Transiciones suaves */
-    .view-transition {
-        transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    
-    /* Vista general */
-    #general-view {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    
-    #general-view.hidden {
-        opacity: 0;
-        transform: translateY(-20px);
-        display: none;
-    }
-    
-    /* Vista detalle CAI */
-    #cai-detail-view {
-        opacity: 0;
-        transform: translateY(20px);
-        display: none;
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        background: white;
-        z-index: 10;
-        padding: 20px;
-    }
-    
-    #cai-detail-view.visible {
-        opacity: 1;
-        transform: translateY(0);
-        display: block;
-    }
-    
-    /* Estilos para la vista detallada */
-    .cai-detail-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 30px;
-    }
-    
-    .back-button {
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-        padding: 8px 15px;
-        margin-right: 15px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        transition: background 0.2s;
-    }
-    
-    .back-button:hover {
-        background: #e9ecef;
-    }
-    
-    .back-button i {
-        margin-right: 5px;
-    }
-    
-    .cai-stats-container {
-        display: flex;
-        justify-content: space-around;
-        margin-bottom: 30px;
-    }
-    
-    .cai-stat-card {
-        background: white;
-        border-radius: 10px;
-        padding: 20px;
-        width: 45%;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        text-align: center;
-    }
-    
-    .cai-stat-card i {
-        font-size: 2rem;
-        margin-bottom: 10px;
-        color: #007bff;
-    }
-    
-    .tabs-container {
-        margin-top: 20px;
-    }
-    
-    .tabs-header {
-        display: flex;
-        border-bottom: 1px solid #dee2e6;
-    }
-    
-    .tab-button {
-        padding: 12px 20px;
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-weight: 500;
-        color: #6c757d;
-        position: relative;
-    }
-    
-    .tab-button.active {
-        color: #007bff;
-    }
-    
-    .tab-button.active::after {
-        content: '';
-        position: absolute;
-        bottom: -1px;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: #007bff;
-    }
-    
-    .tab-content {
-        display: none;
-        padding: 20px 0;
-    }
-    
-    .tab-content.active {
-        display: block;
-    }
-    
-    .search-container {
-        margin-bottom: 15px;
-    }
-    
-    .search-container input {
-        width: 100%;
-        padding: 10px 15px;
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-        font-size: 1rem;
-    }
-    
-    .person-list {
-        max-height: 60vh;
-        overflow-y: auto;
-        padding-right: 5px;
-    }
-    
-    .person-card {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px;
-        background: white;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    
-    .person-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    
-    .person-info {
-        display: flex;
-        align-items: center;
-        flex-grow: 1;
-    }
-    
-    .person-info i {
-        font-size: 1.5rem;
-        margin-right: 15px;
-        color: #007bff;
-    }
-    
-    .person-details h4 {
-        margin: 0;
-        font-size: 1rem;
-        color: #212529;
-    }
-    
-    .person-details p {
-        margin: 5px 0 0;
-        color: #6c757d;
-        font-size: 0.875rem;
-    }
-    
-    .view-button {
-        padding: 8px 15px;
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        text-decoration: none;
-        font-size: 0.875rem;
-        white-space: nowrap;
-        transition: background 0.2s;
-    }
-    
-    .view-button:hover {
-        background: #0069d9;
-    }
-    
-    .no-results {
-        text-align: center;
-        padding: 30px;
-        color: #6c757d;
-    }
-    
-    /* Loading indicator */
-    .loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(255,255,255,0.8);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        display: none;
-    }
-    
-    .spinner {
-        border: 5px solid #f3f3f3;
-        border-top: 5px solid #007bff;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
+    /* Estilos relevantes (omitidos por brevedad si ya los tienes en CSS externo) */
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="home-container">
-    <!-- Loading overlay -->
-    <div class="loading-overlay" id="loadingIndicator">
-        <div class="spinner"></div>
-    </div>
-
-    <!-- Logo en la parte superior derecha -->
     <div class="logo-container">
         <img src="{% static 'nutricion/images/Logo4.png' %}" alt="Logo" class="logo">
     </div>
 
-    <!-- Vista General -->
     <div id="general-view" class="view-transition">
         <h1>Bienvenido, Nutriólogo</h1>
         <p class="intro-text">Gestiona y da seguimiento a los pacientes de manera eficiente y personalizada.</p>
 
         <div class="button-container">
-            <a href="{% url 'registrar_seguimiento' %}" class="btn btn-primary">
-                <i class="fas fa-plus-circle"></i> Registrar Seguimiento
+            <a href="{% url 'historial' %}" class="btn btn-primary">
+                <i class="fas fa-history"></i> Ver Historial
             </a>
             <a href="{% url 'seguimientos_general' %}" class="btn btn-secondary">
                 <i class="fas fa-list"></i> Ver Seguimientos
             </a>
         </div>
+        
 
         <div class="stats-container">
             <div class="stat-card">
                 <i class="fas fa-user-plus"></i>
                 <p>Pacientes Activos</p>
-                <span id="total-pacientes">{{ total_pacientes }}</span>
+                <span>{{ total_pacientes }}</span>
             </div>
             <div class="stat-card">
                 <i class="fas fa-user-tie"></i> 
                 <p>Trabajadores</p>
-                <span id="total-trabajadores">{{ total_trabajadores }}</span>
+                <span>{{ total_trabajadores }}</span>
             </div>
             <div class="stat-card">
                 <i class="fas fa-child"></i>
                 <p>Niños Registrados</p>
-                <span id="total-ninos">{{ total_ninos }}</span>
+                <span>{{ total_ninos }}</span>
             </div>
         </div>
 
@@ -294,7 +52,7 @@
         <h2 class="cai-section-title">Centros de Atención Infantil del DIF Tabasco</h2>
         <div class="cai-container">
             {% for cai in cais %}
-            <div class="cai-card" onclick="showCAIDetail('{{ cai.0 }}', '{{ cai.1 }}')">
+            <div class="cai-card" onclick="mostrarDetalleCAI('{{ cai.0 }}')">
                 <i class="fas fa-school"></i>
                 <p>{{ cai.1 }}</p>
             </div>
@@ -303,10 +61,9 @@
         {% endif %}
     </div>
 
-    <!-- Vista Detalle CAI -->
-    <div id="cai-detail-view" class="view-transition">
+    <div id="cai-detail-view" class="view-transition" style="display: none;">
         <div class="cai-detail-header">
-            <button class="back-button" onclick="hideCAIDetail()">
+            <button class="back-button" onclick="volverVistaGeneral()">
                 <i class="fas fa-arrow-left"></i> Volver
             </button>
             <h2 id="cai-detail-title">Detalle del CAI</h2>
@@ -327,230 +84,78 @@
 
         <div class="tabs-container">
             <div class="tabs-header">
-                <button class="tab-button active" onclick="switchTab('workers')">Trabajadores</button>
-                <button class="tab-button" onclick="switchTab('children')">Niños</button>
+                <button class="tab-button active" onclick="cambiarTab('workers')">Trabajadores</button>
+                <button class="tab-button" onclick="cambiarTab('children')">Niños</button>
             </div>
 
             <div id="workers-tab" class="tab-content active">
-                <div class="search-container">
-                    <input type="text" id="workers-search" placeholder="Buscar trabajadores..." onkeyup="filterList('workers')">
-                </div>
-                <div class="person-list" id="workers-list">
-                    <div class="no-results">No hay trabajadores para mostrar</div>
-                </div>
+                <div class="person-list" id="workers-list"></div>
             </div>
 
             <div id="children-tab" class="tab-content">
-                <div class="search-container">
-                    <input type="text" id="children-search" placeholder="Buscar niños..." onkeyup="filterList('children')">
-                </div>
-                <div class="person-list" id="children-list">
-                    <div class="no-results">No hay niños para mostrar</div>
-                </div>
+                <div class="person-list" id="children-list"></div>
             </div>
         </div>
     </div>
+
+    <!-- JSON seguro para JS -->
+    {{ detalle_cais|json_script:"detalle-cais-data" }}
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-// Variable para almacenar los datos del CAI actual
-let currentCAIData = null;
+    const detalleCais = JSON.parse(document.getElementById('detalle-cais-data').textContent);
 
-// Mostrar vista detalle del CAI
-function showCAIDetail(caiId, caiName) {
-    // Mostrar indicador de carga
-    document.getElementById('loadingIndicator').style.display = 'flex';
-    
-    // Ocultar vista general con animación
-    const generalView = document.getElementById('general-view');
-    generalView.classList.add('hidden');
-    
-    // Configurar título del CAI
-    document.getElementById('cai-detail-title').textContent = caiName;
-    
-    // Simular carga de datos (reemplazar con tu llamada AJAX real)
-    setTimeout(() => {
-        // Aquí iría tu llamada AJAX real
-        // fetch(`/api/cai-detail/?cai_id=${caiId}`)
-        //     .then(response => response.json())
-        //     .then(data => {
-        //         currentCAIData = data;
-        //         updateCAIDetailView(data);
-        //         document.getElementById('loadingIndicator').style.display = 'none';
-        //     });
-        
-        // Datos de ejemplo (eliminar en producción)
-        const mockData = {
-            workers_count: 8,
-            children_count: 24,
-            workers: [
-                {id: 1, name: "María González", position: "Directora"},
-                {id: 2, name: "Juan Pérez", position: "Nutriólogo"},
-                {id: 3, name: "Laura Martínez", position: "Educadora"},
-                {id: 4, name: "Carlos Sánchez", position: "Psicólogo"},
-                {id: 5, name: "Ana Ramírez", position: "Asistente"},
-                {id: 6, name: "Pedro López", position: "Mantenimiento"},
-                {id: 7, name: "Sofía Díaz", position: "Cocinera"},
-                {id: 8, name: "Miguel Ruiz", position: "Seguridad"}
-            ],
-            children: [
-                {id: 1, name: "Alejandro García", age: 5},
-                {id: 2, name: "Valeria Hernández", age: 6},
-                {id: 3, name: "Diego Fernández", age: 4},
-                {id: 4, name: "Camila Gómez", age: 5},
-                {id: 5, name: "Mateo Rodríguez", age: 6},
-                {id: 6, name: "Renata López", age: 4},
-                {id: 7, name: "Daniel Martínez", age: 5},
-                {id: 8, name: "Ximena Pérez", age: 6},
-                {id: 9, name: "Sebastián Sánchez", age: 4},
-                {id: 10, name: "Regina Ramírez", age: 5},
-                {id: 11, name: "Emiliano Cruz", age: 6},
-                {id: 12, name: "Mariana Flores", age: 4},
-                {id: 13, name: "Leonardo Reyes", age: 5},
-                {id: 14, name: "Valentina Morales", age: 6},
-                {id: 15, name: "Javier Ortega", age: 4},
-                {id: 16, name: "Dulce Navarro", age: 5},
-                {id: 17, name: "Eduardo Vargas", age: 6},
-                {id: 18, name: "Paulina Medina", age: 4},
-                {id: 19, name: "Fernando Castro", age: 5},
-                {id: 20, name: "Anaís Guerrero", age: 6},
-                {id: 21, name: "Ricardo Paredes", age: 4},
-                {id: 22, name: "Lucía Ríos", age: 5},
-                {id: 23, name: "Oscar Méndez", age: 6},
-                {id: 24, name: "Adriana Vega", age: 4}
-            ]
-        };
-        
-        currentCAIData = mockData;
-        updateCAIDetailView(mockData);
-        document.getElementById('loadingIndicator').style.display = 'none';
-    }, 800); // Simular tiempo de carga
-    
-    // Mostrar vista detalle después de un breve retraso para permitir la animación
-    setTimeout(() => {
-        document.getElementById('cai-detail-view').classList.add('visible');
-    }, 300);
-}
+    function mostrarDetalleCAI(caiKey) {
+        const data = detalleCais[caiKey];
+        document.getElementById('cai-detail-title').innerText = data.nombre;
+        document.getElementById('cai-workers-count').innerText = data.total_trabajadores;
+        document.getElementById('cai-children-count').innerText = data.total_ninos;
 
-// Ocultar vista detalle del CAI
-function hideCAIDetail() {
-    // Ocultar vista detalle con animación
-    const detailView = document.getElementById('cai-detail-view');
-    detailView.classList.remove('visible');
-    
-    // Mostrar vista general después de la animación
-    setTimeout(() => {
-        document.getElementById('general-view').classList.remove('hidden');
-    }, 300);
-}
+        renderPersonas('workers-list', data.trabajadores, true);
+        renderPersonas('children-list', data.ninos, false);
 
-// Actualizar la vista detalle con los datos del CAI
-function updateCAIDetailView(data) {
-    // Actualizar contadores
-    document.getElementById('cai-workers-count').textContent = data.workers_count;
-    document.getElementById('cai-children-count').textContent = data.children_count;
-    
-    // Renderizar listas
-    renderPersonList('workers', data.workers);
-    renderPersonList('children', data.children);
-}
-
-// Renderizar una lista de personas (trabajadores o niños)
-function renderPersonList(type, items) {
-    const container = document.getElementById(`${type}-list`);
-    const isWorkers = type === 'workers';
-    
-    if (!items || items.length === 0) {
-        container.innerHTML = `<div class="no-results">No hay ${isWorkers ? 'trabajadores' : 'niños'} para mostrar</div>`;
-        return;
+        document.getElementById('general-view').style.display = 'none';
+        document.getElementById('cai-detail-view').style.display = 'block';
     }
-    
-    container.innerHTML = '';
-    
-    items.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'person-card';
-        
-        if (isWorkers) {
-            card.innerHTML = `
+
+    function volverVistaGeneral() {
+        document.getElementById('cai-detail-view').style.display = 'none';
+        document.getElementById('general-view').style.display = 'block';
+    }
+
+    function cambiarTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(e => e.classList.remove('active'));
+
+        document.getElementById(`${tab}-tab`).classList.add('active');
+        document.querySelector(`.tab-button[onclick="cambiarTab('${tab}')"]`).classList.add('active');
+    }
+
+    function renderPersonas(containerId, lista, esTrabajador) {
+        const contenedor = document.getElementById(containerId);
+        contenedor.innerHTML = "";
+
+        if (!lista.length) {
+            contenedor.innerHTML = `<div class="no-results">No hay ${esTrabajador ? "trabajadores" : "niños"} registrados.</div>`;
+            return;
+        }
+
+        lista.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'person-card';
+            div.innerHTML = `
                 <div class="person-info">
-                    <i class="fas fa-user-tie"></i>
+                    <i class="fas ${esTrabajador ? 'fa-user-tie' : 'fa-child'}"></i>
                     <div class="person-details">
-                        <h4>${item.name}</h4>
-                        <p>${item.position || 'Puesto no especificado'}</p>
+                        <h4>${p.nombre}</h4>
+                        <p>${esTrabajador ? p.cargo : 'Edad: ' + p.edad + ' años'}</p>
                     </div>
                 </div>
-                <a href="/worker/${item.id}" class="view-button">
-                    <i class="fas fa-eye"></i> Ver
-                </a>
             `;
-        } else {
-            card.innerHTML = `
-                <div class="person-info">
-                    <i class="fas fa-child"></i>
-                    <div class="person-details">
-                        <h4>${item.name}</h4>
-                        <p>Edad: ${item.age || 'N/A'} años</p>
-                    </div>
-                </div>
-                <a href="/child/${item.id}" class="view-button">
-                    <i class="fas fa-eye"></i> Ver
-                </a>
-            `;
-        }
-        
-        container.appendChild(card);
-    });
-}
-
-// Cambiar entre pestañas
-function switchTab(tabName) {
-    // Ocultar todos los tabs
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    // Desactivar todos los botones
-    document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // Mostrar el tab seleccionado y activar su botón
-    document.getElementById(`${tabName}-tab`).classList.add('active');
-    const activeButton = tabName === 'workers' 
-        ? document.querySelector('.tab-button[onclick="switchTab(\'workers\')"]')
-        : document.querySelector('.tab-button[onclick="switchTab(\'children\')"]');
-    activeButton.classList.add('active');
-}
-
-// Filtrar listas
-function filterList(type) {
-    const searchTerm = document.getElementById(`${type}-search`).value.toLowerCase();
-    const cards = document.querySelectorAll(`#${type}-list .person-card`);
-    let hasVisible = false;
-    
-    cards.forEach(card => {
-        const name = card.querySelector('h4').textContent.toLowerCase();
-        if (name.includes(searchTerm)) {
-            card.style.display = 'flex';
-            hasVisible = true;
-        } else {
-            card.style.display = 'none';
-        }
-    });
-    
-    // Mostrar mensaje si no hay resultados
-    const container = document.getElementById(`${type}-list`);
-    if (!hasVisible) {
-        const noResults = container.querySelector('.no-results') || document.createElement('div');
-        noResults.className = 'no-results';
-        noResults.textContent = `No se encontraron ${type === 'workers' ? 'trabajadores' : 'niños'}`;
-        
-        if (!container.querySelector('.no-results')) {
-            container.innerHTML = '';
-            container.appendChild(noResults);
-        }
+            contenedor.appendChild(div);
+        });
     }
-}
 </script>
 {% endblock %}

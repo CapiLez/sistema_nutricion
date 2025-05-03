@@ -43,41 +43,39 @@ class HomeView(LoginRequiredMixin, View):
     ]
 
     def get(self, request):
-        # Determinar si es una petición AJAX para filtrar
-        if 'cai' in request.GET:
-            return self.filtrar_por_cai(request)
-        
-        # Si el usuario es nutriólogo, filtrar por su CAI
         if request.user.is_nutriologo and request.user.cai:
+            # Si el usuario es nutriólogo, ver solo su CAI
             total_ninos = Paciente.objects.filter(cai=request.user.cai).count()
             total_trabajadores = Trabajador.objects.filter(cai=request.user.cai).count()
             cais = [(request.user.cai, dict(self.CAI_CHOICES).get(request.user.cai, request.user.cai))]
         else:
+            # Para usuarios con permisos globales
             total_ninos = Paciente.objects.count()
             total_trabajadores = Trabajador.objects.count()
             cais = self.CAI_CHOICES
-        
+
         total_pacientes = total_ninos + total_trabajadores
-        
+
+        # Obtener datos detallados por CAI
+        detalle_cais = {}
+        for clave, nombre in cais:
+            trabajadores = Trabajador.objects.filter(cai=clave).values('id', 'nombre', 'cargo')
+            ninos = Paciente.objects.filter(cai=clave).values('id', 'nombre', 'edad')
+            detalle_cais[clave] = {
+                'nombre': nombre,
+                'trabajadores': list(trabajadores),
+                'ninos': list(ninos),
+                'total_trabajadores': len(trabajadores),
+                'total_ninos': len(ninos)
+            }
+
         return render(request, 'home.html', {
             'usuario': request.user,
             'total_ninos': total_ninos,
             'total_trabajadores': total_trabajadores,
             'total_pacientes': total_pacientes,
-            'cais': cais
-        })
-
-    def filtrar_por_cai(self, request):
-        cai = request.GET.get('cai', '')
-        
-        total_ninos = Paciente.objects.filter(cai=cai).count()
-        total_trabajadores = Trabajador.objects.filter(cai=cai).count()
-        total_pacientes = total_ninos + total_trabajadores
-        
-        return JsonResponse({
-            'total_pacientes': total_pacientes,
-            'total_trabajadores': total_trabajadores,
-            'total_ninos': total_ninos
+            'cais': cais,
+            'detalle_cais': detalle_cais
         })
     
 #-------------------
@@ -294,12 +292,13 @@ class EditarTrabajadorView(LoginRequiredMixin, UpdateView):
     
     def form_valid(self, form):
         instance = form.save(commit=False)
-        # Calcula automáticamente el IMC
+        # Calcula automáticamente el IMC redondeado a 2 decimales
         if instance.peso and instance.talla:
-            instance.imc = instance.peso / ((instance.talla/100) ** 2)
+            instance.imc = round(instance.peso / ((instance.talla / 100) ** 2), 2)
         instance.save()
         messages.success(self.request, "Trabajador actualizado correctamente")
         return super().form_valid(form)
+
 
 class EliminarTrabajadorView(LoginRequiredMixin, DeleteView):
     model = Trabajador

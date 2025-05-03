@@ -114,10 +114,10 @@ class Trabajador(models.Model):
         ('F', 'Femenino'),
         ('O', 'Otro')
     ]
-    
+
     nombre = models.CharField(max_length=255)
-    edad = models.IntegerField(null=True, blank=True)  # Nuevo campo
-    sexo = models.CharField(max_length=1, choices=SEXO_CHOICES, null=True, blank=True)  # Nuevo campo
+    edad = models.IntegerField(null=True, blank=True)
+    sexo = models.CharField(max_length=1, choices=SEXO_CHOICES, null=True, blank=True)
     curp = models.CharField(max_length=18, unique=True, blank=True, null=True)
     cai = models.CharField(max_length=100, choices=CAI_CHOICES)
     cargo = models.CharField(max_length=255)
@@ -128,12 +128,11 @@ class Trabajador(models.Model):
     circunferencia_abdominal = models.FloatField(null=True, blank=True)
     enfermedades_preexistentes = models.TextField(blank=True)
     observaciones = models.TextField(blank=True)
-    fecha_ingreso = models.DateField(verbose_name="Fecha de Ingreso al CAI", null=True, blank=True)
     fecha_registro = models.DateTimeField(auto_now_add=True)
-    
+
     def __str__(self):
         return self.nombre
-    
+
     def get_clasificacion_imc(self):
         if self.imc < 18.5:
             return "Bajo peso"

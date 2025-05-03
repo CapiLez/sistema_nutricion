@@ -181,10 +181,8 @@ class TrabajadorForm(forms.ModelForm):
         fields = '__all__'
         widgets = {
             'sexo': forms.Select(),
-            'fecha_ingreso': forms.DateInput(attrs={'type': 'date'}),
-            'fecha_nacimiento': forms.DateInput(attrs={'type': 'date'})
         }
-    
+
     def clean_curp(self):
         curp = self.cleaned_data.get('curp')
         if curp and len(curp) != 18:
@@ -219,12 +217,11 @@ class TrabajadorForm(forms.ModelForm):
         cleaned_data = super().clean()
         peso = cleaned_data.get('peso')
         talla = cleaned_data.get('talla')
-        
+
         if peso and talla:
-            # Convertir talla de cm a metros para cálculo de IMC
-            talla_m = talla / 100
+            talla_m = talla / 100  # Convertir de cm a metros
             cleaned_data['imc'] = round(peso / (talla_m ** 2), 2)
-        
+
         return cleaned_data
 
 ### -------------------- SEGUIMIENTOS NIÑOS --------------------

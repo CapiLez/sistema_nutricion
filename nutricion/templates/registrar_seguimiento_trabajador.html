@@ -12,7 +12,7 @@
     <div class="registrar-seguimiento-container">
         <h1>Registrar Seguimiento Nutricional - Trabajador</h1>
 
-        <form method="post" id="seguimiento-trabajador-form">
+        <form method="post" id="seguimiento-trabajador-form" data-trabajador-id="{{ form.trabajador.value }}">
             {% csrf_token %}
             {% for field in form %}
                 <div class="form-group">
@@ -31,9 +31,12 @@
                 <button type="submit" class="btn btn-success">
                     <i class="fas fa-save"></i> Guardar
                 </button>
-                <button type="button" class="btn btn-danger" id="cancelar-formulario">
-                    <i class="fas fa-times"></i> Cancelar
+                <button type="button" class="btn btn-warning" id="limpiar-formulario">
+                    <i class="fas fa-eraser"></i> Limpiar formulario
                 </button>
+                <a href="#" class="btn btn-danger" id="cancelar-formulario">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
             </div>
         </form>
 
@@ -52,8 +55,20 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function () {
-        $('#cancelar-formulario').on('click', function () {
-            $('#seguimiento-trabajador-form')[0].reset();
+        const form = $('#seguimiento-trabajador-form');
+
+        $('#limpiar-formulario').on('click', function () {
+            form[0].reset();
+        });
+
+        $('#cancelar-formulario').on('click', function (e) {
+            e.preventDefault();
+            const trabajadorId = form.data('trabajador-id');
+            if (trabajadorId) {
+                window.location.href = `/seguimiento/trabajador/${trabajadorId}/`;
+            } else {
+                window.history.back();
+            }
         });
     });
 </script>
