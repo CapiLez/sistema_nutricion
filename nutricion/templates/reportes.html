@@ -130,6 +130,61 @@
     .imc-normal { background-color: #28a745; color: white; }
     .imc-sobrepeso { background-color: #fd7e14; color: white; }
     .imc-obesidad { background-color: #dc3545; color: white; }
+    
+    /* Estilos para el buscador */
+    .search-container {
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .search-box {
+        position: relative;
+        flex-grow: 1;
+        max-width: 400px;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+    
+    .search-box input {
+        width: 100%;
+        padding: 10px 15px 10px 40px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 16px;
+        transition: all 0.3s;
+    }
+    
+    .search-box input:focus {
+        outline: none;
+        border-color: #3e95cd;
+        box-shadow: 0 0 0 2px rgba(62, 149, 205, 0.2);
+    }
+    
+    .result-count {
+        color: #6c757d;
+        font-size: 14px;
+    }
+    
+    @media (max-width: 768px) {
+        .search-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .search-box {
+            max-width: 100%;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -148,174 +203,282 @@
 
     <!-- SECCIÓN NIÑOS -->
     <div id="seccion-ninos" class="seccion">
+        <div class="search-container">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-ninos" placeholder="Buscar niños por nombre, CAI o grado..." onkeyup="filtrarNinos()">
+            </div>
+            <div class="result-count" id="contador-ninos">
+                Mostrando {{ ninos_page.paginator.count }} niños
+            </div>
+        </div>
+        
         <h2><i class="fas fa-child"></i> Reportes de Niños</h2>
         
-        {% if ninos_page %}
-        <div class="lista-tarjetas">
-            {% for paciente in ninos_page %}
-            <div class="tarjeta">
-                <h3>{{ paciente.nombre }}</h3>
-                <p><strong><i class="fas fa-birthday-cake"></i> Edad:</strong> {{ paciente.edad_detallada }}</p>
-                <p><strong><i class="fas fa-home"></i> CAI:</strong> {{ paciente.cai }}</p>
-                <p>
-                    <strong><i class="fas fa-weight"></i> IMC:</strong> 
-                    {% if paciente.imc %}
-                        {{ paciente.imc|floatformat:2 }}
-                        <span class="badge-imc 
-                            {% if paciente.imc < 18.5 %}imc-bajo
-                            {% elif paciente.imc < 25 %}imc-normal
-                            {% elif paciente.imc < 30 %}imc-sobrepeso
-                            {% else %}imc-obesidad
-                            {% endif %}">
-                            {% if paciente.imc < 18.5 %}Bajo peso
-                            {% elif paciente.imc < 25 %}Normal
-                            {% elif paciente.imc < 30 %}Sobrepeso
-                            {% else %}Obesidad
-                            {% endif %}
-                        </span>
-                    {% else %}
-                        No calculado
-                    {% endif %}
-                </p>
-                <p><strong><i class="fas fa-school"></i> Grado/Grupo:</strong> 
-                   {{ paciente.grado|default:"-" }} / {{ paciente.grupo|default:"-" }}</p>
-                <a href="{% url 'reporte_paciente' paciente.id %}" class="btn-ver">
-                    <i class="fas fa-file-alt"></i> Ver Reporte Completo
-                </a>
+        <div id="contenedor-ninos">
+            {% if ninos_page %}
+            <div class="lista-tarjetas" id="lista-ninos">
+                {% for paciente in ninos_page %}
+                <div class="tarjeta" data-search="{{ paciente.nombre|lower }} {{ paciente.cai|lower }} {{ paciente.grado|default:''|lower }} {{ paciente.grupo|default:''|lower }}">
+                    <h3>{{ paciente.nombre }}</h3>
+                    <p><strong><i class="fas fa-birthday-cake"></i> Edad:</strong> {{ paciente.edad_detallada }}</p>
+                    <p><strong><i class="fas fa-home"></i> CAI:</strong> {{ paciente.cai }}</p>
+                    <p>
+                        <strong><i class="fas fa-weight"></i> IMC:</strong> 
+                        {% if paciente.imc %}
+                            {{ paciente.imc|floatformat:2 }}
+                            <span class="badge-imc 
+                                {% if paciente.imc < 18.5 %}imc-bajo
+                                {% elif paciente.imc < 25 %}imc-normal
+                                {% elif paciente.imc < 30 %}imc-sobrepeso
+                                {% else %}imc-obesidad
+                                {% endif %}">
+                                {% if paciente.imc < 18.5 %}Bajo peso
+                                {% elif paciente.imc < 25 %}Normal
+                                {% elif paciente.imc < 30 %}Sobrepeso
+                                {% else %}Obesidad
+                                {% endif %}
+                            </span>
+                        {% else %}
+                            No calculado
+                        {% endif %}
+                    </p>
+                    <p><strong><i class="fas fa-school"></i> Grado/Grupo:</strong> 
+                       {{ paciente.grado|default:"-" }} / {{ paciente.grupo|default:"-" }}</p>
+                    <a href="{% url 'reporte_paciente' paciente.id %}" class="btn-ver">
+                        <i class="fas fa-file-alt"></i> Ver Reporte Completo
+                    </a>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
-        
-        <div class="paginacion">
-            {% if ninos_page.has_previous %}
-                <a href="?page_pacientes=1">&laquo; Primera</a>
-                <a href="?page_pacientes={{ ninos_page.previous_page_number }}">Anterior</a>
-            {% endif %}
-
-            {% for num in ninos_page.paginator.page_range %}
-                {% if num == ninos_page.number %}
-                    <a href="?page_pacientes={{ num }}" class="active">{{ num }}</a>
-                {% elif num > ninos_page.number|add:'-3' and num < ninos_page.number|add:'3' %}
-                    <a href="?page_pacientes={{ num }}">{{ num }}</a>
+            
+            <div class="paginacion" id="paginacion-ninos">
+                {% if ninos_page.has_previous %}
+                    <a href="?page_pacientes=1">&laquo; Primera</a>
+                    <a href="?page_pacientes={{ ninos_page.previous_page_number }}">Anterior</a>
                 {% endif %}
-            {% endfor %}
 
-            {% if ninos_page.has_next %}
-                <a href="?page_pacientes={{ ninos_page.next_page_number }}">Siguiente</a>
-                <a href="?page_pacientes={{ ninos_page.paginator.num_pages }}">Última &raquo;</a>
+                {% for num in ninos_page.paginator.page_range %}
+                    {% if num == ninos_page.number %}
+                        <a href="?page_pacientes={{ num }}" class="active">{{ num }}</a>
+                    {% elif num > ninos_page.number|add:'-3' and num < ninos_page.number|add:'3' %}
+                        <a href="?page_pacientes={{ num }}">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if ninos_page.has_next %}
+                    <a href="?page_pacientes={{ ninos_page.next_page_number }}">Siguiente</a>
+                    <a href="?page_pacientes={{ ninos_page.paginator.num_pages }}">Última &raquo;</a>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="no-data">
+                <i class="fas fa-exclamation-circle fa-2x"></i>
+                <p>No hay niños registrados.</p>
+            </div>
             {% endif %}
         </div>
-        {% else %}
-        <div class="no-data">
-            <i class="fas fa-exclamation-circle fa-2x"></i>
-            <p>No hay niños registrados.</p>
-        </div>
-        {% endif %}
     </div>
 
     <!-- SECCIÓN TRABAJADORES -->
     <div id="seccion-trabajadores" class="seccion" style="display: none;">
+        <div class="search-container">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-trabajadores" placeholder="Buscar trabajadores por nombre, departamento o cargo..." onkeyup="filtrarTrabajadores()">
+            </div>
+            <div class="result-count" id="contador-trabajadores">
+                Mostrando {{ trabajadores_page.paginator.count }} trabajadores
+            </div>
+        </div>
+        
         <h2><i class="fas fa-user-tie"></i> Reportes de Trabajadores</h2>
         
-        {% if trabajadores_page %}
-        <div class="lista-tarjetas">
-            {% for trabajador in trabajadores_page %}
-            <div class="tarjeta">
-                <h3>{{ trabajador.nombre }}</h3>
-                <p><strong><i class="fas fa-id-badge"></i> Puesto:</strong> {{ trabajador.cargo }}</p>
-                <p><strong><i class="fas fa-building"></i> Departamento:</strong> {{ trabajador.departamento|default:"-" }}</p>
-                <p>
-                    <strong><i class="fas fa-weight"></i> IMC:</strong> 
-                    {% if trabajador.imc %}
-                        {{ trabajador.imc|floatformat:2 }}
-                        <span class="badge-imc 
-                            {% if trabajador.imc < 18.5 %}imc-bajo
-                            {% elif trabajador.imc < 25 %}imc-normal
-                            {% elif trabajador.imc < 30 %}imc-sobrepeso
-                            {% else %}imc-obesidad
-                            {% endif %}">
-                            {% if trabajador.imc < 18.5 %}Bajo peso
-                            {% elif trabajador.imc < 25 %}Normal
-                            {% elif trabajador.imc < 30 %}Sobrepeso
-                            {% else %}Obesidad
-                            {% endif %}
-                        </span>
-                    {% else %}
-                        No calculado
-                    {% endif %}
-                </p>
-                <a href="{% url 'reporte_trabajador' trabajador.id %}" class="btn-ver">
-                    <i class="fas fa-file-alt"></i> Ver Reporte Completo
-                </a>
+        <div id="contenedor-trabajadores">
+            {% if trabajadores_page %}
+            <div class="lista-tarjetas" id="lista-trabajadores">
+                {% for trabajador in trabajadores_page %}
+                <div class="tarjeta" data-search="{{ trabajador.nombre|lower }} {{ trabajador.cargo|default:''|lower }} {{ trabajador.departamento|default:''|lower }}">
+                    <h3>{{ trabajador.nombre }}</h3>
+                    <p><strong><i class="fas fa-id-badge"></i> Puesto:</strong> {{ trabajador.cargo }}</p>
+                    <p><strong><i class="fas fa-building"></i> Departamento:</strong> {{ trabajador.departamento|default:"-" }}</p>
+                    <p>
+                        <strong><i class="fas fa-weight"></i> IMC:</strong> 
+                        {% if trabajador.imc %}
+                            {{ trabajador.imc|floatformat:2 }}
+                            <span class="badge-imc 
+                                {% if trabajador.imc < 18.5 %}imc-bajo
+                                {% elif trabajador.imc < 25 %}imc-normal
+                                {% elif trabajador.imc < 30 %}imc-sobrepeso
+                                {% else %}imc-obesidad
+                                {% endif %}">
+                                {% if trabajador.imc < 18.5 %}Bajo peso
+                                {% elif trabajador.imc < 25 %}Normal
+                                {% elif trabajador.imc < 30 %}Sobrepeso
+                                {% else %}Obesidad
+                                {% endif %}
+                            </span>
+                        {% else %}
+                            No calculado
+                        {% endif %}
+                    </p>
+                    <p><strong><i class="fas fa-calendar-day"></i> Fecha Ingreso:</strong> 
+                       {% if trabajador.fecha_ingreso %}
+                           {{ trabajador.fecha_ingreso|date:"d/m/Y" }}
+                       {% else %}
+                           -
+                       {% endif %}
+                    </p>
+                    <a href="{% url 'reporte_trabajador' trabajador.id %}" class="btn-ver">
+                        <i class="fas fa-file-alt"></i> Ver Reporte Completo
+                    </a>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
-        
-        <div class="paginacion">
-            {% if trabajadores_page.has_previous %}
-                <a href="?page_trabajadores=1">&laquo; Primera</a>
-                <a href="?page_trabajadores={{ trabajadores_page.previous_page_number }}">Anterior</a>
-            {% endif %}
-
-            {% for num in trabajadores_page.paginator.page_range %}
-                {% if num == trabajadores_page.number %}
-                    <a href="?page_trabajadores={{ num }}" class="active">{{ num }}</a>
-                {% elif num > trabajadores_page.number|add:'-3' and num < trabajadores_page.number|add:'3' %}
-                    <a href="?page_trabajadores={{ num }}">{{ num }}</a>
+            
+            <div class="paginacion" id="paginacion-trabajadores">
+                {% if trabajadores_page.has_previous %}
+                    <a href="?page_trabajadores=1">&laquo; Primera</a>
+                    <a href="?page_trabajadores={{ trabajadores_page.previous_page_number }}">Anterior</a>
                 {% endif %}
-            {% endfor %}
 
-            {% if trabajadores_page.has_next %}
-                <a href="?page_trabajadores={{ trabajadores_page.next_page_number }}">Siguiente</a>
-                <a href="?page_trabajadores={{ trabajadores_page.paginator.num_pages }}">Última &raquo;</a>
+                {% for num in trabajadores_page.paginator.page_range %}
+                    {% if num == trabajadores_page.number %}
+                        <a href="?page_trabajadores={{ num }}" class="active">{{ num }}</a>
+                    {% elif num > trabajadores_page.number|add:'-3' and num < trabajadores_page.number|add:'3' %}
+                        <a href="?page_trabajadores={{ num }}">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if trabajadores_page.has_next %}
+                    <a href="?page_trabajadores={{ trabajadores_page.next_page_number }}">Siguiente</a>
+                    <a href="?page_trabajadores={{ trabajadores_page.paginator.num_pages }}">Última &raquo;</a>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="no-data">
+                <i class="fas fa-exclamation-circle fa-2x"></i>
+                <p>No hay trabajadores registrados.</p>
+            </div>
             {% endif %}
         </div>
-        {% else %}
-        <div class="no-data">
-            <i class="fas fa-exclamation-circle fa-2x"></i>
-            <p>No hay trabajadores registrados.</p>
-        </div>
-        {% endif %}
     </div>
 </div>
 
 <script>
-function mostrarSeccion(seccion) {
-    // Ocultar todas las secciones
-    document.querySelectorAll('.seccion').forEach(sec => {
-        sec.style.display = 'none';
-    });
+    function mostrarSeccion(seccion) {
+        document.querySelectorAll('.seccion').forEach(sec => {
+            sec.style.display = 'none';
+        });
     
-    // Mostrar solo la sección seleccionada
-    document.getElementById(`seccion-${seccion}`).style.display = 'block';
+        document.getElementById(`seccion-${seccion}`).style.display = 'block';
     
-    // Actualizar botones activos
-    document.querySelectorAll('.switch-seccion button').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.classList.add('active');
+        document.querySelectorAll('.switch-seccion button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
     
-    // Actualizar la URL sin recargar
-    history.pushState(null, null, `#${seccion}`);
-    
-    // Guardar preferencia en localStorage
-    localStorage.setItem('ultimaSeccionReportes', seccion);
-}
-
-// Mostrar sección basada en hash o localStorage al cargar
-window.addEventListener('DOMContentLoaded', () => {
-    const hash = window.location.hash.substring(1);
-    const seccionGuardada = localStorage.getItem('ultimaSeccionReportes');
-    
-    if (hash === 'trabajadores' || seccionGuardada === 'trabajadores') {
-        document.querySelector('.switch-seccion button:nth-child(2)').click();
+        history.pushState(null, null, `#${seccion}`);
+        localStorage.setItem('ultimaSeccionReportes', seccion);
     }
     
-    // Configurar tooltips para los badges de IMC
-    const badges = document.querySelectorAll('.badge-imc');
-    badges.forEach(badge => {
-        badge.title = 'Clasificación según OMS';
+    // Buscar niños con AJAX
+    function filtrarNinos() {
+        const input = document.getElementById('search-ninos');
+        const term = input.value.trim();
+        const contenedor = document.getElementById('lista-ninos');
+        const contador = document.getElementById('contador-ninos');
+    
+        contenedor.innerHTML = '<p>Buscando...</p>';
+    
+        fetch(`/ajax/buscar-ninos/?term=${encodeURIComponent(term)}`)
+            .then(res => res.json())
+            .then(data => {
+                contenedor.innerHTML = '';
+    
+                if (data.resultados.length === 0) {
+                    contenedor.innerHTML = '<p>No se encontraron niños.</p>';
+                    contador.textContent = 'Mostrando 0 niños';
+                    return;
+                }
+    
+                data.resultados.forEach(n => {
+                    const div = document.createElement('div');
+                    div.className = 'tarjeta';
+                    div.innerHTML = `
+                        <h3>${n.nombre}</h3>
+                        <p><strong><i class="fas fa-birthday-cake"></i> Edad:</strong> ${n.edad}</p>
+                        <p><strong><i class="fas fa-home"></i> CAI:</strong> ${n.cai}</p>
+                        <p><strong><i class="fas fa-school"></i> Grado/Grupo:</strong> ${n.grado || '-'} / ${n.grupo || '-'}</p>
+                        <a href="/reporte/paciente/${n.id}/" class="btn-ver"><i class="fas fa-file-alt"></i> Ver Reporte Completo</a>
+                    `;
+                    contenedor.appendChild(div);
+                });
+    
+                contador.textContent = `Mostrando ${data.resultados.length} niños`;
+            })
+            .catch(err => {
+                console.error(err);
+                contenedor.innerHTML = '<p>Error al cargar resultados.</p>';
+                contador.textContent = 'Mostrando 0 niños';
+            });
+    }
+    
+    // Buscar trabajadores con AJAX
+    function filtrarTrabajadores() {
+        const input = document.getElementById('search-trabajadores');
+        const term = input.value.trim();
+        const contenedor = document.getElementById('lista-trabajadores');
+        const contador = document.getElementById('contador-trabajadores');
+    
+        contenedor.innerHTML = '<p>Buscando...</p>';
+    
+        fetch(`/ajax/buscar-trabajadores/?term=${encodeURIComponent(term)}`)
+            .then(res => res.json())
+            .then(data => {
+                contenedor.innerHTML = '';
+    
+                if (data.resultados.length === 0) {
+                    contenedor.innerHTML = '<p>No se encontraron trabajadores.</p>';
+                    contador.textContent = 'Mostrando 0 trabajadores';
+                    return;
+                }
+    
+                data.resultados.forEach(t => {
+                    const div = document.createElement('div');
+                    div.className = 'tarjeta';
+                    div.innerHTML = `
+                        <h3>${t.nombre}</h3>
+                        <p><strong><i class="fas fa-id-badge"></i> Puesto:</strong> ${t.cargo || '-'}</p>
+                        <p><strong><i class="fas fa-building"></i> Departamento:</strong> ${t.departamento || '-'}</p>
+                        <p><strong>CURP:</strong> ${t.curp || '-'}</p>
+                        <a href="/reporte/trabajador/${t.id}/" class="btn-ver"><i class="fas fa-file-alt"></i> Ver Reporte Completo</a>
+                    `;
+                    contenedor.appendChild(div);
+                });
+    
+                contador.textContent = `Mostrando ${data.resultados.length} trabajadores`;
+            })
+            .catch(err => {
+                console.error(err);
+                contenedor.innerHTML = '<p>Error al cargar resultados.</p>';
+                contador.textContent = 'Mostrando 0 trabajadores';
+            });
+    }
+    
+    // Cargar la sección según hash/localStorage
+    window.addEventListener('DOMContentLoaded', () => {
+        const hash = window.location.hash.substring(1);
+        const seccionGuardada = localStorage.getItem('ultimaSeccionReportes');
+    
+        if (hash === 'trabajadores' || seccionGuardada === 'trabajadores') {
+            document.querySelector('.switch-seccion button:nth-child(2)').click();
+        }
+    
+        const badges = document.querySelectorAll('.badge-imc');
+        badges.forEach(badge => {
+            badge.title = 'Clasificación según OMS';
+        });
     });
-});
-</script>
+</script> 
 {% endblock %}

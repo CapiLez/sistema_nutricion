@@ -389,8 +389,19 @@ class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, 
 
     def form_valid(self, form):
         trabajador = form.cleaned_data.get('trabajador')
+
+        # Validación de CAI para nutriólogos
         if self.request.user.is_nutriologo and trabajador.cai != self.request.user.cai:
             return HttpResponseForbidden("No tienes permiso para registrar seguimiento de este trabajador.")
+
+        # Guardar con commit=False para modificar el objeto antes del guardado
+        instance = form.save(commit=False)
+
+        # Asignar IMC calculado manualmente desde cleaned_data
+        instance.imc = form.cleaned_data.get('imc')
+
+        instance.save()
+        self.object = instance  # para que RevisionCreateView lo registre correctamente
         return super().form_valid(form)
 
 

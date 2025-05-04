@@ -1,55 +1,89 @@
-/* Variables de color - Tema infantil */
+/* ===== VARIABLES DE COLOR - TEMA INFANTIL MEJORADO ===== */
 :root {
-    --primary-color: #00b894;    /* Verde turquesa */
-    --primary-dark: #00a884;    /* Verde más oscuro */
-    --secondary-color: #fdcb6e;  /* Amarillo */
-    --secondary-dark: #e8a623;   /* Amarillo oscuro */
+    --primary-color: #00cec9;    /* Verde turquesa claro */
+    --primary-dark: #00b894;     /* Verde turquesa oscuro */
+    --secondary-color: #ff7675;  /* Coral rojizo */
+    --secondary-dark: #e84393;   /* Rosa fuerte */
     --background-light: #f8f9fa;
     --white: #ffffff;
     --text-dark: #2d3436;
     --text-light: #f5f5f5;
     --border-color: #dfe6e9;
     --error-color: #d63031;
+    --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --shadow-large: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* Estructura principal (igual que trabajadores) */
+/* ===== ESTRUCTURA PRINCIPAL ===== */
 .editar-nino-container {
     max-width: 700px;
     margin: 2rem auto;
     padding: 0 1rem;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .card {
     background: var(--white);
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: var(--shadow-medium);
     overflow: hidden;
     border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-large);
+    transform: translateY(-2px);
 }
 
 .card-header {
-    background-color: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: var(--white);
     padding: 1.5rem;
     text-align: center;
-    border-bottom: 1px solid var(--primary-dark);
+    border-bottom: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+    transform: rotate(30deg);
 }
 
 .card-header h2 {
     margin: 0;
     font-size: 1.6rem;
-    font-weight: 500;
+    font-weight: 600;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    position: relative;
 }
 
 .card-header i {
     margin-right: 0.75rem;
+    font-size: 1.4rem;
+    color: var(--secondary-color);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .card-body {
     padding: 2rem 2.5rem;
+    background-color: var(--white);
 }
 
-/* Formulario (igual que trabajadores) */
+/* ===== FORMULARIO ===== */
 .nino-form {
     display: flex;
     flex-direction: column;
@@ -60,58 +94,74 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    position: relative;
 }
 
 .form-group label {
     font-weight: 600;
     color: var(--primary-dark);
     font-size: 0.95rem;
+    display: flex;
+    align-items: center;
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
-    padding: 0.8rem;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
+.form-group label i {
+    margin-right: 8px;
+    font-size: 0.9rem;
+    color: var(--secondary-dark);
+}
+
+.form-control {
+    padding: 0.85rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
     font-size: 1rem;
     transition: all 0.3s ease;
     background-color: var(--background-light);
+    font-family: 'Poppins', sans-serif;
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
+.form-control:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.2);
+    box-shadow: 0 0 0 3px rgba(0, 206, 201, 0.2);
     outline: none;
     background-color: var(--white);
 }
 
-.form-text {
-    font-size: 0.85rem;
-    color: var(--secondary-dark);
+.readonly-field {
+    background-color: #f0f3f5;
+    cursor: not-allowed;
+    opacity: 0.9;
 }
 
 .error-message {
     color: var(--error-color);
     font-size: 0.85rem;
     margin-top: 0.25rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
-/* Botones (igual que trabajadores) */
+.error-message i {
+    font-size: 0.9rem;
+}
+
+/* ===== BOTONES MEJORADOS ===== */
 .form-actions {
     display: flex;
     justify-content: space-between;
-    margin-top: 2rem;
+    margin-top: 2.5rem;
     gap: 1.5rem;
 }
 
 .btn {
-    padding: 0.8rem 1.75rem;
-    border-radius: 5px;
+    padding: 0.95rem 1.75rem;
+    border-radius: 8px;
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 600;
     border: none;
     cursor: pointer;
     display: inline-flex;
@@ -119,52 +169,152 @@
     justify-content: center;
     transition: all 0.3s ease;
     text-decoration: none;
+    box-shadow: var(--shadow-light);
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: 0.5px;
 }
 
 .btn i {
     margin-right: 0.75rem;
+    font-size: 1.1rem;
+    transition: transform 0.3s ease;
 }
 
-.btn-save {
-    background-color: var(--primary-color);
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: var(--white);
-    flex: 1;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.1);
 }
 
-.btn-save:hover {
-    background-color: var(--primary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 184, 148, 0.3);
 }
 
-.btn-cancel {
-    background-color: var(--secondary-color);
+.btn-primary:hover i {
+    transform: scale(1.15) translateX(2px);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, var(--secondary-color), var(--secondary-dark));
     color: var(--white);
-    flex: 1;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.1);
 }
 
-.btn-cancel:hover {
-    background-color: var(--secondary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+.btn-secondary:hover {
+    background: linear-gradient(135deg, var(--secondary-dark), var(--secondary-color));
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(232, 67, 147, 0.3);
 }
 
-/* Responsive (igual que trabajadores) */
+.btn-secondary:hover i {
+    transform: scale(1.15) translateX(2px);
+}
+
+/* Efecto de onda al hacer hover */
+.btn:after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 40%;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(30deg);
+    transition: all 0.5s;
+}
+
+.btn:hover:after {
+    left: 120%;
+}
+
+/* ===== DISEÑO RESPONSIVE ===== */
 @media (max-width: 768px) {
     .editar-nino-container {
-        padding: 0 0.5rem;
+        padding: 0 0.75rem;
+        margin: 1.5rem auto;
     }
     
     .card-body {
-        padding: 1.5rem;
+        padding: 1.75rem;
     }
     
     .form-actions {
         flex-direction: column;
         gap: 1rem;
+        margin-top: 2rem;
     }
     
     .btn {
         width: 100%;
+        padding: 0.9rem;
     }
+    
+    .card-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .form-group label {
+        font-size: 0.92rem;
+    }
+    
+    .form-control {
+        padding: 0.8rem;
+        font-size: 0.95rem;
+    }
+    
+    .btn {
+        font-size: 0.95rem;
+    }
+    
+    .card-header {
+        padding: 1.25rem;
+    }
+    
+    .card-header h2 {
+        font-size: 1.4rem;
+    }
+}
+
+/* ===== ANIMACIONES Y DETALLES ===== */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.5) sepia(1) saturate(5) hue-rotate(140deg);
+    cursor: pointer;
+    padding: 0.2rem;
+}
+
+input[type="date"]:focus::-webkit-calendar-picker-indicator {
+    filter: invert(0.5) sepia(1) saturate(5) hue-rotate(100deg);
+}
+
+/* Estilo para campos de solo lectura */
+.readonly-field {
+    position: relative;
+}
+
+.readonly-field::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.5);
+    z-index: 1;
+    pointer-events: none;
+    border-radius: 6px;
 }

@@ -1,0 +1,230 @@
+/* ===== NUEVA PALETA DE COLORES ===== */
+:root {
+    --primary-color: #4361ee;     /* Azul vibrante */
+    --primary-light: #4895ef;     /* Azul claro */
+    --secondary-color: #f72585;   /* Rosa magenta */
+    --dark-color: #1a1a2e;        /* Azul oscuro */
+    --light-color: #f8f9fa;       /* Gris claro */
+    --text-dark: #212529;         /* Texto oscuro */
+    --text-light: #6c757d;        /* Texto claro */
+    --border-color: #dee2e6;      /* Borde gris */
+    --error-color: #ef233c;       /* Rojo error */
+    --success-color: #4cc9f0;     /* Verde éxito */
+}
+
+/* ===== ESTILOS BASE ===== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.6;
+    color: var(--text-dark);
+    background-color: #f5f7ff;
+}
+
+/* ===== CONTENEDOR PRINCIPAL ===== */
+.editar-seguimiento-container {
+    max-width: 780px;
+    margin: 2rem auto;
+    padding: 2.5rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+/* ===== ENCABEZADO ===== */
+.editar-seguimiento-container h2 {
+    color: var(--dark-color);
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    text-align: center;
+    position: relative;
+    padding-bottom: 1rem;
+}
+
+.editar-seguimiento-container h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+    border-radius: 2px;
+}
+
+/* ===== FORMULARIO ===== */
+.seguimiento-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.seguimiento-form table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 1.2rem;
+}
+
+.seguimiento-form tr {
+    transition: all 0.2s ease;
+}
+
+.seguimiento-form th {
+    text-align: left;
+    padding-right: 1.5rem;
+    width: 30%;
+    vertical-align: top;
+    padding-top: 0.8rem;
+    font-weight: 500;
+    color: var(--text-light);
+    font-size: 0.95rem;
+}
+
+.seguimiento-form td {
+    width: 70%;
+    position: relative;
+}
+
+.seguimiento-form input,
+.seguimiento-form select,
+.seguimiento-form textarea {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    background-color: var(--light-color);
+    font-family: inherit;
+    color: var(--text-dark);
+}
+
+.seguimiento-form input:focus,
+.seguimiento-form select:focus,
+.seguimiento-form textarea:focus {
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    outline: none;
+    background-color: white;
+}
+
+.seguimiento-form textarea {
+    min-height: 120px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+/* ===== MENSAJES DE ERROR ===== */
+.error {
+    color: var(--error-color);
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.error::before {
+    content: '✕';
+    font-size: 0.9rem;
+}
+
+/* ===== BOTONES ===== */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.btn {
+    padding: 0.8rem 1.8rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: none;
+}
+
+.btn-submit {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-submit:hover {
+    background-color: var(--primary-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2);
+}
+
+.btn-cancel {
+    background-color: white;
+    color: var(--secondary-color);
+    border: 1px solid var(--secondary-color);
+}
+
+.btn-cancel:hover {
+    background-color: var(--secondary-color);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(247, 37, 133, 0.2);
+}
+
+/* ===== EFECTOS ESPECIALES ===== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.editar-seguimiento-container {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .editar-seguimiento-container {
+        padding: 1.5rem;
+        margin: 1rem;
+        border-radius: 12px;
+    }
+
+    .seguimiento-form table {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .seguimiento-form tr {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 1.2rem;
+    }
+
+    .seguimiento-form th,
+    .seguimiento-form td {
+        width: 100%;
+        padding: 0.3rem 0;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+        gap: 0.8rem;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}

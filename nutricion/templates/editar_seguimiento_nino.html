@@ -1,29 +1,42 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}Editar Seguimiento Niño{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'nutricion/css/editar_seguimiento_nino.css' %}">
+{% endblock %}
+
 {% block content %}
-<h2>Editar Seguimiento del Niño</h2>
+<div class="editar-seguimiento-container">
+    <h2>Editar Seguimiento del Niño</h2>
 
-
-
-<form method="post">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
-    <table>
-        {% for field in form %}
-        <tr>
-            <th>{{ field.label_tag }}</th>
-            <td>
-                {{ field }}
-                {% if field.errors %}
-                    <div class="error">{{ field.errors }}</div>
+    <form method="post" class="seguimiento-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        
+        <table>
+            {% for field in form %}
+                {% if field.name != 'edad' %}
+                    <tr>
+                        <th>{{ field.label_tag }}</th>
+                        <td>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="error">{{ field.errors }}</div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    {{ field }} {# Campo oculto fuera de la tabla #}
                 {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+            {% endfor %}
+        </table>
 
-    <button type="submit">Guardar Cambios</button>
-    <a href="{% url 'seguimientos_nino' seguimiento.paciente.id %}">Cancelar</a>
-</form>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-submit">Guardar Cambios</button>
+            <a href="{% url 'seguimientos_nino' seguimiento.paciente.id %}" class="btn btn-cancel">Cancelar</a>
+        </div>
+    </form>
+</div>
 {% endblock %}

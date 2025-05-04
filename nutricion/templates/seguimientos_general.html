@@ -11,7 +11,7 @@
 <div class="seguimiento-page">
     <h1>Seguimientos Nutricionales</h1>
 
-    <!-- =================== SECCIÓN NIÑOS =================== -->
+    <!-- SECCIÓN NIÑOS -->
     <div class="section-container">
         <h2 class="section-toggle" data-target="#ninos-section"><i class="fas fa-child"></i> Niños <i class="fas fa-chevron-down toggle-icon"></i></h2>
 
@@ -37,7 +37,7 @@
                         </tr>
                     </thead>
                     <tbody id="tabla-seguimientos-ninos">
-                        <!-- AJAX -->
+                        <!-- Los datos se cargarán via AJAX -->
                     </tbody>
                 </table>
             </div>
@@ -48,7 +48,7 @@
         </div>
     </div>
 
-    <!-- =================== SECCIÓN TRABAJADORES =================== -->
+    <!-- SECCIÓN TRABAJADORES -->
     <div class="section-container">
         <h2 class="section-toggle" data-target="#trabajadores-section"><i class="fas fa-user-tie"></i> Trabajadores <i class="fas fa-chevron-down toggle-icon"></i></h2>
 
@@ -74,7 +74,7 @@
                         </tr>
                     </thead>
                     <tbody id="tabla-seguimientos-trabajadores">
-                        <!-- AJAX -->
+                        <!-- Los datos se cargarán via AJAX -->
                     </tbody>
                 </table>
             </div>
@@ -123,8 +123,15 @@ $(document).ready(function() {
                                 <td>${s.imc}</td>
                                 <td>${s.dx}</td>
                                 <td>
-                                    <a href="/seguimiento/nino/editar/${s.id}/" class="btn btn-warning btn-sm">Editar</a>
-                                    <a href="/seguimiento/nino/eliminar/${s.id}/" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar este seguimiento?')">Eliminar</a>
+                                    <div class="btn-group-mobile">
+                                        <a href="/seguimiento/nino/editar/${s.id}/" class="btn-accion btn-editar">
+                                            <i class="fas fa-edit"></i> Editar
+                                        </a>
+                                        <a href="/seguimiento/nino/eliminar/${s.id}/" class="btn-accion btn-eliminar" 
+                                           onclick="return confirm('¿Estás seguro de eliminar este seguimiento?')">
+                                            <i class="fas fa-trash-alt"></i> Eliminar
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>`;
                     });
@@ -157,8 +164,15 @@ $(document).ready(function() {
                                 <td>${s.imc}</td>
                                 <td>${s.dx}</td>
                                 <td>
-                                    <a href="/seguimiento/trabajador/editar/${s.id}/" class="btn btn-warning btn-sm">Editar</a>
-                                    <a href="/seguimiento/trabajador/eliminar/${s.id}/" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar este seguimiento?')">Eliminar</a>
+                                    <div class="btn-group-mobile">
+                                        <a href="/seguimiento/trabajador/editar/${s.id}/" class="btn-accion btn-editar">
+                                            <i class="fas fa-edit"></i> Editar
+                                        </a>
+                                        <a href="/seguimiento/trabajador/eliminar/${s.id}/" class="btn-accion btn-eliminar" 
+                                           onclick="return confirm('¿Estás seguro de eliminar este seguimiento?')">
+                                            <i class="fas fa-trash-alt"></i> Eliminar
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>`;
                     });
