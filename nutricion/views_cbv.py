@@ -279,26 +279,29 @@ class EditarTrabajadorView(LoginRequiredMixin, UpdateView):
     model = Trabajador
     form_class = TrabajadorForm
     template_name = 'editar_trabajador.html'
-    
+
     def get_success_url(self):
-        # Redirige a 'historial' si viene de ahí, sino a 'reportes'
         return reverse_lazy('historial') if 'from' in self.request.GET else reverse_lazy('reportes')
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Define explícitamente la URL de cancelación
         context['cancel_url'] = 'historial' if 'from' in self.request.GET else 'reportes'
         return context
-    
+
     def form_valid(self, form):
         instance = form.save(commit=False)
-        # Calcula automáticamente el IMC redondeado a 2 decimales
+        
         if instance.peso and instance.talla:
             instance.imc = round(instance.peso / ((instance.talla / 100) ** 2), 2)
-        instance.save()
+
+        # Guardar con historial de cambios usando reversion
+        with create_revision():
+            instance.save()
+            set_user(self.request.user)
+            set_comment("Actualización de trabajador")
+
         messages.success(self.request, "Trabajador actualizado correctamente")
         return super().form_valid(form)
-
 
 class EliminarTrabajadorView(LoginRequiredMixin, DeleteView):
     model = Trabajador

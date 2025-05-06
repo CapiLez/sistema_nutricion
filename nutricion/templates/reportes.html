@@ -322,13 +322,6 @@
                             No calculado
                         {% endif %}
                     </p>
-                    <p><strong><i class="fas fa-calendar-day"></i> Fecha Ingreso:</strong> 
-                       {% if trabajador.fecha_ingreso %}
-                           {{ trabajador.fecha_ingreso|date:"d/m/Y" }}
-                       {% else %}
-                           -
-                       {% endif %}
-                    </p>
                     <a href="{% url 'reporte_trabajador' trabajador.id %}" class="btn-ver">
                         <i class="fas fa-file-alt"></i> Ver Reporte Completo
                     </a>

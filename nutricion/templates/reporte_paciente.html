@@ -6,104 +6,93 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'nutricion/css/reportes.css' %}">
 <link rel="stylesheet" href="{% static 'nutricion/css/reportes_paciente.css' %}">
+<style>
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    body * {
+        visibility: hidden;
+    }
+    #reporte, #reporte * {
+        visibility: visible;
+    }
+    #reporte {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: white;
+        padding: 0;
+    }
+    .no-print {
+        display: none !important;
+    }
+}
 
+.action-buttons {
+    margin-top: 30px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    text-decoration: none;
+    color: white;
+    cursor: pointer;
+}
+
+.btn-primary { background: #3e95cd; }
+.btn-secondary { background: #6c757d; }
+.btn-danger { background: #dc3545; }
+
+.btn i { margin-right: 5px; }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container reporte-container">
-    <!-- Icono de niño/niña -->
+<div class="container reporte-container" id="reporte">
     <div class="child-icon {% if paciente.sexo == 'M' %}boy{% else %}girl{% endif %}">
         <i class="fas fa-{% if paciente.sexo == 'M' %}male{% else %}female{% endif %}"></i>
     </div>
 
-    <!-- Encabezado del Reporte -->
     <div class="header-section">
         <h1><i class="fas fa-file-medical"></i> Reporte Nutricional Pediátrico</h1>
         <h2>{{ paciente.nombre }}</h2>
     </div>
 
-    <!-- Resto del contenido se mantiene igual... -->
-    <!-- Sección de Datos Básicos -->
     <div class="datos-section">
         <h3><i class="fas fa-info-circle"></i> Datos Básicos</h3>
-        
         <div class="datos-grid">
-            <div class="dato-item">
-                <i class="fas fa-birthday-cake"></i>
-                <div>
-                    <strong>Edad:</strong> {{ paciente.edad_detallada }}
-                </div>
-            </div>
-            
-            <div class="dato-item">
-                <i class="fas fa-venus-mars"></i>
-                <div>
-                    <strong>Sexo:</strong> {{ paciente.get_sexo_display }}
-                </div>
-            </div>
-            
-            <div class="dato-item">
-                <i class="fas fa-home"></i>
-                <div>
-                    <strong>CAI:</strong> {{ paciente.cai }}
-                </div>
-            </div>
-            
-            <div class="dato-item">
-                <i class="fas fa-graduation-cap"></i>
-                <div>
-                    <strong>Grado/Grupo:</strong> 
-                    {{ paciente.grado|default:"No especificado" }} / {{ paciente.grupo|default:"-" }}
-                </div>
-            </div>
-            
-            <div class="dato-item">
-                <i class="fas fa-weight"></i>
-                <div>
-                    <strong>Último IMC:</strong> 
-                    {{ paciente.imc|floatformat:2|default:"No calculado" }}
-                </div>
-            </div>
-            
-            <div class="dato-item">
-                <i class="fas fa-calendar-alt"></i>
-                <div>
-                    <strong>Fecha Registro:</strong> 
-                    {{ paciente.fecha_registro|date:"d/m/Y"|default:"-" }}
-                </div>
-            </div>
+            <div class="dato-item"><i class="fas fa-birthday-cake"></i><div><strong>Edad:</strong> {{ paciente.edad_detallada }}</div></div>
+            <div class="dato-item"><i class="fas fa-venus-mars"></i><div><strong>Sexo:</strong> {{ paciente.get_sexo_display }}</div></div>
+            <div class="dato-item"><i class="fas fa-home"></i><div><strong>CAI:</strong> {{ paciente.cai }}</div></div>
+            <div class="dato-item"><i class="fas fa-graduation-cap"></i><div><strong>Grado/Grupo:</strong> {{ paciente.grado|default:"-" }} / {{ paciente.grupo|default:"-" }}</div></div>
+            <div class="dato-item"><i class="fas fa-weight"></i><div><strong>Último IMC:</strong> {{ paciente.imc|floatformat:2|default:"No calculado" }}</div></div>
+            <div class="dato-item"><i class="fas fa-calendar-alt"></i><div><strong>Fecha Registro:</strong> {{ paciente.fecha_registro|date:"d/m/Y"|default:"-" }}</div></div>
         </div>
     </div>
 
-    <!-- Sección de Gráficas -->
     <div class="graficas-section">
         <h3><i class="fas fa-chart-line"></i> Evolución Nutricional</h3>
-        
         <div class="graficas-grid">
-            <div class="grafica-container">
-                <h4>Evolución de Peso (kg)</h4>
-                <canvas id="graficaPeso" height="250"></canvas>
-            </div>
-            
-            <div class="grafica-container">
-                <h4>Evolución de Talla (cm)</h4>
-                <canvas id="graficaTalla" height="250"></canvas>
-            </div>
-            
+            <div class="grafica-container"><h4>Peso (kg)</h4><canvas id="graficaPeso" height="250"></canvas></div>
+            <div class="grafica-container"><h4>Talla (cm)</h4><canvas id="graficaTalla" height="250"></canvas></div>
             {% if paciente.edad >= 5 %}
-            <div class="grafica-container">
-                <h4>Evolución de IMC</h4>
-                <canvas id="graficaIMC" height="250"></canvas>
-            </div>
+            <div class="grafica-container"><h4>IMC</h4><canvas id="graficaIMC" height="250"></canvas></div>
             {% endif %}
-
         </div>
     </div>
 
-    <!-- Sección de Historial de Seguimientos -->
     <div class="seguimientos-section">
         <h3><i class="fas fa-history"></i> Historial de Seguimientos</h3>
-        
         {% if seguimientos %}
         <div class="table-responsive">
             <table class="seguimientos-table">
@@ -135,30 +124,32 @@
         </div>
         {% else %}
         <div class="no-data">
-            <p><i class="fas fa-exclamation-circle"></i> No hay seguimientos registrados para este paciente.</p>
+            <p><i class="fas fa-exclamation-circle"></i> No hay seguimientos registrados.</p>
         </div>
         {% endif %}
     </div>
+</div>
 
-    <!-- Botones de Acción -->
-    <div class="action-buttons">
-        <a href="{% url 'reportes' %}" class="btn btn-primary">
-            <i class="fas fa-arrow-left"></i> Volver a Reportes
-        </a>
-        <button onclick="window.print()" class="btn btn-secondary">
-            <i class="fas fa-print"></i> Imprimir Reporte
-        </button>
-    </div>
+<!-- Botones visibles solo en pantalla -->
+<div class="action-buttons no-print">
+    <a href="{% url 'reportes' %}" class="btn btn-primary">
+        <i class="fas fa-arrow-left"></i> Volver a Reportes
+    </a>
+    <button onclick="window.print()" class="btn btn-secondary">
+        <i class="fas fa-print"></i> Imprimir
+    </button>
+    <button id="btn-pdf" class="btn btn-danger">
+        <i class="fas fa-file-pdf"></i> Descargar PDF
+    </button>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
-// Datos para los gráficos
 const datos = JSON.parse('{{ datos_json|escapejs }}');
 
-// Función para crear gráficos
 function crearGrafico(id, label, data, borderColor, backgroundColor) {
     const ctx = document.getElementById(id).getContext('2d');
     return new Chart(ctx, {
@@ -178,60 +169,33 @@ function crearGrafico(id, label, data, borderColor, backgroundColor) {
         options: {
             responsive: true,
             plugins: {
-                legend: {
-                    position: 'top',
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                }
+                legend: { position: 'top' },
+                tooltip: { mode: 'index', intersect: false }
             },
             scales: {
-                y: {
-                    beginAtZero: false
-                }
+                y: { beginAtZero: false }
             }
         }
     });
 }
 
-// Crear gráficos cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
-    // Gráfico de Peso
-    if (datos.pesos && datos.pesos.length > 0) {
-        crearGrafico(
-            'graficaPeso', 
-            'Peso (kg)', 
-            datos.pesos, 
-            'rgba(78, 115, 223, 1)', 
-            'rgba(78, 115, 223, 0.2)'
-        );
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    if (datos.pesos?.length) crearGrafico('graficaPeso', 'Peso (kg)', datos.pesos, 'rgba(78, 115, 223, 1)', 'rgba(78, 115, 223, 0.2)');
+    if (datos.tallas?.length) crearGrafico('graficaTalla', 'Talla (cm)', datos.tallas, 'rgba(54, 185, 204, 1)', 'rgba(54, 185, 204, 0.2)');
+    if (datos.imcs?.length) crearGrafico('graficaIMC', 'IMC', datos.imcs, 'rgba(26, 188, 156, 1)', 'rgba(26, 188, 156, 0.2)');
 
-    // Gráfico de Talla
-    if (datos.tallas && datos.tallas.length > 0) {
-        crearGrafico(
-            'graficaTalla', 
-            'Talla (cm)', 
-            datos.tallas, 
-            'rgba(54, 185, 204, 1)', 
-            'rgba(54, 185, 204, 0.2)'
-        );
-    }
-
-    // Gráfico de IMC
-    if (datos.imcs && datos.imcs.length > 0) {
-        crearGrafico(
-            'graficaIMC', 
-            'Índice de Masa Corporal', 
-            datos.imcs, 
-            'rgba(26, 188, 156, 1)', 
-            'rgba(26, 188, 156, 0.2)'
-        );
-    }
-    
-    // Debug: Mostrar datos en consola
-    console.log('Datos para gráficos:', datos);
+    document.getElementById('btn-pdf').addEventListener('click', () => {
+        const element = document.getElementById('reporte');
+        const opt = {
+            margin: 0.3,
+            filename: 'reporte_{{ paciente.nombre|slugify }}.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+        html2pdf().set(opt).from(element).save();
+    });
 });
 </script>
 {% endblock %}
