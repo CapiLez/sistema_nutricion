@@ -279,29 +279,26 @@ class EditarTrabajadorView(LoginRequiredMixin, UpdateView):
     model = Trabajador
     form_class = TrabajadorForm
     template_name = 'editar_trabajador.html'
-
+    
     def get_success_url(self):
+        # Redirige a 'historial' si viene de ahí, sino a 'reportes'
         return reverse_lazy('historial') if 'from' in self.request.GET else reverse_lazy('reportes')
-
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Define explícitamente la URL de cancelación
         context['cancel_url'] = 'historial' if 'from' in self.request.GET else 'reportes'
         return context
-
+    
     def form_valid(self, form):
         instance = form.save(commit=False)
-        
+        # Calcula automáticamente el IMC redondeado a 2 decimales
         if instance.peso and instance.talla:
             instance.imc = round(instance.peso / ((instance.talla / 100) ** 2), 2)
-
-        # Guardar con historial de cambios usando reversion
-        with create_revision():
-            instance.save()
-            set_user(self.request.user)
-            set_comment("Actualización de trabajador")
-
+        instance.save()
         messages.success(self.request, "Trabajador actualizado correctamente")
         return super().form_valid(form)
+
 
 class EliminarTrabajadorView(LoginRequiredMixin, DeleteView):
     model = Trabajador
@@ -362,11 +359,9 @@ class RegistrarSeguimientoNinoView(FiltroCAIMixin, InitialFromModelMixin, Revisi
         return super().form_valid(form)
     
     def form_invalid(self, form):
-        print("❌ Formulario inválido:")
+        print("Formulario inválido:")
         print(form.errors)
         return super().form_invalid(form)
-
-
 
 class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, RevisionCreateView):
     model = SeguimientoTrabajador
@@ -379,7 +374,6 @@ class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, 
     related_model_class = Trabajador
     field_map = {
         'trabajador': 'id',
-        'edad': 'edad',
         'peso': 'peso',
         'talla': 'talla',
         'imc': 'imc',
@@ -393,20 +387,28 @@ class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, 
     def form_valid(self, form):
         trabajador = form.cleaned_data.get('trabajador')
 
-        # Validación de CAI para nutriólogos
         if self.request.user.is_nutriologo and trabajador.cai != self.request.user.cai:
             return HttpResponseForbidden("No tienes permiso para registrar seguimiento de este trabajador.")
 
-        # Guardar con commit=False para modificar el objeto antes del guardado
         instance = form.save(commit=False)
-
-        # Asignar IMC calculado manualmente desde cleaned_data
+        instance.edad = trabajador.edad or 0
         instance.imc = form.cleaned_data.get('imc')
 
-        instance.save()
-        self.object = instance  # para que RevisionCreateView lo registre correctamente
-        return super().form_valid(form)
+        with create_revision():
+            instance.save()
+            set_user(self.request.user)
+            set_comment(self.comment)
 
+            # Actualizar datos del modelo Trabajador con los más recientes
+            trabajador.peso = instance.peso
+            trabajador.talla = instance.talla
+            trabajador.imc = instance.imc
+            trabajador.circunferencia_abdominal = instance.circunferencia_abdominal
+            trabajador.save()
+
+        self.object = instance
+        return super().form_valid(form)
+    
 
 class ListaSeguimientosGeneralView(FiltroCAIMixin, LoginRequiredMixin, View):
     model = SeguimientoTrimestral  # Necesario para que el mixin sepa qué modelo usar
@@ -419,18 +421,18 @@ class ListaSeguimientosGeneralView(FiltroCAIMixin, LoginRequiredMixin, View):
         seguimientos_ninos = SeguimientoTrimestral.objects.select_related('paciente')
         seguimientos_trabajadores = SeguimientoTrabajador.objects.select_related('trabajador')
 
-        # 🔥 Filtro por CAI si es nutriólogo
+        # Filtro por CAI si es nutriólogo
         if request.user.is_nutriologo and request.user.cai:
             seguimientos_ninos = seguimientos_ninos.filter(paciente__cai=request.user.cai)
             seguimientos_trabajadores = seguimientos_trabajadores.filter(trabajador__cai=request.user.cai)
 
-        # 🔍 Filtros de búsqueda adicionales
+        # Filtros de búsqueda adicionales
         if q_nino:
             seguimientos_ninos = seguimientos_ninos.filter(paciente__nombre__icontains=q_nino)
         if q_trabajador:
             seguimientos_trabajadores = seguimientos_trabajadores.filter(trabajador__nombre__icontains=q_trabajador)
 
-        # 🔎 Renderiza el template con los seguimientos filtrados
+        # Renderiza el template con los seguimientos filtrados
         return render(request, 'seguimientos_general.html', {
             'seguimientos_ninos': seguimientos_ninos,
             'seguimientos_trabajadores': seguimientos_trabajadores,
@@ -505,14 +507,29 @@ class EditarSeguimientoTrabajadorView(LoginRequiredMixin, View):
 
     def post(self, request, id):
         seguimiento = get_object_or_404(SeguimientoTrabajador, id=id)
-        
+
         if request.user.is_nutriologo and seguimiento.trabajador.cai != request.user.cai:
             return HttpResponseForbidden("No tienes permiso para editar este seguimiento.")
-            
+
         form = SeguimientoTrabajadorForm(request.POST, instance=seguimiento, user=request.user)
         if form.is_valid():
-            form.save()
-            return redirect('seguimientos_trabajador', trabajador_id=seguimiento.trabajador.id)
+            seguimiento_actualizado = form.save(commit=False)
+
+            trabajador = seguimiento_actualizado.trabajador
+            trabajador.peso = seguimiento_actualizado.peso
+            trabajador.talla = seguimiento_actualizado.talla
+            trabajador.imc = seguimiento_actualizado.imc
+            trabajador.circunferencia_abdominal = seguimiento_actualizado.circunferencia_abdominal
+
+            # Crear revisión para ambos modelos
+            with create_revision():
+                seguimiento_actualizado.save()
+                trabajador.save()
+                set_user(request.user)
+                set_comment("Edición de seguimiento y actualización de datos del trabajador.")
+
+            return redirect('seguimientos_trabajador', trabajador_id=trabajador.id)
+
         return render(request, 'editar_seguimiento_trabajador.html', {'form': form, 'seguimiento': seguimiento})
 
 
@@ -771,7 +788,12 @@ class ReporteTrabajadorView(LoginRequiredMixin, DetailView):
             'fechas': [s.fecha_valoracion.strftime('%Y-%m-%d') for s in seguimientos],
             'pesos': [float(s.peso) for s in seguimientos],
             'imcs': [float(s.imc) for s in seguimientos],
+            'circ_abdominal': [
+                float(s.circunferencia_abdominal) if s.circunferencia_abdominal is not None else None
+                for s in seguimientos
+            ],
         }
+
         
         context.update({
             'seguimientos': seguimientos,

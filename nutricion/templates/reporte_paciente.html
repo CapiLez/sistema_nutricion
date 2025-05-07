@@ -75,7 +75,12 @@
             <div class="dato-item"><i class="fas fa-venus-mars"></i><div><strong>Sexo:</strong> {{ paciente.get_sexo_display }}</div></div>
             <div class="dato-item"><i class="fas fa-home"></i><div><strong>CAI:</strong> {{ paciente.cai }}</div></div>
             <div class="dato-item"><i class="fas fa-graduation-cap"></i><div><strong>Grado/Grupo:</strong> {{ paciente.grado|default:"-" }} / {{ paciente.grupo|default:"-" }}</div></div>
-            <div class="dato-item"><i class="fas fa-weight"></i><div><strong>Último IMC:</strong> {{ paciente.imc|floatformat:2|default:"No calculado" }}</div></div>
+            {% if paciente.mostrar_imc %}
+            <div class="dato-item">
+                <i class="fas fa-weight"></i>
+                <div><strong>Último IMC:</strong> {{ paciente.imc|floatformat:2|default:"No calculado" }}</div>
+            </div>
+            {% endif %}
             <div class="dato-item"><i class="fas fa-calendar-alt"></i><div><strong>Fecha Registro:</strong> {{ paciente.fecha_registro|date:"d/m/Y"|default:"-" }}</div></div>
         </div>
     </div>

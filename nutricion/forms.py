@@ -386,8 +386,8 @@ class SeguimientoTrimestralForm(forms.ModelForm):
 
 class SeguimientoTrabajadorForm(forms.ModelForm):
     edad = forms.IntegerField(
-        widget=forms.NumberInput(attrs={'readonly': 'readonly'}),
-        required=False
+        required=True,  # Ahora obligatorio, si tu modelo lo requiere
+        widget=forms.NumberInput(attrs={'min': 1, 'max': 120, 'step': 1})
     )
 
     class Meta:
@@ -395,18 +395,19 @@ class SeguimientoTrabajadorForm(forms.ModelForm):
         fields = ['trabajador', 'edad', 'peso', 'talla', 'circunferencia_abdominal', 'dx', 'fecha_valoracion']
         widgets = {
             'fecha_valoracion': forms.DateInput(attrs={'type': 'date'}),
-            'trabajador': forms.Select(attrs={'class': 'form-control'})
+            'trabajador': forms.Select(attrs={'class': 'form-control'}),
+            'circunferencia_abdominal': forms.NumberInput(attrs={'min': 10, 'step': '0.1'}),
         }
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        
-        # Filtramos trabajadores por CAI si es nutriólogo
+
+        # Si es nutriólogo, limitar los trabajadores por CAI
         if self.user and self.user.is_nutriologo and self.user.cai:
             self.fields['trabajador'].queryset = Trabajador.objects.filter(cai=self.user.cai)
-        
-        # Establecer edad inicial si ya existe la instancia
+
+        # Cargar edad si ya existe la instancia
         if self.instance.pk:
             self.fields['edad'].initial = self.instance.edad
 
@@ -415,21 +416,27 @@ class SeguimientoTrabajadorForm(forms.ModelForm):
         trabajador = cleaned_data.get('trabajador')
         peso = cleaned_data.get('peso')
         talla = cleaned_data.get('talla')
-        
-        # Verificación de CAI para nutriólogos
+        edad = cleaned_data.get('edad')
+
+        # Verificar permiso de CAI
         if self.user and self.user.is_nutriologo and trabajador and trabajador.cai != self.user.cai:
             raise forms.ValidationError("No tienes permiso para registrar seguimiento de este trabajador.")
 
-        # Validaciones básicas
+        # Validación de edad
+        if edad is None or edad < 0:
+            self.add_error('edad', "La edad debe ser un número positivo.")
+
+        # Validación de peso
         if peso is not None and (peso < 30 or peso > 300):
             self.add_error('peso', "El peso debe estar entre 30 y 300 kg")
-        
+
+        # Validación de talla
         if talla is not None and (talla < 120 or talla > 250):
             self.add_error('talla', "La talla debe estar entre 120 y 250 cm")
-        
-        # Cálculo automático de IMC
+
+        # Calcular IMC si es posible
         if peso and talla:
             talla_m = talla / 100
             cleaned_data['imc'] = round(peso / (talla_m ** 2), 2)
-        
+
         return cleaned_data
