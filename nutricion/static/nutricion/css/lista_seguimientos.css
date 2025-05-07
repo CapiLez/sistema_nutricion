@@ -8,6 +8,16 @@
     --texto-claro: #ffffff;
     --sombra-suave: 0 2px 4px rgba(0, 0, 0, 0.08);
     --sombra-media: 0 4px 8px rgba(0, 0, 0, 0.15);
+    --verde-primario: #1abc9c;
+    --verde-secundario: #16a085;
+    --azul-primario: #3498db;
+    --azul-secundario: #2980b9;
+    --gris-oscuro: #2c3e50;
+    --gris-muy-oscuro: #34495e;
+    --gris-texto: #4a5568;
+    --gris-borde: #e0e6ed;
+    --gris-fondo: #f5f7fa;
+    --gris-claro: #f8fafc;
 }
 
 /* ===== ESTILOS GENERALES PARA LA PÁGINA ===== */
@@ -43,6 +53,101 @@
     height: 3px;
     background: linear-gradient(to right, #1abc9c, #3498db);
 }
+/* ===== BARRA DE BÚSQUEDA Y FILTROS ===== */
+.search-section {
+    margin-bottom: 25px;
+    background-color: var(--gris-claro);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--gris-borde);
+}
+
+.search-form {
+    margin-bottom: 15px;
+}
+
+.search-input-group {
+    display: flex;
+    max-width: 600px;
+    margin-bottom: 15px;
+    box-shadow: var(--sombra-suave);
+}
+
+.search-input {
+    flex: 1;
+    padding: 12px 15px;
+    border: 1px solid #dbe1e8;
+    border-radius: 6px 0 0 6px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s;
+    background-color: white;
+}
+
+.search-input:focus {
+    border-color: var(--verde-primario);
+    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.1);
+}
+
+.search-button {
+    padding: 12px 20px;
+    background: linear-gradient(to right, var(--verde-primario), var(--verde-secundario));
+    color: white;
+    border: none;
+    border-radius: 0 6px 6px 0;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+}
+
+.search-button i {
+    margin-right: 8px;
+}
+
+.search-button:hover {
+    background: linear-gradient(to right, var(--verde-secundario), var(--verde-primario));
+    transform: translateY(-1px);
+}
+
+.filters-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.filter-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: var(--gris-texto);
+    font-weight: 500;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--gris-borde);
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: white;
+    transition: all 0.3s;
+}
+
+.filter-select:focus {
+    border-color: var(--verde-primario);
+    box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.1);
+    outline: none;
+}
+
 
 /* ===== SECCIONES ACORDEÓN ===== */
 .section-container {
@@ -187,6 +292,24 @@
     transform: scale(1.1);
 }
 
+/* Botón Ver Seguimientos */
+.btn-ver {
+    background: linear-gradient(to right, var(--azul-primario), var(--azul-secundario));
+    color: var(--texto-claro);
+    min-width: 70px;
+}
+
+.btn-ver:hover {
+    background: linear-gradient(to right, var(--azul-secundario), var(--azul-primario));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.2);
+    color: var(--texto-claro);
+}
+
+.btn-ver:hover i {
+    transform: scale(1.1);
+}
+
 /* Efecto de onda al hacer hover */
 .btn-accion:after {
     content: "";
@@ -206,9 +329,96 @@
 
 /* Versión pequeña para tablas */
 .table .btn-accion {
+    padding: 6px 2px;
+    font-size: 12px;
+    min-width: 50px;
+    margin-right: 2px;
+}
+
+.table .btn-ver {
+    min-width: 60px;
+}
+
+.table .btn-accion i {
+    font-size: 11px;
+    margin-right: 5px;
+}
+
+/* Contenedor de botones para móviles */
+.btn-group-mobile {
+    display: flex;
+    gap: 8px;
+}
+
+@media (max-width: 768px) {
+    .btn-group-mobile {
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .table .btn-accion {
+        width: 100%;
+        margin-right: 0;
+    }
+    
+    .btn-ver {
+        width: 100%;
+    }
+}
+/* ===== BOTÓN VER SEGUIMIENTOS ===== */
+.btn-ver {
+    background: linear-gradient(to right, var(--azul-primario), var(--azul-secundario));
+    color: var(--texto-claro);
+    min-width: 70px;
+}
+
+.btn-ver:hover {
+    background: linear-gradient(to right, var(--azul-secundario), var(--azul-primario));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.2);
+    color: var(--texto-claro);
+}
+
+.btn-ver:hover i {
+    transform: scale(1.1);
+}
+
+/* Versión para tablas */
+.table .btn-ver {
     padding: 6px 10px;
     font-size: 12px;
-    min-width: 70px;
+    min-width: 60px;
+}
+
+/* Versión para móviles */
+@media (max-width: 768px) {
+    .btn-ver {
+        width: 100%;
+    }
+}
+
+/* Efecto de onda al hacer hover */
+.btn-accion:after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 40%;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.15);
+    transform: rotate(30deg);
+    transition: all 0.5s;
+}
+
+.btn-accion:hover:after {
+    left: 120%;
+}
+
+/* Versión pequeña para tablas */
+.table .btn-accion {
+    padding: 6px 6px;
+    font-size: 12px;
+    min-width: 50px;
     margin-right: 5px;
 }
 

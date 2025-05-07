@@ -2,12 +2,13 @@ from datetime import date
 from django.views.generic import DeleteView, ListView, View, TemplateView, UpdateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import permission_required
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from matplotlib.dates import relativedelta
 from reversion.models import Version
+from django.db.models import OuterRef, Subquery, Max
 from reversion import create_revision, set_user, set_comment
 from django.utils.decorators import method_decorator
 from django.core.paginator import Paginator
@@ -391,7 +392,7 @@ class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, 
             return HttpResponseForbidden("No tienes permiso para registrar seguimiento de este trabajador.")
 
         instance = form.save(commit=False)
-        instance.edad = trabajador.edad or 0
+        instance.edad = form.cleaned_data.get('edad')
         instance.imc = form.cleaned_data.get('imc')
 
         with create_revision():
@@ -562,48 +563,61 @@ class ListaSeguimientosView(LoginRequiredMixin, View):
         return JsonResponse({'error': 'Solicitud inválida'}, status=400)
     
     def get_seguimientos_ninos(self, request, search_term=None):
-        seguimientos = SeguimientoTrimestral.objects.select_related('paciente')
+        qs = SeguimientoTrimestral.objects.select_related('paciente').order_by('paciente__id', '-fecha_valoracion')
 
-        # Filtrado por CAI si es nutriólogo
         if request.user.is_nutriologo and request.user.cai:
-            seguimientos = seguimientos.filter(paciente__cai=request.user.cai)
-
-        # Filtro de búsqueda
+            qs = qs.filter(paciente__cai=request.user.cai)
+        
         if search_term:
-            seguimientos = seguimientos.filter(paciente__nombre__icontains=search_term)
+            qs = qs.filter(paciente__nombre__icontains=search_term)
 
-        return [{
-            'id': s.id,
-            'nombre': s.paciente.nombre,
-            'fecha': s.fecha_valoracion.strftime('%d/%m/%Y'),
-            'edad': edad_textual(s.paciente.fecha_nacimiento, s.fecha_valoracion),  # <-- ¡Aquí!
-            'peso': s.peso,
-            'talla': s.talla,
-            'imc': f"{s.imc:.2f}" if s.imc else '',
-            'dx': s.dx or ''
-        } for s in seguimientos]
+        # Agrupar por paciente y tomar solo el seguimiento más reciente
+        vistos = {}
+        resultados = []
+        for s in qs:
+            if s.paciente.id not in vistos:
+                vistos[s.paciente.id] = True
+                resultados.append({
+                    'id': s.paciente.id,
+                    'nombre': s.paciente.nombre,
+                    'fecha': s.fecha_valoracion.strftime('%d/%m/%Y'),
+                    'edad': calcular_edad_detallada(s.paciente.fecha_nacimiento, s.fecha_valoracion),
+                    'peso': s.peso,
+                    'talla': s.talla,
+                    'imc': f"{s.imc:.2f}" if s.imc else '',
+                    'dx': s.dx or '',
+                    'url': reverse('seguimientos_nino', kwargs={'nino_id': s.paciente.id})
+                })
+        return resultados
+
     
     def get_seguimientos_trabajadores(self, request, search_term=None):
-        seguimientos = SeguimientoTrabajador.objects.select_related('trabajador')
-        
-        # Filtrado por CAI si es nutriólogo
+        qs = SeguimientoTrabajador.objects.select_related('trabajador').order_by('trabajador__id', '-fecha_valoracion')
+
         if request.user.is_nutriologo and request.user.cai:
-            seguimientos = seguimientos.filter(trabajador__cai=request.user.cai)
-        
-        # Filtro de búsqueda
+            qs = qs.filter(trabajador__cai=request.user.cai)
+
         if search_term:
-            seguimientos = seguimientos.filter(trabajador__nombre__icontains=search_term)
-        
-        return [{
-            'id': s.id,
-            'nombre': s.trabajador.nombre,
-            'fecha': s.fecha_valoracion.strftime('%d/%m/%Y'),
-            'edad': s.edad,
-            'peso': s.peso,
-            'talla': s.talla,
-            'imc': f"{s.imc:.2f}" if s.imc else '',
-            'dx': s.dx or ''
-        } for s in seguimientos]
+            qs = qs.filter(trabajador__nombre__icontains=search_term)
+
+        vistos = {}
+        resultados = []
+        for s in qs:
+            if s.trabajador.id not in vistos:
+                vistos[s.trabajador.id] = True
+                resultados.append({
+                    'id': s.trabajador.id,
+                    'nombre': s.trabajador.nombre,
+                    'fecha': s.fecha_valoracion.strftime('%d/%m/%Y'),
+                    'edad': s.edad,
+                    'peso': s.peso,
+                    'talla': s.talla,
+                    'imc': f"{s.imc:.2f}" if s.imc else '',
+                    'dx': s.dx or '',
+                    'url': reverse('seguimientos_trabajador', kwargs={'trabajador_id': s.trabajador.id})
+                })
+        return resultados
+
     
 class EliminarSeguimientoNinoView(DeleteView):
     model = SeguimientoTrimestral
@@ -886,62 +900,69 @@ def calcular_edad_detallada(nacimiento, valoracion):
 
 def buscar_seguimientos_nino_ajax(request):
     termino = request.GET.get('term', '')
-    page = int(request.GET.get('page', 1))
-
-    queryset = SeguimientoTrimestral.objects.select_related('paciente').filter(
-        paciente__nombre__icontains=termino
-    )
-
+    
+    base_queryset = SeguimientoTrimestral.objects.select_related('paciente')
     if request.user.is_nutriologo and request.user.cai:
-        queryset = queryset.filter(paciente__cai=request.user.cai)
+        base_queryset = base_queryset.filter(paciente__cai=request.user.cai)
 
-    queryset = queryset.order_by('-fecha_valoracion')
-    paginator = Paginator(queryset, 10)
-    page_obj = paginator.get_page(page)
+    # Subconsulta: obtener última fecha por paciente
+    latest_dates = base_queryset.values('paciente').annotate(
+        max_fecha=Max('fecha_valoracion')
+    ).values('paciente', 'max_fecha')
+
+    # Buscar los seguimientos que coincidan con la última fecha por paciente
+    filters = {
+        'paciente__nombre__icontains': termino
+    }
+
+    queryset = base_queryset.filter(**filters).filter(
+        fecha_valoracion__in=Subquery(
+            latest_dates.filter(paciente=OuterRef('paciente')).values('max_fecha')
+        )
+    ).order_by('paciente__nombre')
 
     data = [{
         'id': s.id,
+        'paciente_id': s.paciente.id,
         'nombre': s.paciente.nombre,
         'fecha': s.fecha_valoracion.strftime('%d/%m/%Y') if s.fecha_valoracion else '',
         'edad': calcular_edad_detallada(s.paciente.fecha_nacimiento, s.fecha_valoracion),
         'peso': s.peso,
         'talla': s.talla,
         'imc': s.imc,
-        'dx': s.dx
-    } for s in page_obj]
+        'dx': s.dx or ''
+    } for s in queryset]
 
-    return JsonResponse({'resultados': data, 'has_next': page_obj.has_next()})
+    return JsonResponse({'resultados': data})
 
 def buscar_seguimientos_trabajador_ajax(request):
     termino = request.GET.get('term', '')
-    page = int(request.GET.get('page', 1))
-
-    queryset = SeguimientoTrabajador.objects.select_related('trabajador').filter(
-        trabajador__nombre__icontains=termino
-    )
-
+    
+    base_queryset = SeguimientoTrabajador.objects.select_related('trabajador')
     if request.user.is_nutriologo and request.user.cai:
-        queryset = queryset.filter(trabajador__cai=request.user.cai)
+        base_queryset = base_queryset.filter(trabajador__cai=request.user.cai)
 
-    queryset = queryset.order_by('-fecha_valoracion')
-    paginator = Paginator(queryset, 10)
-    page_obj = paginator.get_page(page)
+    latest_dates = base_queryset.values('trabajador').annotate(
+        max_fecha=Max('fecha_valoracion')
+    ).values('trabajador', 'max_fecha')
+
+    queryset = base_queryset.filter(
+        trabajador__nombre__icontains=termino,
+        fecha_valoracion__in=Subquery(
+            latest_dates.filter(trabajador=OuterRef('trabajador')).values('max_fecha')
+        )
+    ).order_by('trabajador__nombre')
 
     data = [{
         'id': s.id,
+        'trabajador_id': s.trabajador.id,
         'nombre': s.trabajador.nombre,
         'fecha': s.fecha_valoracion.strftime('%d/%m/%Y') if s.fecha_valoracion else '',
         'edad': s.edad,
         'peso': s.peso,
         'talla': s.talla,
         'imc': s.imc,
-        'dx': s.dx
-    } for s in page_obj]
+        'dx': s.dx or ''
+    } for s in queryset]
 
-    return JsonResponse({'resultados': data, 'has_next': page_obj.has_next()})
-
-def edad_textual(nacimiento, fecha_valoracion):
-    if not nacimiento or not fecha_valoracion:
-        return "0 años, 0 meses"
-    diferencia = relativedelta(fecha_valoracion, nacimiento)
-    return f"{diferencia.years} años, {diferencia.months} meses"
+    return JsonResponse({'resultados': data})

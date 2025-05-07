@@ -37,13 +37,9 @@
                         </tr>
                     </thead>
                     <tbody id="tabla-seguimientos-ninos">
-                        <!-- Los datos se cargarán via AJAX -->
+                        <!-- Los datos se cargarán vía AJAX -->
                     </tbody>
                 </table>
-            </div>
-            <div class="pagination-buttons text-center mt-2">
-                <button id="btn-anterior-nino" class="btn btn-outline-secondary" style="display:none;">Anterior</button>
-                <button id="btn-siguiente-nino" class="btn btn-outline-primary" style="display:none;">Siguiente</button>
             </div>
         </div>
     </div>
@@ -74,13 +70,9 @@
                         </tr>
                     </thead>
                     <tbody id="tabla-seguimientos-trabajadores">
-                        <!-- Los datos se cargarán via AJAX -->
+                        <!-- Los datos se cargarán vía AJAX -->
                     </tbody>
                 </table>
-            </div>
-            <div class="pagination-buttons text-center mt-2">
-                <button id="btn-anterior-trabajador" class="btn btn-outline-secondary" style="display:none;">Anterior</button>
-                <button id="btn-siguiente-trabajador" class="btn btn-outline-primary" style="display:none;">Siguiente</button>
             </div>
         </div>
     </div>
@@ -101,14 +93,10 @@ $(document).ready(function() {
         $(this).find('.toggle-icon').toggleClass('fa-chevron-down fa-chevron-up');
     });
 
-    let paginaNino = 1;
-    let paginaTrabajador = 1;
-
     function cargarSeguimientosNino() {
-        const termino = $('#buscar-nino').val();
         $.ajax({
             url: '{% url "buscar_seguimientos_nino_ajax" %}',
-            data: { term: termino, page: paginaNino },
+            data: { term: $('#buscar-nino').val(), page: 1 },
             success: function (data) {
                 let html = '';
                 if (data.resultados.length > 0) {
@@ -125,11 +113,14 @@ $(document).ready(function() {
                                 <td>
                                     <div class="btn-group-mobile">
                                         <a href="/seguimiento/nino/editar/${s.id}/" class="btn-accion btn-editar">
-                                            <i class="fas fa-edit"></i> Editar
+                                            <i class="fas fa-edit"></i>
                                         </a>
                                         <a href="/seguimiento/nino/eliminar/${s.id}/" class="btn-accion btn-eliminar" 
                                            onclick="return confirm('¿Estás seguro de eliminar este seguimiento?')">
-                                            <i class="fas fa-trash-alt"></i> Eliminar
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                        <a href="/seguimientos/nino/${s.paciente_id}/" class="btn-accion btn-ver">
+                                            <i class="fas fa-eye"></i>
                                         </a>
                                     </div>
                                 </td>
@@ -139,17 +130,14 @@ $(document).ready(function() {
                     html = `<tr><td colspan="8">⚠ No se encontraron seguimientos.</td></tr>`;
                 }
                 $('#tabla-seguimientos-ninos').html(html);
-                $('#btn-anterior-nino').toggle(paginaNino > 1);
-                $('#btn-siguiente-nino').toggle(data.has_next);
             }
         });
     }
 
     function cargarSeguimientosTrabajador() {
-        const termino = $('#buscar-trabajador').val();
         $.ajax({
             url: '{% url "buscar_seguimientos_trabajador_ajax" %}',
-            data: { term: termino, page: paginaTrabajador },
+            data: { term: $('#buscar-trabajador').val(), page: 1 },
             success: function (data) {
                 let html = '';
                 if (data.resultados.length > 0) {
@@ -166,11 +154,14 @@ $(document).ready(function() {
                                 <td>
                                     <div class="btn-group-mobile">
                                         <a href="/seguimiento/trabajador/editar/${s.id}/" class="btn-accion btn-editar">
-                                            <i class="fas fa-edit"></i> Editar
+                                            <i class="fas fa-edit"></i>
                                         </a>
                                         <a href="/seguimiento/trabajador/eliminar/${s.id}/" class="btn-accion btn-eliminar" 
                                            onclick="return confirm('¿Estás seguro de eliminar este seguimiento?')">
-                                            <i class="fas fa-trash-alt"></i> Eliminar
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                        <a href="/seguimientos/trabajador/${s.trabajador_id}/" class="btn-accion btn-ver">
+                                            <i class="fas fa-eye"></i>
                                         </a>
                                     </div>
                                 </td>
@@ -180,45 +171,12 @@ $(document).ready(function() {
                     html = `<tr><td colspan="8">⚠ No se encontraron seguimientos.</td></tr>`;
                 }
                 $('#tabla-seguimientos-trabajadores').html(html);
-                $('#btn-anterior-trabajador').toggle(paginaTrabajador > 1);
-                $('#btn-siguiente-trabajador').toggle(data.has_next);
             }
         });
     }
 
-    $('#buscar-nino').on('input', function () {
-        paginaNino = 1;
-        cargarSeguimientosNino();
-    });
-
-    $('#btn-anterior-nino').on('click', function () {
-        if (paginaNino > 1) {
-            paginaNino--;
-            cargarSeguimientosNino();
-        }
-    });
-
-    $('#btn-siguiente-nino').on('click', function () {
-        paginaNino++;
-        cargarSeguimientosNino();
-    });
-
-    $('#buscar-trabajador').on('input', function () {
-        paginaTrabajador = 1;
-        cargarSeguimientosTrabajador();
-    });
-
-    $('#btn-anterior-trabajador').on('click', function () {
-        if (paginaTrabajador > 1) {
-            paginaTrabajador--;
-            cargarSeguimientosTrabajador();
-        }
-    });
-
-    $('#btn-siguiente-trabajador').on('click', function () {
-        paginaTrabajador++;
-        cargarSeguimientosTrabajador();
-    });
+    $('#buscar-nino').on('input', cargarSeguimientosNino);
+    $('#buscar-trabajador').on('input', cargarSeguimientosTrabajador);
 
     cargarSeguimientosNino();
     cargarSeguimientosTrabajador();
