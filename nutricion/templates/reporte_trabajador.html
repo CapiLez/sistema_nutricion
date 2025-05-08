@@ -25,6 +25,31 @@
         display: none !important;
     }
 }
+
+.print-mode {
+    position: static !important;
+    visibility: visible !important;
+    width: 100% !important;
+    background: white;
+    padding: 0 !important;
+}
+.print-mode * {
+    visibility: visible !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+}
+.print-mode .no-print,
+.print-mode .excluir-de-pdf {
+    display: none !important;
+}
+.graficas-grid,
+.datos-grid,
+.table-responsive,
+.health-info {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+}
+
 .action-buttons {
     margin-top: 30px;
     display: flex;
@@ -43,8 +68,6 @@
 }
 .btn-primary { background: #3e95cd; }
 .btn-secondary { background: #6c757d; }
-.btn-danger { background: #dc3545; }
-.btn i { margin-right: 5px; }
 </style>
 {% endblock %}
 
@@ -106,7 +129,7 @@
         </div>
     </div>
 
-    <div class="seguimientos-section">
+    <div class="seguimientos-section excluir-de-pdf">
         <h3><i class="fas fa-history"></i> Historial de Evaluaciones</h3>
         {% if seguimientos %}
         <div class="table-responsive">
@@ -127,18 +150,7 @@
                         <td>{{ seg.fecha_valoracion|date:"d/m/Y" }}</td>
                         <td>{{ seg.edad }}</td>
                         <td>{{ seg.peso|floatformat:2 }}</td>
-                        <td>{{ seg.imc|floatformat:2 }}
-                            <span class="badge-imc 
-                                {% if seg.imc < 18.5 %}imc-bajo
-                                {% elif seg.imc < 25 %}imc-normal
-                                {% elif seg.imc < 30 %}imc-sobrepeso
-                                {% else %}imc-obesidad{% endif %}">
-                                {% if seg.imc < 18.5 %}Bajo
-                                {% elif seg.imc < 25 %}Normal
-                                {% elif seg.imc < 30 %}Sobrepeso
-                                {% else %}Obesidad{% endif %}
-                            </span>
-                        </td>
+                        <td>{{ seg.imc|floatformat:2 }}</td>
                         <td>{{ seg.circunferencia_abdominal|floatformat:2|default:"-" }}</td>
                         <td>{{ seg.dx|default:"-" }}</td>
                     </tr>
@@ -155,19 +167,17 @@
 <div class="action-buttons no-print">
     <a href="{% url 'reportes' %}" class="btn btn-primary"><i class="fas fa-arrow-left"></i> Volver</a>
     <button onclick="window.print()" class="btn btn-secondary"><i class="fas fa-print"></i> Imprimir</button>
-    <button id="btn-pdf" class="btn btn-danger"><i class="fas fa-file-pdf"></i> Descargar PDF</button>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 const datos = JSON.parse('{{ datos_json|escapejs }}');
 
 function crearGrafico(id, label, data, borderColor, backgroundColor) {
     const ctx = document.getElementById(id).getContext('2d');
-    return new Chart(ctx, {
+    new Chart(ctx, {
         type: 'line',
         data: {
             labels: datos.fechas,
@@ -198,52 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (datos.pesos?.length) crearGrafico('graficaPeso', 'Peso (kg)', datos.pesos, 'rgba(78, 115, 223, 1)', 'rgba(78, 115, 223, 0.2)');
     if (datos.imcs?.length) crearGrafico('graficaIMC', 'IMC', datos.imcs, 'rgba(54, 185, 204, 1)', 'rgba(54, 185, 204, 0.2)');
     if (datos.circ_abdominal?.length) crearGrafico('graficaCircAbdominal', 'Circ. Abdominal (cm)', datos.circ_abdominal, 'rgba(155, 89, 182, 1)', 'rgba(155, 89, 182, 0.2)');
-
-    // PDF con los mismos estilos que impresión
-    document.getElementById('btn-pdf').addEventListener('click', () => {
-        const original = document.getElementById('reporte');
-
-        // Clonamos el contenido
-        const clone = original.cloneNode(true);
-        clone.classList.add('print-mode');
-
-        // Creamos un contenedor temporal
-        const container = document.createElement('div');
-        container.appendChild(clone);
-        document.body.appendChild(container);
-
-        const opt = {
-            margin: 0,
-            filename: 'reporte_{{ trabajador.nombre|slugify }}.pdf',
-            image: { type: 'jpeg', quality: 1 },
-            html2canvas: {
-                scale: 2,
-                useCORS: true,
-                scrollY: 0,
-                logging: false
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        html2pdf().set(opt).from(clone).save().then(() => {
-            document.body.removeChild(container);
-        });
-    });
 });
 </script>
-<style>
-/* Clon de estilos de impresión para PDF */
-.print-mode {
-    position: static !important;
-    visibility: visible !important;
-    width: 100% !important;
-    background: white;
-}
-.print-mode * {
-    visibility: visible !important;
-}
-.print-mode .no-print {
-    display: none !important;
-}
-</style>
 {% endblock %}

@@ -11,6 +11,7 @@ from reversion.models import Version
 from django.db.models import OuterRef, Subquery, Max
 from reversion import create_revision, set_user, set_comment
 from django.utils.decorators import method_decorator
+from django.utils.dateformat import DateFormat
 from django.core.paginator import Paginator
 import json
 import pandas as pd
@@ -443,22 +444,27 @@ class ListaSeguimientosGeneralView(FiltroCAIMixin, LoginRequiredMixin, View):
 
 
 class SeguimientosNinoView(FiltroCAIMixin, LoginRequiredMixin, View):
-    model = SeguimientoTrimestral
-    
     def get(self, request, nino_id):
-        # Primero verificamos el paciente
         paciente = get_object_or_404(Paciente, id=nino_id)
-        
-        # Verificación explícita de CAI
+
         if request.user.is_nutriologo and paciente.cai != request.user.cai:
-            raise Http404("No encontrado")
-        
-        # Los seguimientos ya se filtrarán por CAI gracias al mixin
-        seguimientos = SeguimientoTrimestral.objects.filter(paciente=paciente)
+            raise Http404("No autorizado")
+
+        seguimientos = SeguimientoTrimestral.objects.filter(paciente=paciente).order_by('fecha_valoracion')
+
+        datos = {
+            'fechas': [s.fecha_valoracion.strftime('%d/%m/%Y') for s in seguimientos if s.fecha_valoracion],
+            'pesos': [float(s.peso) for s in seguimientos if s.peso is not None],
+            'tallas': [float(s.talla) for s in seguimientos if s.talla is not None],
+            'imcs': [float(s.imc) for s in seguimientos if s.imc is not None],
+        }
+
         return render(request, 'seguimientos_nino.html', {
             'nino': paciente,
-            'seguimientos': seguimientos
+            'seguimientos': seguimientos,
+            'datos_json': json.dumps(datos),
         })
+
 
 class SeguimientosTrabajadorView(LoginRequiredMixin, View):
     def get(self, request, trabajador_id):
@@ -467,8 +473,20 @@ class SeguimientosTrabajadorView(LoginRequiredMixin, View):
         if request.user.is_nutriologo and trabajador.cai != request.user.cai:
             return HttpResponseForbidden("No tienes acceso a este trabajador.")
 
-        seguimientos = SeguimientoTrabajador.objects.filter(trabajador=trabajador)
-        return render(request, 'seguimientos_trabajador.html', {'trabajador': trabajador, 'seguimientos': seguimientos})
+        seguimientos = SeguimientoTrabajador.objects.filter(trabajador=trabajador).order_by('fecha_valoracion')
+
+        datos = {
+            'fechas': [DateFormat(s.fecha_valoracion).format('d/m/Y') for s in seguimientos if s.fecha_valoracion],
+            'pesos': [float(s.peso) for s in seguimientos if s.peso is not None],
+            'tallas': [float(s.talla) for s in seguimientos if s.talla is not None],
+            'imcs': [float(s.imc) for s in seguimientos if s.imc is not None],
+        }
+
+        return render(request, 'seguimientos_trabajador.html', {
+            'trabajador': trabajador,
+            'seguimientos': seguimientos,
+            'datos_json': json.dumps(datos),
+        })
     
 class EditarSeguimientoNinoView(FiltroCAIMixin, LoginRequiredMixin, View):
     def get(self, request, id):

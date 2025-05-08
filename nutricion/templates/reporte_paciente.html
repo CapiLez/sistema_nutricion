@@ -8,10 +8,6 @@
 <link rel="stylesheet" href="{% static 'nutricion/css/reportes_paciente.css' %}">
 <style>
 @media print {
-    body {
-        margin: 0;
-        padding: 0;
-    }
     body * {
         visibility: hidden;
     }
@@ -24,11 +20,33 @@
         left: 0;
         width: 100%;
         background: white;
-        padding: 0;
     }
     .no-print {
         display: none !important;
     }
+}
+
+.print-mode {
+    position: static !important;
+    visibility: visible !important;
+    width: 100% !important;
+    background: white;
+    padding: 0 !important;
+}
+.print-mode * {
+    visibility: visible !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+}
+.print-mode .no-print,
+.print-mode .excluir-de-pdf {
+    display: none !important;
+}
+.graficas-grid,
+.datos-grid,
+.table-responsive {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
 }
 
 .action-buttons {
@@ -38,7 +56,6 @@
     justify-content: center;
     flex-wrap: wrap;
 }
-
 .btn {
     padding: 10px 15px;
     border: none;
@@ -48,12 +65,8 @@
     color: white;
     cursor: pointer;
 }
-
 .btn-primary { background: #3e95cd; }
 .btn-secondary { background: #6c757d; }
-.btn-danger { background: #dc3545; }
-
-.btn i { margin-right: 5px; }
 </style>
 {% endblock %}
 
@@ -76,10 +89,7 @@
             <div class="dato-item"><i class="fas fa-home"></i><div><strong>CAI:</strong> {{ paciente.cai }}</div></div>
             <div class="dato-item"><i class="fas fa-graduation-cap"></i><div><strong>Grado/Grupo:</strong> {{ paciente.grado|default:"-" }} / {{ paciente.grupo|default:"-" }}</div></div>
             {% if paciente.mostrar_imc %}
-            <div class="dato-item">
-                <i class="fas fa-weight"></i>
-                <div><strong>Último IMC:</strong> {{ paciente.imc|floatformat:2|default:"No calculado" }}</div>
-            </div>
+            <div class="dato-item"><i class="fas fa-weight"></i><div><strong>Último IMC:</strong> {{ paciente.imc|floatformat:2|default:"No calculado" }}</div></div>
             {% endif %}
             <div class="dato-item"><i class="fas fa-calendar-alt"></i><div><strong>Fecha Registro:</strong> {{ paciente.fecha_registro|date:"d/m/Y"|default:"-" }}</div></div>
         </div>
@@ -96,7 +106,7 @@
         </div>
     </div>
 
-    <div class="seguimientos-section">
+    <div class="seguimientos-section excluir-de-pdf">
         <h3><i class="fas fa-history"></i> Historial de Seguimientos</h3>
         {% if seguimientos %}
         <div class="table-responsive">
@@ -128,36 +138,25 @@
             </table>
         </div>
         {% else %}
-        <div class="no-data">
-            <p><i class="fas fa-exclamation-circle"></i> No hay seguimientos registrados.</p>
-        </div>
+        <div class="no-data"><p><i class="fas fa-exclamation-circle"></i> No hay seguimientos registrados.</p></div>
         {% endif %}
     </div>
 </div>
 
-<!-- Botones visibles solo en pantalla -->
 <div class="action-buttons no-print">
-    <a href="{% url 'reportes' %}" class="btn btn-primary">
-        <i class="fas fa-arrow-left"></i> Volver a Reportes
-    </a>
-    <button onclick="window.print()" class="btn btn-secondary">
-        <i class="fas fa-print"></i> Imprimir
-    </button>
-    <button id="btn-pdf" class="btn btn-danger">
-        <i class="fas fa-file-pdf"></i> Descargar PDF
-    </button>
+    <a href="{% url 'reportes' %}" class="btn btn-primary"><i class="fas fa-arrow-left"></i> Volver</a>
+    <button onclick="window.print()" class="btn btn-secondary"><i class="fas fa-print"></i> Imprimir</button>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 const datos = JSON.parse('{{ datos_json|escapejs }}');
 
 function crearGrafico(id, label, data, borderColor, backgroundColor) {
     const ctx = document.getElementById(id).getContext('2d');
-    return new Chart(ctx, {
+    new Chart(ctx, {
         type: 'line',
         data: {
             labels: datos.fechas,
@@ -188,19 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (datos.pesos?.length) crearGrafico('graficaPeso', 'Peso (kg)', datos.pesos, 'rgba(78, 115, 223, 1)', 'rgba(78, 115, 223, 0.2)');
     if (datos.tallas?.length) crearGrafico('graficaTalla', 'Talla (cm)', datos.tallas, 'rgba(54, 185, 204, 1)', 'rgba(54, 185, 204, 0.2)');
     if (datos.imcs?.length) crearGrafico('graficaIMC', 'IMC', datos.imcs, 'rgba(26, 188, 156, 1)', 'rgba(26, 188, 156, 0.2)');
-
-    document.getElementById('btn-pdf').addEventListener('click', () => {
-        const element = document.getElementById('reporte');
-        const opt = {
-            margin: 0.3,
-            filename: 'reporte_{{ paciente.nombre|slugify }}.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-        };
-        html2pdf().set(opt).from(element).save();
-    });
 });
 </script>
 {% endblock %}
