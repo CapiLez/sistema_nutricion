@@ -119,7 +119,6 @@
                         <th>Talla (cm)</th>
                         <th>IMC</th>
                         <th>Diagnóstico</th>
-                        <th>Observaciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -131,7 +130,6 @@
                         <td>{{ seg.talla|floatformat:2 }}</td>
                         <td>{{ seg.imc|floatformat:2 }}</td>
                         <td>{{ seg.dx|default:"-" }}</td>
-                        <td>{{ seg.observaciones|truncatechars:30|default:"-" }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
