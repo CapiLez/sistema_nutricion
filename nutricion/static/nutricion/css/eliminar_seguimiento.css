@@ -1,0 +1,102 @@
+/* eliminar_seguimiento.css */
+
+.eliminar-seguimiento-page {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-family: 'Arial', sans-serif;
+}
+
+.eliminar-seguimiento-page h2 {
+    color: #e74c3c;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.eliminar-seguimiento-page p {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #333;
+}
+
+.eliminar-seguimiento-page p strong {
+    color: #2c3e50;
+    font-weight: 600;
+    display: inline-block;
+    width: 120px;
+}
+
+.eliminar-seguimiento-page form {
+    margin-top: 2rem;
+}
+
+.eliminar-seguimiento-page .buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.eliminar-seguimiento-page .btn {
+    padding: 0.7rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.eliminar-seguimiento-page .btn-danger {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.eliminar-seguimiento-page .btn-danger:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+}
+
+.eliminar-seguimiento-page .btn-secondary {
+    background-color: #95a5a6;
+    color: white;
+}
+
+.eliminar-seguimiento-page .btn-secondary:hover {
+    background-color: #7f8c8d;
+    transform: translateY(-2px);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .eliminar-seguimiento-page {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+    
+    .eliminar-seguimiento-page h2 {
+        font-size: 1.5rem;
+    }
+    
+    .eliminar-seguimiento-page p {
+        font-size: 1rem;
+    }
+    
+    .eliminar-seguimiento-page .buttons {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .eliminar-seguimiento-page .btn {
+        width: 100%;
+        text-align: center;
+    }
+}

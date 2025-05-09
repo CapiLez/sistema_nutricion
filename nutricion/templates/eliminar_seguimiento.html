@@ -11,14 +11,32 @@
 <div class="eliminar-seguimiento-page">
     <h2>¿Estás seguro de que deseas eliminar este seguimiento?</h2>
 
-    <p><strong>Nombre:</strong> {{ seguimiento.nombre }}</p>
+    <!-- Mostrar el nombre según el tipo de objeto relacionado -->
+    {% if seguimiento.trabajador %}
+        <p><strong>Nombre del trabajador:</strong> {{ seguimiento.trabajador.nombre }}</p>
+    {% elif seguimiento.paciente %}
+        <p><strong>Nombre del paciente:</strong> {{ seguimiento.paciente.nombre }}</p>
+    {% else %}
+        <p><strong>Nombre:</strong> No disponible</p>
+    {% endif %}
+
+    <!-- Datos comunes -->
     <p><strong>Fecha:</strong> {{ seguimiento.fecha_valoracion|date:"d/m/Y" }}</p>
     <p><strong>Edad:</strong> {{ seguimiento.edad }}</p>
     <p><strong>Peso:</strong> {{ seguimiento.peso }} kg</p>
-    <p><strong>Talla:</strong> {{ seguimiento.talla }} cm</p>
-    <p><strong>IMC:</strong> {{ seguimiento.imc }}</p>
-    <p><strong>Diagnóstico:</strong> {{ seguimiento.dx }}</p>
 
+    {% if seguimiento.talla %}
+        <p><strong>Talla:</strong> {{ seguimiento.talla }} cm</p>
+    {% endif %}
+
+    {% if seguimiento.circunferencia_abdominal %}
+        <p><strong>Circunferencia Abdominal:</strong> {{ seguimiento.circunferencia_abdominal }} cm</p>
+    {% endif %}
+
+    <p><strong>IMC:</strong> {{ seguimiento.imc }}</p>
+    <p><strong>Diagnóstico:</strong> {{ seguimiento.dx|default:"-" }}</p>
+
+    <!-- Formulario de confirmación -->
     <form method="POST">
         {% csrf_token %}
         <div class="buttons">
