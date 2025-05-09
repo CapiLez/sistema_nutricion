@@ -639,23 +639,34 @@ class ListaSeguimientosView(LoginRequiredMixin, View):
     
 class EliminarSeguimientoNinoView(DeleteView):
     model = SeguimientoTrimestral
-    template_name = 'nutricion/eliminar_seguimiento.html' 
+    template_name = 'eliminar_seguimiento.html'
     context_object_name = 'seguimiento'
-    success_url = reverse_lazy('seguimientos_general')  
+    success_url = reverse_lazy('seguimientos_general')
 
-    
     def get_queryset(self):
-        return SeguimientoTrimestral.objects.filter(paciente__cai=self.request.user.cai)
+        qs = SeguimientoTrimestral.objects.all()
+
+        # Si el usuario es nutriólogo, filtrar por CAI
+        if hasattr(self.request.user, 'is_nutriologo') and self.request.user.is_nutriologo:
+            return qs.filter(paciente__cai=self.request.user.cai)
+
+        return qs  # Admin o jefe de departamento ve todo
     
 class EliminarSeguimientoTrabajadorView(DeleteView):
     model = SeguimientoTrabajador
-    template_name = 'nutricion/eliminar_seguimiento.html' 
+    template_name = 'eliminar_seguimiento.html'
     context_object_name = 'seguimiento'
-    success_url = reverse_lazy('seguimientos_general')  
+    success_url = reverse_lazy('seguimientos_general')
 
-    
     def get_queryset(self):
-        return SeguimientoTrabajador.objects.filter(trabajador__cai=self.request.user.cai)
+        qs = SeguimientoTrabajador.objects.all()
+
+        # Si el usuario es nutriólogo, filtrar por CAI
+        if hasattr(self.request.user, 'is_nutriologo') and self.request.user.is_nutriologo:
+            return qs.filter(trabajador__cai=self.request.user.cai)
+
+        return qs  # Admin o jefe de departamento ve todo
+
 
 #-------------------
 # Views Historial
