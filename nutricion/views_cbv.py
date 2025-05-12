@@ -738,7 +738,7 @@ class ReportesView(FiltroCAIMixin, LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
 
-        if user.is_admin:
+        if user.is_admin or user.is_jefe_departamento:
             pacientes = Paciente.objects.all()
             trabajadores = Trabajador.objects.all()
         else:
