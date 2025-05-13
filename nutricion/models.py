@@ -1,5 +1,6 @@
 from datetime import date
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from matplotlib.dates import relativedelta
 
@@ -37,23 +38,29 @@ class Usuario(AbstractUser):
     def is_nutriologo(self):
         return self.rol == 'nutriologo'
 
+# Mixin de auditoría
+class AuditoriaMixin(models.Model):
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="%(class)s_creados")
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="%(class)s_editados")
+    deleted_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="%(class)s_eliminados")
+    is_deleted = models.BooleanField(default=False)
+
+    class Meta:
+        abstract = True
 
 # Modelo para Paciente (niño)
-class Paciente(models.Model):
+class Paciente(AuditoriaMixin):
     nombre = models.CharField(max_length=255, verbose_name="Nombre completo")
-    edad = models.FloatField(verbose_name="Edad (años)")  # Se calcula internamente
+    edad = models.FloatField(verbose_name="Edad (años)")
     curp = models.CharField(max_length=18, unique=True, blank=True, null=True, verbose_name="CURP")
     sexo = models.CharField(max_length=1, choices=[('M', 'Masculino'), ('F', 'Femenino')], verbose_name="Sexo")
     cai = models.CharField(max_length=100, choices=CAI_CHOICES, verbose_name="CAI")
-
     peso = models.FloatField(verbose_name="Peso (kg)", help_text="Peso en kilogramos")
     talla = models.FloatField(verbose_name="Talla (cm)", help_text="Estatura en centímetros")
     imc = models.FloatField(verbose_name="Índice de Masa Corporal", blank=True, null=True)
     imc_categoria = models.CharField(max_length=50, blank=True, null=True, verbose_name="Categoría IMC")
-
     grado = models.CharField(max_length=50, blank=True, null=True, verbose_name="Grado escolar")
     grupo = models.CharField(max_length=50, blank=True, null=True, verbose_name="Grupo")
-
     fecha_nacimiento = models.DateField(verbose_name="Fecha de nacimiento")
     fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
 
@@ -105,10 +112,9 @@ class Paciente(models.Model):
         if self.peso and self.talla:
             self.calcular_imc()
         super().save(*args, **kwargs)
-    
-# Modelo para Trabajador    
 
-class Trabajador(models.Model):
+# Modelo para Trabajador
+class Trabajador(AuditoriaMixin):
     SEXO_CHOICES = [
         ('M', 'Masculino'),
         ('F', 'Femenino'),
@@ -147,9 +153,8 @@ class Trabajador(models.Model):
         else:
             return "Obesidad grado III"
 
-
-# Seguimiento para Pacientes (niños)
-class SeguimientoTrimestral(models.Model):
+# Seguimiento para Pacientes
+class SeguimientoTrimestral(AuditoriaMixin):
     paciente = models.ForeignKey('Paciente', on_delete=models.CASCADE)
     indicador_peso_edad = models.CharField(max_length=50)
     indicador_peso_talla = models.CharField(max_length=50)
@@ -167,7 +172,6 @@ class SeguimientoTrimestral(models.Model):
     def calcular_edad_completa(self):
         if not self.paciente.fecha_nacimiento or not self.fecha_valoracion:
             return 0.0, "0 años, 0 meses"
-
         diferencia = relativedelta(self.fecha_valoracion, self.paciente.fecha_nacimiento)
         edad_decimal = round((diferencia.years * 12 + diferencia.months) / 12, 2)
         edad_texto = f"{diferencia.years} años, {diferencia.months} meses"
@@ -178,9 +182,8 @@ class SeguimientoTrimestral(models.Model):
         self.edad = edad_texto
         super().save(*args, **kwargs)
 
-
 # Seguimiento para Trabajadores
-class SeguimientoTrabajador(models.Model):
+class SeguimientoTrabajador(AuditoriaMixin):
     trabajador = models.ForeignKey('Trabajador', on_delete=models.CASCADE)
     imc = models.FloatField()
     dx = models.CharField(max_length=255)

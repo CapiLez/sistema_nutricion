@@ -183,7 +183,8 @@ class RegistroNinoView(FiltroCAIMixin, RevisionCreateView):
         if self.request.user.is_nutriologo:
             form.instance.cai = self.request.user.cai
 
-        self.object = form.save()  # 🔴 Guarda el niño correctamente
+        form.instance.created_by = self.request.user  # Auditoría
+        self.object = form.save()
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -220,34 +221,46 @@ class EditarNinoView(CancelUrlMixin, RevisionUpdateView):
     cancel_url_default = 'registro_ninos'
     cancel_url_alt = 'historial'
 
+    def form_valid(self, form):
+        form.instance.updated_by = self.request.user  # Auditoría
+        return super().form_valid(form)
+
     def get_success_url(self):
         return reverse_lazy(self.cancel_url_alt if 'from' in self.request.GET else self.cancel_url_default)
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['cancel_url'] = self.request.GET.get('from', 'lista_pacientes')
         return context
 
-class EliminarNinoView(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
+class EliminarNinoView(AdminRequiredMixin, View):
     model = Paciente
     template_name = 'eliminar_nino.html'
+
+    def get_object(self):
+        return get_object_or_404(Paciente, pk=self.kwargs['pk'])
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        context = self.get_context_data()
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.object.deleted_by = request.user # Auditoría
+        self.object.is_deleted = True
+        self.object.save()
+        messages.success(self.request, '[ninos] Niño eliminado correctamente.')
+        return redirect(self.get_success_url())
 
     def get_success_url(self):
         return reverse_lazy('registro_ninos' if 'from' not in self.request.GET else 'historial')
 
-    def form_valid(self, form):
-        from reversion import create_revision, set_user, set_comment
-        with create_revision():
-            set_user(self.request.user)
-            set_comment("Eliminación de niño")
-            self.object.save()
-        messages.success(self.request, '[ninos] Niño eliminado correctamente.')
-        return super().form_valid(form)
-
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['cancel_url'] = 'historial' if 'from' in self.request.GET else 'registro_ninos'
-        context['nino'] = self.object
+        context = {
+            'cancel_url': 'historial' if 'from' in self.request.GET else 'registro_ninos',
+            'nino': self.get_object()
+        }
         return context
     
 #-------------------
@@ -263,70 +276,68 @@ class RegistroTrabajadorView(FiltroCAIMixin, RevisionCreateView):
     comment = "Registro de nuevo trabajador"
 
     def form_valid(self, form):
-        # Para nutriólogos, asignar automáticamente su CAI
         if self.request.user.is_nutriologo:
             form.instance.cai = self.request.user.cai
+        form.instance.created_by = self.request.user
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Filtrar últimos trabajadores por CAI
-        ultimos_trabajadores = Trabajador.objects.all()
+        ultimos_trabajadores = Trabajador.objects.filter(is_deleted=False)
         if self.request.user.is_nutriologo and self.request.user.cai:
             ultimos_trabajadores = ultimos_trabajadores.filter(cai=self.request.user.cai)
         context['ultimos_trabajadores'] = ultimos_trabajadores.order_by('-id')[:5]
         return context
 
-class EditarTrabajadorView(LoginRequiredMixin, UpdateView):
+class EditarTrabajadorView(CancelUrlMixin, RevisionUpdateView):
     model = Trabajador
     form_class = TrabajadorForm
     template_name = 'editar_trabajador.html'
-    
-    def get_success_url(self):
-        # Redirige a 'historial' si viene de ahí, sino a 'reportes'
-        return reverse_lazy('historial') if 'from' in self.request.GET else reverse_lazy('reportes')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Define explícitamente la URL de cancelación
-        context['cancel_url'] = 'historial' if 'from' in self.request.GET else 'reportes'
-        return context
-    
+    success_message = "Trabajador actualizado correctamente"
+    comment = "Edición de trabajador"
+    cancel_url_default = 'reportes'
+    cancel_url_alt = 'historial'
+
     def form_valid(self, form):
         instance = form.save(commit=False)
-        # Calcula automáticamente el IMC redondeado a 2 decimales
         if instance.peso and instance.talla:
             instance.imc = round(instance.peso / ((instance.talla / 100) ** 2), 2)
+        instance.updated_by = self.request.user
         instance.save()
-        messages.success(self.request, "Trabajador actualizado correctamente")
         return super().form_valid(form)
-
-
-class EliminarTrabajadorView(LoginRequiredMixin, DeleteView):
-    model = Trabajador
-    pk_url_kwarg = 'trabajador_id'  # Coincide con tu URL pattern
-    template_name = 'eliminar_trabajador.html'
 
     def get_success_url(self):
-        # Redirige a registro_trabajadores por defecto o a historial si viene de ahí
+        return reverse_lazy('historial') if 'from' in self.request.GET else reverse_lazy('reportes')
+
+class EliminarTrabajadorView(LoginRequiredMixin, View):
+    model = Trabajador
+    template_name = 'eliminar_trabajador.html'
+    pk_url_kwarg = 'trabajador_id'
+
+    def get_object(self):
+        return get_object_or_404(Trabajador, pk=self.kwargs[self.pk_url_kwarg])
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        context = self.get_context_data()
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.object.deleted_by = request.user
+        self.object.is_deleted = True
+        self.object.save()
+        messages.success(self.request, '[trabajadores] Trabajador eliminado correctamente.')
+        return redirect(self.get_success_url())
+
+    def get_success_url(self):
         return reverse_lazy('registro_trabajadores' if 'from' not in self.request.GET else 'historial')
 
-    def form_valid(self, form):
-        # Registra la eliminación en el historial de cambios
-        with create_revision():
-            set_user(self.request.user)
-            set_comment("Eliminación de trabajador")
-            self.object.save()  # Guarda antes de eliminar para el historial
-        
-        messages.success(self.request, '[trabajadores] Trabajador eliminado correctamente.')
-        return super().form_valid(form)
-
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Determina la URL de cancelación basada en el origen
-        context['cancel_url'] = 'historial' if 'from' in self.request.GET else 'registro_trabajadores'
-        # Añade el objeto trabajador al contexto
-        context['trabajador'] = self.object
+        context = {
+            'cancel_url': 'historial' if 'from' in self.request.GET else 'registro_trabajadores',
+            'trabajador': self.get_object()
+        }
         return context
 
 #-------------------
@@ -358,12 +369,8 @@ class RegistrarSeguimientoNinoView(FiltroCAIMixin, InitialFromModelMixin, Revisi
         paciente = form.cleaned_data.get('paciente')
         if self.request.user.is_nutriologo and paciente.cai != self.request.user.cai:
             return HttpResponseForbidden("No tienes permiso para registrar seguimiento de este paciente.")
+        form.instance.created_by = self.request.user
         return super().form_valid(form)
-    
-    def form_invalid(self, form):
-        print("Formulario inválido:")
-        print(form.errors)
-        return super().form_invalid(form)
 
 class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, RevisionCreateView):
     model = SeguimientoTrabajador
@@ -395,13 +402,13 @@ class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, 
         instance = form.save(commit=False)
         instance.edad = form.cleaned_data.get('edad')
         instance.imc = form.cleaned_data.get('imc')
+        instance.created_by = self.request.user
 
         with create_revision():
             instance.save()
             set_user(self.request.user)
             set_comment(self.comment)
 
-            # Actualizar datos del modelo Trabajador con los más recientes
             trabajador.peso = instance.peso
             trabajador.talla = instance.talla
             trabajador.imc = instance.imc
@@ -507,7 +514,12 @@ class EditarSeguimientoNinoView(FiltroCAIMixin, LoginRequiredMixin, View):
 
         form = SeguimientoTrimestralForm(request.POST, instance=seguimiento, user=request.user)
         if form.is_valid():
-            form.save()
+            instance = form.save(commit=False)
+            instance.updated_by = request.user
+            with create_revision():
+                instance.save()
+                set_user(request.user)
+                set_comment("Edición de seguimiento de niño.")
             return redirect('seguimientos_nino', nino_id=seguimiento.paciente.id)
         return render(request, 'editar_seguimiento_nino.html', {
             'form': form,
@@ -517,10 +529,10 @@ class EditarSeguimientoNinoView(FiltroCAIMixin, LoginRequiredMixin, View):
 class EditarSeguimientoTrabajadorView(LoginRequiredMixin, View):
     def get(self, request, id):
         seguimiento = get_object_or_404(SeguimientoTrabajador, id=id)
-        
+
         if request.user.is_nutriologo and seguimiento.trabajador.cai != request.user.cai:
             return HttpResponseForbidden("No tienes permiso para editar este seguimiento.")
-            
+
         form = SeguimientoTrabajadorForm(instance=seguimiento, user=request.user)
         return render(request, 'editar_seguimiento_trabajador.html', {'form': form, 'seguimiento': seguimiento})
 
@@ -533,6 +545,7 @@ class EditarSeguimientoTrabajadorView(LoginRequiredMixin, View):
         form = SeguimientoTrabajadorForm(request.POST, instance=seguimiento, user=request.user)
         if form.is_valid():
             seguimiento_actualizado = form.save(commit=False)
+            seguimiento_actualizado.updated_by = request.user
 
             trabajador = seguimiento_actualizado.trabajador
             trabajador.peso = seguimiento_actualizado.peso
@@ -540,7 +553,6 @@ class EditarSeguimientoTrabajadorView(LoginRequiredMixin, View):
             trabajador.imc = seguimiento_actualizado.imc
             trabajador.circunferencia_abdominal = seguimiento_actualizado.circunferencia_abdominal
 
-            # Crear revisión para ambos modelos
             with create_revision():
                 seguimiento_actualizado.save()
                 trabajador.save()
@@ -637,42 +649,54 @@ class ListaSeguimientosView(LoginRequiredMixin, View):
         return resultados
 
     
-class EliminarSeguimientoNinoView(DeleteView):
-    model = SeguimientoTrimestral
-    template_name = 'eliminar_seguimiento.html'
-    context_object_name = 'seguimiento'
-    success_url = reverse_lazy('seguimientos_general')
+class EliminarSeguimientoNinoView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        seguimiento = get_object_or_404(SeguimientoTrimestral.objects.filter(is_deleted=False), pk=pk)
 
-    def get_queryset(self):
-        qs = SeguimientoTrimestral.objects.all()
+        if request.user.is_nutriologo and seguimiento.paciente.cai != request.user.cai:
+            return HttpResponseForbidden("No tienes permiso para eliminar este seguimiento.")
 
-        # Si el usuario es nutriólogo, filtrar por CAI
-        if hasattr(self.request.user, 'is_nutriologo') and self.request.user.is_nutriologo:
-            return qs.filter(paciente__cai=self.request.user.cai)
+        return render(request, 'eliminar_seguimiento.html', {'seguimiento': seguimiento})
 
-        return qs  # Admin o jefe de departamento ve todo
+    def post(self, request, pk):
+        seguimiento = get_object_or_404(SeguimientoTrimestral.objects.filter(is_deleted=False), pk=pk)
+
+        if request.user.is_nutriologo and seguimiento.paciente.cai != request.user.cai:
+            return HttpResponseForbidden("No tienes permiso para eliminar este seguimiento.")
+
+        seguimiento.deleted_by = request.user
+        seguimiento.is_deleted = True
+        seguimiento.save()
+        messages.success(request, "Seguimiento eliminado correctamente.")
+        return redirect('seguimientos_general')
     
-class EliminarSeguimientoTrabajadorView(DeleteView):
-    model = SeguimientoTrabajador
-    template_name = 'eliminar_seguimiento.html'
-    context_object_name = 'seguimiento'
-    success_url = reverse_lazy('seguimientos_general')
+class EliminarSeguimientoTrabajadorView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        seguimiento = get_object_or_404(SeguimientoTrabajador.objects.filter(is_deleted=False), pk=pk)
 
-    def get_queryset(self):
-        qs = SeguimientoTrabajador.objects.all()
+        if request.user.is_nutriologo and seguimiento.trabajador.cai != request.user.cai:
+            return HttpResponseForbidden("No tienes permiso para eliminar este seguimiento.")
 
-        # Si el usuario es nutriólogo, filtrar por CAI
-        if hasattr(self.request.user, 'is_nutriologo') and self.request.user.is_nutriologo:
-            return qs.filter(trabajador__cai=self.request.user.cai)
+        return render(request, 'eliminar_seguimiento.html', {'seguimiento': seguimiento})
 
-        return qs  # Admin o jefe de departamento ve todo
+    def post(self, request, pk):
+        seguimiento = get_object_or_404(SeguimientoTrabajador.objects.filter(is_deleted=False), pk=pk)
+
+        if request.user.is_nutriologo and seguimiento.trabajador.cai != request.user.cai:
+            return HttpResponseForbidden("No tienes permiso para eliminar este seguimiento.")
+
+        seguimiento.deleted_by = request.user
+        seguimiento.is_deleted = True
+        seguimiento.save()
+        messages.success(request, "Seguimiento eliminado correctamente.")
+        return redirect('seguimientos_general')
 
 
 #-------------------
 # Views Historial
 #-------------------
 
-class HistorialView(FiltroCAIMixin, LoginRequiredMixin, TemplateView):
+class HistorialView(LoginRequiredMixin, FiltroCAIMixin, TemplateView):
     template_name = 'historial.html'
 
     def get_context_data(self, **kwargs):
@@ -731,7 +755,7 @@ class ExportarHistorialExcelView(LoginRequiredMixin, View):
 # Views Reportes
 #-------------------
 
-class ReportesView(FiltroCAIMixin, LoginRequiredMixin, TemplateView):
+class ReportesView(LoginRequiredMixin, FiltroCAIMixin, TemplateView):
     template_name = 'reportes.html'
 
     def get_context_data(self, **kwargs):
