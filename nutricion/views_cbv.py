@@ -278,7 +278,7 @@ class RegistroTrabajadorView(FiltroCAIMixin, RevisionCreateView):
     def form_valid(self, form):
         if self.request.user.is_nutriologo:
             form.instance.cai = self.request.user.cai
-        form.instance.created_by = self.request.user
+        form.instance.created_by = self.request.user # Auditoría
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -302,7 +302,7 @@ class EditarTrabajadorView(CancelUrlMixin, RevisionUpdateView):
         instance = form.save(commit=False)
         if instance.peso and instance.talla:
             instance.imc = round(instance.peso / ((instance.talla / 100) ** 2), 2)
-        instance.updated_by = self.request.user
+        instance.updated_by = self.request.user # Auditoría
         instance.save()
         return super().form_valid(form)
 
@@ -324,7 +324,7 @@ class EliminarTrabajadorView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        self.object.deleted_by = request.user
+        self.object.deleted_by = request.user # Auditoría
         self.object.is_deleted = True
         self.object.save()
         messages.success(self.request, '[trabajadores] Trabajador eliminado correctamente.')
@@ -369,7 +369,7 @@ class RegistrarSeguimientoNinoView(FiltroCAIMixin, InitialFromModelMixin, Revisi
         paciente = form.cleaned_data.get('paciente')
         if self.request.user.is_nutriologo and paciente.cai != self.request.user.cai:
             return HttpResponseForbidden("No tienes permiso para registrar seguimiento de este paciente.")
-        form.instance.created_by = self.request.user
+        form.instance.created_by = self.request.user # Auditoría
         return super().form_valid(form)
 
 class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, RevisionCreateView):
@@ -402,7 +402,7 @@ class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, 
         instance = form.save(commit=False)
         instance.edad = form.cleaned_data.get('edad')
         instance.imc = form.cleaned_data.get('imc')
-        instance.created_by = self.request.user
+        instance.created_by = self.request.user # Auditoría
 
         with create_revision():
             instance.save()
@@ -515,7 +515,7 @@ class EditarSeguimientoNinoView(FiltroCAIMixin, LoginRequiredMixin, View):
         form = SeguimientoTrimestralForm(request.POST, instance=seguimiento, user=request.user)
         if form.is_valid():
             instance = form.save(commit=False)
-            instance.updated_by = request.user
+            instance.updated_by = request.user # Auditoría
             with create_revision():
                 instance.save()
                 set_user(request.user)
@@ -545,7 +545,7 @@ class EditarSeguimientoTrabajadorView(LoginRequiredMixin, View):
         form = SeguimientoTrabajadorForm(request.POST, instance=seguimiento, user=request.user)
         if form.is_valid():
             seguimiento_actualizado = form.save(commit=False)
-            seguimiento_actualizado.updated_by = request.user
+            seguimiento_actualizado.updated_by = request.user # Auditoría
 
             trabajador = seguimiento_actualizado.trabajador
             trabajador.peso = seguimiento_actualizado.peso
@@ -664,7 +664,7 @@ class EliminarSeguimientoNinoView(LoginRequiredMixin, View):
         if request.user.is_nutriologo and seguimiento.paciente.cai != request.user.cai:
             return HttpResponseForbidden("No tienes permiso para eliminar este seguimiento.")
 
-        seguimiento.deleted_by = request.user
+        seguimiento.deleted_by = request.user # Auditoría
         seguimiento.is_deleted = True
         seguimiento.save()
         messages.success(request, "Seguimiento eliminado correctamente.")
@@ -685,7 +685,7 @@ class EliminarSeguimientoTrabajadorView(LoginRequiredMixin, View):
         if request.user.is_nutriologo and seguimiento.trabajador.cai != request.user.cai:
             return HttpResponseForbidden("No tienes permiso para eliminar este seguimiento.")
 
-        seguimiento.deleted_by = request.user
+        seguimiento.deleted_by = request.user # Auditoría
         seguimiento.is_deleted = True
         seguimiento.save()
         messages.success(request, "Seguimiento eliminado correctamente.")
@@ -831,7 +831,7 @@ class ReportePacienteView(ReporteBaseView):
     template_name = 'reporte_paciente.html'
     model = Paciente
     seguimiento_model = SeguimientoTrimestral
-    id_kwarg = 'pk'  # O usa 'paciente_id' si prefieres mantener ese nombre
+    id_kwarg = 'pk'
 
 class ReporteTrabajadorView(LoginRequiredMixin, DetailView):
     model = Trabajador
@@ -866,7 +866,7 @@ class ReporteTrabajadorView(LoginRequiredMixin, DetailView):
             'seguimientos': seguimientos,
             'ultimo_seguimiento': ultimo_seguimiento,
             'datos_json': json.dumps(datos),
-            'debug_mode': settings.DEBUG  # Solo en modo desarrollo
+            'debug_mode': settings.DEBUG
         })
         return context
  
@@ -958,7 +958,6 @@ def buscar_seguimientos_nino_ajax(request):
     if request.user.is_nutriologo and request.user.cai:
         base_queryset = base_queryset.filter(paciente__cai=request.user.cai)
 
-    # Subconsulta: obtener última fecha por paciente
     latest_dates = base_queryset.values('paciente').annotate(
         max_fecha=Max('fecha_valoracion')
     ).values('paciente', 'max_fecha')

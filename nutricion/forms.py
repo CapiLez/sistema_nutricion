@@ -135,7 +135,7 @@ class PacienteForm(forms.ModelForm):
     class Meta:
         model = Paciente
         fields = [
-            'nombre', 'curp', 'fecha_nacimiento', 'edad',  # solo 'edad' real
+            'nombre', 'curp', 'fecha_nacimiento', 'edad',
             'sexo', 'cai', 'peso', 'talla',
             'imc', 'imc_categoria', 'grado', 'grupo'
         ]
@@ -178,7 +178,7 @@ class PacienteForm(forms.ModelForm):
 class TrabajadorForm(forms.ModelForm):
     class Meta:
         model = Trabajador
-        fields = '__all__'
+        exclude = ['created_by', 'updated_by', 'deleted_by', 'is_deleted']
         widgets = {
             'sexo': forms.Select(),
         }

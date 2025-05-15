@@ -41,7 +41,7 @@ class RevisionCreateView(LoginRequiredMixin, RevisionMixin, CreateView):
     success_message = "Registro creado exitosamente"
 
     def form_valid(self, form):
-        self.object = form.save()  # 🔴 Guardar explícitamente
+        self.object = form.save()  # Guardar explícitamente
         return super().form_valid(form)
 
 
