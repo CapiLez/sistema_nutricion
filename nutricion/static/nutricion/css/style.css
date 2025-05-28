@@ -46,11 +46,6 @@
     padding: 15px 0;
 }
 
-.navbar-toggle:hover {
-    background: rgba(0,0,0,0.3);
-    transform: rotate(90deg);
-}
-
 /* Header del navbar */
 .nav-header {
     display: flex;
@@ -186,8 +181,34 @@
     overflow-x: hidden;
 }
 
-.navbar.collapsed + .main-content {
+.sidebar-collapsed {
     margin-left: 60px;
+}
+
+/* Estilos para el botón de toggle */
+.sidebar-toggle {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1100;
+    background: #2c3e50;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    display: none;
+}
+
+.sidebar-toggle:hover {
+    background: #1abc9c;
+    transform: scale(1.1);
 }
 
 /* Ajustes para el menú colapsado */
@@ -213,13 +234,13 @@
 
 /* Responsive Design */
 @media (max-width: 992px) {
-    .navbar {
-        transform: translateX(-100%);
-        width: 220px;
+    .sidebar-toggle {
+        display: flex;
     }
     
-    .navbar.collapsed {
+    .navbar {
         transform: translateX(-100%);
+        transition: transform 0.3s ease;
         width: 220px;
     }
     
@@ -229,12 +250,6 @@
     
     .main-content {
         margin-left: 0;
-    }
-    
-    .navbar-toggle {
-        display: block !important;
-        right: auto;
-        left: 10px;
     }
     
     /* Overlay cuando el menú está abierto */
@@ -248,8 +263,10 @@
         background: rgba(0,0,0,0.5);
         z-index: 999;
     }
-    
-    .navbar.collapsed.show {
-        width: 220px;
+}
+
+@media (min-width: 993px) {
+    .navbar {
+        transform: translateX(0) !important;
     }
 }

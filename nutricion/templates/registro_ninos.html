@@ -139,7 +139,7 @@
                                 <a href="{% url 'editar_nino' nino.id %}" class="btn btn-warning btn-sm">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                {% if request.user.is_admin %}
+                                {% if request.user.is_admin or request.user.is_jefe_departamento%}
                                     <a href="{% url 'eliminar_nino' nino.id %}" class="btn btn-danger btn-sm">
                                         <i class="fas fa-trash-alt"></i>
                                     </a>

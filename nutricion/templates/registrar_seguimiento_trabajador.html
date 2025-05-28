@@ -14,17 +14,38 @@
 
         <form method="post" id="seguimiento-trabajador-form" data-trabajador-id="{{ form.trabajador.value }}">
             {% csrf_token %}
-            {% for field in form %}
+
+            {# Mostrar trabajador como texto si viene precargado #}
+            {% if form.trabajador.value %}
                 <div class="form-group">
-                    {{ field.label_tag }}
-                    {{ field }}
-                    {% if field.help_text %}
-                        <small class="form-text text-muted">{{ field.help_text }}</small>
-                    {% endif %}
-                    {% for error in field.errors %}
+                    {{ form.trabajador_nombre.label_tag }}
+                    {{ form.trabajador_nombre }}
+                    {{ form.trabajador }}  {# campo oculto con el ID real #}
+                </div>
+            {% else %}
+                <div class="form-group">
+                    {{ form.trabajador.label_tag }}
+                    {{ form.trabajador }}
+                    {% for error in form.trabajador.errors %}
                         <div class="alert alert-danger">{{ error }}</div>
                     {% endfor %}
                 </div>
+            {% endif %}
+
+            {# Mostrar los demás campos excluyendo trabajador y trabajador_nombre #}
+            {% for field in form %}
+                {% if field.name != "trabajador" and field.name != "trabajador_nombre" %}
+                    <div class="form-group">
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <div class="alert alert-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
             {% endfor %}
 
             <div class="form-buttons mt-3">
@@ -50,6 +71,7 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -65,12 +87,11 @@
             e.preventDefault();
             const trabajadorId = form.data('trabajador-id');
             if (trabajadorId) {
-                window.location.href = `/seguimiento/trabajador/${trabajadorId}/`;
+                window.location.href = `/seguimientos/trabajador/${trabajadorId}/`;
             } else {
                 window.history.back();
             }
         });
     });
 </script>
-{% endblock %}
 {% endblock %}

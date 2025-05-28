@@ -12,13 +12,10 @@
 </head>
 
 <body class="home-page">
-    <!-- Checkbox invisible para el toggle -->
-    <input type="checkbox" id="navbar-toggle" style="display:none;">
-    
-    <!-- Label que actúa como botón -->
-    <label for="navbar-toggle" class="navbar-toggle">
+    <!-- Botón de toggle para el sidebar -->
+    <button class="sidebar-toggle">
         <i class="fas fa-bars"></i>
-    </label>
+    </button>
     
     <div class="navbar">
         <nav>
@@ -81,6 +78,63 @@
         {% block content %}{% endblock %}
     </div>
     
+    <!-- JavaScript embebido directamente en el HTML -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.querySelector('.navbar');
+        const toggleBtn = document.querySelector('.sidebar-toggle');
+        const mainContent = document.querySelector('.main-content');
+
+        // Toggle del sidebar
+        toggleBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            sidebar.classList.toggle('show');
+
+            // Solo para desktop: alternar entre colapsado y expandido
+            if (window.innerWidth > 992) {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('sidebar-collapsed');
+
+                // Guardar el estado en localStorage
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', isCollapsed);
+            }
+        });
+
+        // Cerrar sidebar al hacer clic fuera en móviles
+        document.addEventListener('click', function(e) {
+            if (window.innerWidth <= 992 && 
+                !sidebar.contains(e.target) && 
+                !toggleBtn.contains(e.target) && 
+                sidebar.classList.contains('show')) {
+                sidebar.classList.remove('show');
+            }
+        });
+
+        // Cargar estado guardado (solo para desktop)
+        if (window.innerWidth > 992 && localStorage.getItem('sidebarCollapsed')) {
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('sidebar-collapsed');
+            }
+        }
+
+        // Manejar cambios de tamaño de pantalla
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 992) {
+                sidebar.classList.remove('show');
+                sidebar.style.transform = '';
+            } else {
+                if (sidebar.classList.contains('collapsed')) {
+                    sidebar.classList.remove('collapsed');
+                    mainContent.classList.remove('sidebar-collapsed');
+                }
+            }
+        });
+    });
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

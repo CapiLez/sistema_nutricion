@@ -14,19 +14,68 @@
     <form method="post" class="seguimiento-trabajador-form">
         {% csrf_token %}
         {{ form.non_field_errors }}
-        
+
         <table>
-            {% for field in form %}
             <tr>
-                <th>{{ field.label_tag }}</th>
+                <th>{{ form.trabajador_nombre.label_tag }}</th>
+                <td>{{ form.trabajador_nombre }}</td>
+            </tr>
+            {{ form.trabajador }}  {# Campo oculto con el ID real #}
+
+            <tr>
+                <th>{{ form.edad.label_tag }}</th>
                 <td>
-                    {{ field }}
-                    {% if field.errors %}
-                        <div class="error">{{ field.errors }}</div>
+                    {{ form.edad }}
+                    {% if form.edad.errors %}
+                        <div class="error">{{ form.edad.errors }}</div>
                     {% endif %}
                 </td>
             </tr>
-            {% endfor %}
+            <tr>
+                <th>{{ form.peso.label_tag }}</th>
+                <td>
+                    {{ form.peso }}
+                    {% if form.peso.errors %}
+                        <div class="error">{{ form.peso.errors }}</div>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>{{ form.talla.label_tag }}</th>
+                <td>
+                    {{ form.talla }}
+                    {% if form.talla.errors %}
+                        <div class="error">{{ form.talla.errors }}</div>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>{{ form.circunferencia_abdominal.label_tag }}</th>
+                <td>
+                    {{ form.circunferencia_abdominal }}
+                    {% if form.circunferencia_abdominal.errors %}
+                        <div class="error">{{ form.circunferencia_abdominal.errors }}</div>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>{{ form.dx.label_tag }}</th>
+                <td>
+                    {{ form.dx }}
+                    {% if form.dx.errors %}
+                        <div class="error">{{ form.dx.errors }}</div>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>{{ form.fecha_valoracion.label_tag }}</th>
+                <td>
+                    {{ form.fecha_valoracion }}
+                    {% if form.fecha_valoracion.errors %}
+                        <div class="error">{{ form.fecha_valoracion.errors }}</div>
+                    {% endif %}
+                </td>
+            </tr>
         </table>
 
         <div class="form-actions">

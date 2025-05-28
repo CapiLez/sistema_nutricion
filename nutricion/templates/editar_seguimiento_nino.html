@@ -16,21 +16,49 @@
         {{ form.non_field_errors }}
         
         <table>
-            {% for field in form %}
-                {% if field.name != 'edad' %}
-                    <tr>
-                        <th>{{ field.label_tag }}</th>
-                        <td>
-                            {{ field }}
-                            {% if field.errors %}
-                                <div class="error">{{ field.errors }}</div>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% else %}
-                    {{ field }} {# Campo oculto fuera de la tabla #}
-                {% endif %}
-            {% endfor %}
+            <tr>
+                <th>{{ form.paciente_nombre.label_tag }}</th>
+                <td>{{ form.paciente_nombre }}</td>
+            </tr>
+            {{ form.paciente }} {# Campo oculto para el ID real #}
+            <tr>
+                <th>{{ form.edad_mostrar.label_tag }}</th>
+                <td>{{ form.edad_mostrar }}</td>
+            </tr>
+            {{ form.edad }} {# Campo oculto #}
+            <tr>
+                <th>{{ form.peso.label_tag }}</th>
+                <td>{{ form.peso }}</td>
+            </tr>
+            <tr>
+                <th>{{ form.talla.label_tag }}</th>
+                <td>{{ form.talla }}</td>
+            </tr>
+            <tr>
+                <th>{{ form.imc.label_tag }}</th>
+                <td>{{ form.imc }}</td>
+            </tr>
+            <tr>
+                <th>{{ form.indicador_peso_edad.label_tag }}</th>
+                <td>{{ form.indicador_peso_edad }}</td>
+            </tr>
+            <tr>
+                <th>{{ form.indicador_peso_talla.label_tag }}</th>
+                <td>{{ form.indicador_peso_talla }}</td>
+            </tr>
+            <tr>
+                <th>{{ form.indicador_talla_edad.label_tag }}</th>
+                <td>{{ form.indicador_talla_edad }}</td>
+            </tr>
+            <tr>
+                <th>{{ form.dx.label_tag }}</th>
+                <td>{{ form.dx }}</td>
+            </tr>
+            <tr>
+                <th>{{ form.fecha_valoracion.label_tag }}</th>
+                <td>{{ form.fecha_valoracion }}</td>
+            </tr>
+
         </table>
 
         <div class="form-actions">

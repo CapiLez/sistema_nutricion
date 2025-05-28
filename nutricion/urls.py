@@ -64,9 +64,6 @@ urlpatterns = [
     path('seguimiento/nino/eliminar/<int:pk>/', EliminarSeguimientoNinoView.as_view(), name='eliminar_seguimiento_nino'),
     path('seguimiento/trabajador/eliminar/<int:pk>/', EliminarSeguimientoTrabajadorView.as_view(), name='eliminar_seguimiento_trabajador'),
 
-
-    
-
     # Historial
     path('historial/', HistorialView.as_view(), name='historial'),
     path('historial/exportar/', ExportarHistorialExcelView.as_view(), name='exportar_historial'),

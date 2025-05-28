@@ -10,7 +10,7 @@
 {% block content %}
 <div class="eliminar-page">
     <div class="eliminar-container">
-        <h2>¿Eliminar a <span class="nombre">{{ object.nombre }}</span>?</h2>
+        <h2>¿Eliminar a <span class="nombre">{{ nino.nombre }}</span>?</h2>
         <p class="advertencia">Esta acción no se puede deshacer.</p>
         <form method="POST">
             {% csrf_token %}

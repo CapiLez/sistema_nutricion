@@ -53,10 +53,18 @@
         <form method="post" id="form-seguimiento-nino" data-paciente-id="{{ form.paciente.value }}">
             {% csrf_token %}
 
-            <div class="form-group">
-                {{ form.paciente.label_tag }}
-                {{ form.paciente }}
-            </div>
+            {% if form.paciente.value %}
+                <div class="form-group">
+                    <label>Paciente</label>
+                    <input type="text" class="form-control" value="{{ paciente_nombre }}" readonly>
+                    {{ form.paciente.as_hidden }}
+                </div>
+            {% else %}
+                <div class="form-group">
+                    {{ form.paciente.label_tag }}
+                    {{ form.paciente }}
+                </div>
+            {% endif %}
 
             <div class="form-group">
                 {{ form.edad_mostrar.label_tag }}

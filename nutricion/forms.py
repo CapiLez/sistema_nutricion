@@ -232,27 +232,35 @@ class SeguimientoTrimestralForm(forms.ModelForm):
         label='Edad (años y meses)',
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Ej: 4 años, 3 meses',
-            'id': 'id_edad_mostrar'
+            'readonly': True
+        })
+    )
+
+    paciente_nombre = forms.CharField(
+        required=False,
+        label='Niño',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'readonly': True
         })
     )
 
     class Meta:
         model = SeguimientoTrimestral
         fields = [
-            'paciente', 'fecha_valoracion',
+            'paciente', 'paciente_nombre', 'fecha_valoracion',
             'edad_mostrar', 'edad', 'peso', 'talla', 'imc',
             'indicador_peso_edad', 'indicador_peso_talla',
             'indicador_talla_edad', 'dx'
         ]
         widgets = {
+            'paciente': forms.HiddenInput(),
             'fecha_valoracion': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'paciente': forms.Select(attrs={'class': 'form-control'}),
             'edad': forms.HiddenInput(),
-            'imc': forms.NumberInput(attrs={'class': 'form-control readonly-field', 'readonly': True}),
-            'indicador_peso_edad': forms.TextInput(attrs={'class': 'form-control readonly-field', 'readonly': True}),
-            'indicador_peso_talla': forms.TextInput(attrs={'class': 'form-control readonly-field', 'readonly': True}),
-            'indicador_talla_edad': forms.TextInput(attrs={'class': 'form-control readonly-field', 'readonly': True}),
+            'imc': forms.NumberInput(attrs={'class': 'form-control', 'readonly': True}),
+            'indicador_peso_edad': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
+            'indicador_peso_talla': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
+            'indicador_talla_edad': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
             'peso': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
             'talla': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
             'dx': forms.TextInput(attrs={'class': 'form-control'}),
@@ -262,32 +270,26 @@ class SeguimientoTrimestralForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
-        if self.user and self.user.is_nutriologo and self.user.cai:
-            self.fields['paciente'].queryset = Paciente.objects.filter(cai=self.user.cai)
-
-        self.fields['imc'].disabled = True
-
-        paciente_id = self.initial.get('paciente') or self.data.get('paciente')
+        paciente_id = self.initial.get('paciente') or self.data.get('paciente') or getattr(self.instance, 'paciente_id', None)
         try:
             paciente = Paciente.objects.get(id=paciente_id)
+            self.fields['paciente_nombre'].initial = paciente.nombre
             self.fields['edad_mostrar'].initial = paciente.edad_detallada
             self.fields['edad'].initial = paciente.edad
+            self.fields['paciente'].initial = paciente.id
         except (Paciente.DoesNotExist, TypeError, ValueError):
+            self.fields['paciente_nombre'].initial = ''
             self.fields['edad_mostrar'].initial = ''
             self.fields['edad'].initial = 0
 
         self.order_fields([
-            'paciente',
+            'paciente', 'paciente_nombre',
             'edad_mostrar', 'edad', 'peso', 'talla', 'imc',
             'indicador_peso_edad', 'indicador_peso_talla',
             'indicador_talla_edad', 'dx', 'fecha_valoracion',
         ])
 
     def edad_texto_a_decimal(self, texto):
-        """
-        Convierte 'X años, Y meses' a un número decimal de años (float).
-        Ej: '4 años, 6 meses' → 4.5
-        """
         match = re.match(r"(\d+)\s*años?,\s*(\d+)\s*mes(?:es)?", texto.strip().lower())
         if match:
             anios = int(match.group(1))
@@ -297,19 +299,14 @@ class SeguimientoTrimestralForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        paciente = cleaned_data.get('paciente')
-        fecha_valoracion = cleaned_data.get('fecha_valoracion')
-
-        # Procesar edad textual
         edad_texto = cleaned_data.get('edad_mostrar', '').strip()
         edad_num = self.edad_texto_a_decimal(edad_texto)
         cleaned_data['edad'] = edad_num
 
         peso = cleaned_data.get('peso')
         talla = cleaned_data.get('talla')
-
-        # IMC
         imc = None
+
         if peso and talla:
             talla_m = talla / 100
             imc = round(peso / (talla_m ** 2), 2)
@@ -317,7 +314,6 @@ class SeguimientoTrimestralForm(forms.ModelForm):
         else:
             cleaned_data['imc'] = 0
 
-        # Clasificaciones
         def clasificar_indicador_peso_edad(valor):
             if valor < 80:
                 return "Bajo peso"
@@ -353,7 +349,6 @@ class SeguimientoTrimestralForm(forms.ModelForm):
             cleaned_data['indicador_peso_talla'] = clasificar_indicador_peso_talla(peso_talla)
             cleaned_data['indicador_talla_edad'] = clasificar_indicador_talla_edad(talla_edad)
 
-        # Diagnóstico automático por IMC
         if imc is not None:
             if edad_num < 5:
                 if imc < 14:
@@ -381,35 +376,69 @@ class SeguimientoTrimestralForm(forms.ModelForm):
 
         return cleaned_data
 
-
 ### -------------------- SEGUIMIENTOS TRABAJADORES --------------------
 
 class SeguimientoTrabajadorForm(forms.ModelForm):
     edad = forms.IntegerField(
-        required=True,  # Ahora obligatorio, si tu modelo lo requiere
-        widget=forms.NumberInput(attrs={'min': 1, 'max': 120, 'step': 1})
+        required=True,
+        widget=forms.NumberInput(attrs={
+            'min': 1,
+            'max': 120,
+            'step': 1,
+            'class': 'form-control'
+        })
+    )
+
+    trabajador_nombre = forms.CharField(
+        required=False,
+        label='Trabajador',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'readonly': True
+        })
     )
 
     class Meta:
         model = SeguimientoTrabajador
-        fields = ['trabajador', 'edad', 'peso', 'talla', 'circunferencia_abdominal', 'dx', 'fecha_valoracion']
+        fields = [
+            'trabajador', 'trabajador_nombre',
+            'edad', 'peso', 'talla',
+            'circunferencia_abdominal', 'dx', 'fecha_valoracion'
+        ]
         widgets = {
-            'fecha_valoracion': forms.DateInput(attrs={'type': 'date'}),
-            'trabajador': forms.Select(attrs={'class': 'form-control'}),
-            'circunferencia_abdominal': forms.NumberInput(attrs={'min': 10, 'step': '0.1'}),
+            'trabajador': forms.HiddenInput(),
+            'fecha_valoracion': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'peso': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+            'talla': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
+            'circunferencia_abdominal': forms.NumberInput(attrs={'min': 10, 'step': '0.1', 'class': 'form-control'}),
+            'dx': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
-        # Si es nutriólogo, limitar los trabajadores por CAI
-        if self.user and self.user.is_nutriologo and self.user.cai:
-            self.fields['trabajador'].queryset = Trabajador.objects.filter(cai=self.user.cai)
+        trabajador_id = (
+            self.initial.get('trabajador') or
+            self.data.get('trabajador') or
+            getattr(self.instance, 'trabajador_id', None)
+        )
 
-        # Cargar edad si ya existe la instancia
-        if self.instance.pk:
-            self.fields['edad'].initial = self.instance.edad
+        try:
+            trabajador = Trabajador.objects.get(id=trabajador_id)
+            self.fields['trabajador_nombre'].initial = trabajador.nombre
+            self.fields['trabajador'].initial = trabajador.id
+            self.fields['edad'].initial = trabajador.edad
+        except (Trabajador.DoesNotExist, TypeError, ValueError):
+            self.fields['trabajador_nombre'].initial = ''
+            self.fields['trabajador'].initial = ''
+            self.fields['edad'].initial = None
+
+        self.order_fields([
+            'trabajador', 'trabajador_nombre',
+            'edad', 'peso', 'talla',
+            'circunferencia_abdominal', 'dx', 'fecha_valoracion'
+        ])
 
     def clean(self):
         cleaned_data = super().clean()
@@ -418,23 +447,18 @@ class SeguimientoTrabajadorForm(forms.ModelForm):
         talla = cleaned_data.get('talla')
         edad = cleaned_data.get('edad')
 
-        # Verificar permiso de CAI
         if self.user and self.user.is_nutriologo and trabajador and trabajador.cai != self.user.cai:
             raise forms.ValidationError("No tienes permiso para registrar seguimiento de este trabajador.")
 
-        # Validación de edad
         if edad is None or edad < 0:
             self.add_error('edad', "La edad debe ser un número positivo.")
 
-        # Validación de peso
         if peso is not None and (peso < 30 or peso > 300):
-            self.add_error('peso', "El peso debe estar entre 30 y 300 kg")
+            self.add_error('peso', "El peso debe estar entre 30 y 300 kg.")
 
-        # Validación de talla
         if talla is not None and (talla < 120 or talla > 250):
-            self.add_error('talla', "La talla debe estar entre 120 y 250 cm")
+            self.add_error('talla', "La talla debe estar entre 120 y 250 cm.")
 
-        # Calcular IMC si es posible
         if peso and talla:
             talla_m = talla / 100
             cleaned_data['imc'] = round(peso / (talla_m ** 2), 2)

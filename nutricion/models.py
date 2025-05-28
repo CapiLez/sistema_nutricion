@@ -165,6 +165,10 @@ class SeguimientoTrimestral(AuditoriaMixin):
     peso = models.FloatField()
     talla = models.FloatField()
     fecha_valoracion = models.DateField()
+    is_deleted = models.BooleanField(default=False)
+    deleted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='seguimientos_nino_eliminados'
+    )
 
     def __str__(self):
         return f"{self.paciente.nombre} - {self.fecha_valoracion}"
@@ -197,6 +201,10 @@ class SeguimientoTrabajador(AuditoriaMixin):
         help_text="Medida de la circunferencia abdominal en centímetros"
     )
     fecha_valoracion = models.DateField()
+    is_deleted = models.BooleanField(default=False)
+    deleted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='seguimientos_trabajador_eliminados'
+    )
 
     def __str__(self):
         return f"{self.trabajador.nombre} - {self.fecha_valoracion}"

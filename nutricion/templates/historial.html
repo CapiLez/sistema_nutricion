@@ -13,7 +13,10 @@
 
     <!-- Sección Niños -->
     <div class="section-container">
-        <h2 class="section-toggle" data-target="#ninos-section"><i class="fas fa-child"></i> Niños Registrados <i class="fas fa-chevron-down toggle-icon"></i></h2>
+        <h2 class="section-toggle" data-target="#ninos-section">
+            <i class="fas fa-child"></i> Niños Registrados 
+            <i class="fas fa-chevron-down toggle-icon"></i>
+        </h2>
 
         <div id="ninos-section" class="section-content" style="display: none;">
             <div class="search-section">
@@ -48,7 +51,10 @@
 
     <!-- Sección Trabajadores -->
     <div class="section-container">
-        <h2 class="section-toggle" data-target="#trabajadores-section"><i class="fas fa-user-tie"></i> Trabajadores Registrados <i class="fas fa-chevron-down toggle-icon"></i></h2>
+        <h2 class="section-toggle" data-target="#trabajadores-section">
+            <i class="fas fa-user-tie"></i> Trabajadores Registrados 
+            <i class="fas fa-chevron-down toggle-icon"></i>
+        </h2>
 
         <div id="trabajadores-section" class="section-content" style="display: none;">
             <div class="search-section">
@@ -89,8 +95,8 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-$(document).ready(function() {
-    $('.section-toggle').on('click', function() {
+$(document).ready(function () {
+    $('.section-toggle').on('click', function () {
         const target = $(this).data('target');
         $(target).slideToggle('fast');
         $(this).find('.toggle-icon').toggleClass('fa-chevron-down fa-chevron-up');
@@ -117,11 +123,11 @@ $(document).ready(function() {
                                 <td>${nino.grupo || ''}</td>
                                 <td>${nino.cai || ''}</td>
                                 <td class="actions-cell">
-                                    {% if request.user.is_admin %}
+                                    {% if puede_editar %}
                                         <a href="/ninos/editar/${nino.id}?from=historial" class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
+                                    {% endif %}
+                                    {% if puede_eliminar %}
                                         <a href="/ninos/eliminar/${nino.id}?from=historial" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></a>
-                                    {% else %}
-                                        <button class="btn btn-secondary btn-sm" disabled><i class="fas fa-ban"></i></button>
                                     {% endif %}
                                     <a href="/registrar_seguimiento?paciente_id=${nino.id}" class="btn btn-success btn-sm" title="Registrar seguimiento"><i class="fas fa-notes-medical"></i></a>
                                     <a href="/seguimientos/nino/${nino.id}" class="btn btn-info btn-sm" title="Ver seguimientos"><i class="fas fa-stethoscope"></i></a>
@@ -155,11 +161,11 @@ $(document).ready(function() {
                                 <td>${trabajador.departamento || ''}</td>
                                 <td>${trabajador.cai || ''}</td>
                                 <td class="actions-cell">
-                                    {% if request.user.is_admin %}
+                                    {% if puede_editar %}
                                         <a href="/trabajadores/editar/${trabajador.id}?from=historial" class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
+                                    {% endif %}
+                                    {% if puede_eliminar %}
                                         <a href="/trabajadores/eliminar/${trabajador.id}?from=historial" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></a>
-                                    {% else %}
-                                        <button class="btn btn-secondary btn-sm" disabled><i class="fas fa-ban"></i></button>
                                     {% endif %}
                                     <a href="/seguimiento/trabajador/nuevo/?trabajador_id=${trabajador.id}" class="btn btn-success btn-sm" title="Registrar seguimiento"><i class="fas fa-notes-medical"></i></a>
                                     <a href="/seguimientos/trabajador/${trabajador.id}" class="btn btn-info btn-sm" title="Ver seguimientos"><i class="fas fa-stethoscope"></i></a>
