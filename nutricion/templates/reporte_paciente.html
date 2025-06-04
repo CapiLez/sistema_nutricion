@@ -64,9 +64,13 @@
     text-decoration: none;
     color: white;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
 }
 .btn-primary { background: #3e95cd; }
 .btn-secondary { background: #6c757d; }
+.btn-danger { background: #dc3545; }
 </style>
 {% endblock %}
 
@@ -143,7 +147,7 @@
 
 <div class="action-buttons no-print">
     <a href="{% url 'reportes' %}" class="btn btn-primary"><i class="fas fa-arrow-left"></i> Volver</a>
-    <button onclick="window.print()" class="btn btn-secondary"><i class="fas fa-print"></i> Imprimir</button>
+    <a href="{% url 'generar_pdf_paciente' paciente.id %}" class="btn btn-danger"><i class="fas fa-file-pdf"></i> Descargar PDF</a>
 </div>
 {% endblock %}
 

@@ -1,7 +1,8 @@
 from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
 
-from nutricion.views_cbv import (
+
+from nutricion.views import (
     EditarSeguimientoNinoView,
     EditarSeguimientoTrabajadorView,
     EliminarSeguimientoNinoView,
@@ -16,12 +17,13 @@ from nutricion.views_cbv import (
     SeguimientosNinoView, SeguimientosTrabajadorView,
     ListaSeguimientosView, ListaSeguimientosGeneralView,
     RegistrarSeguimientoNinoView, RegistrarSeguimientoTrabajadorView,
-    HistorialView, ExportarHistorialExcelView,
-    UltimosCambiosView,
+    HistorialView,
     buscar_ninos_ajax,
     buscar_seguimientos_nino_ajax,
     buscar_seguimientos_trabajador_ajax,
-    buscar_trabajadores_ajax
+    buscar_trabajadores_ajax,
+    generar_pdf_paciente,
+    generar_pdf_trabajador
 )
 
 urlpatterns = [
@@ -35,7 +37,6 @@ urlpatterns = [
     path('usuarios/', GestionUsuariosView.as_view(), name='gestionar_usuarios'),
     path('usuarios/eliminar/<int:pk>/', EliminarUsuarioView.as_view(), name='eliminar_usuario'),
 
-
     # Niños
     path('registro_ninos/', RegistroNinoView.as_view(), name='registro_ninos'),
     path('ninos/editar/<int:pk>/', EditarNinoView.as_view(), name='editar_nino'),
@@ -46,7 +47,6 @@ urlpatterns = [
     path('registro_trabajadores/', RegistroTrabajadorView.as_view(), name='registro_trabajadores'),
     path('trabajadores/editar/<int:pk>/', EditarTrabajadorView.as_view(), name='editar_trabajador'),
     path('trabajadores/eliminar/<int:trabajador_id>/', EliminarTrabajadorView.as_view(), name='eliminar_trabajador'),
-
 
     # Seguimientos
     path('registrar_seguimiento/', RegistrarSeguimientoNinoView.as_view(), name='registrar_seguimiento'),
@@ -64,9 +64,9 @@ urlpatterns = [
     path('seguimiento/nino/eliminar/<int:pk>/', EliminarSeguimientoNinoView.as_view(), name='eliminar_seguimiento_nino'),
     path('seguimiento/trabajador/eliminar/<int:pk>/', EliminarSeguimientoTrabajadorView.as_view(), name='eliminar_seguimiento_trabajador'),
 
+
     # Historial
     path('historial/', HistorialView.as_view(), name='historial'),
-    path('historial/exportar/', ExportarHistorialExcelView.as_view(), name='exportar_historial'),
 
     # Reportes
     path('reportes/', ReportesView.as_view(), name='reportes'),
@@ -78,10 +78,12 @@ urlpatterns = [
     path('reporte/trabajador/<int:trabajador_id>/', ReporteTrabajadorView.as_view(), name='reporte_trabajador'),
 
     # Extras
-    path('cambios-recientes/', UltimosCambiosView.as_view(), name='ultimos_cambios'),
     path('ajax/buscar-ninos/', buscar_ninos_ajax, name='buscar_ninos_ajax'),
     path('ajax/buscar-trabajadores/', buscar_trabajadores_ajax, name='buscar_trabajadores_ajax'),
     path('ajax/seguimientos-nino/', buscar_seguimientos_nino_ajax, name='buscar_seguimientos_nino_ajax'),
     path('ajax/seguimientos-trabajador/', buscar_seguimientos_trabajador_ajax, name='buscar_seguimientos_trabajador_ajax'),
 
+    # Reportes PDF
+    path('reporte/paciente/<int:paciente_id>/pdf/', generar_pdf_paciente, name='generar_pdf_paciente'),
+    path('reporte/trabajador/<int:trabajador_id>/pdf/', generar_pdf_trabajador, name='generar_pdf_trabajador'),
 ]
