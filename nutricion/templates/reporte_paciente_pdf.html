@@ -23,25 +23,39 @@
 
         .logo-dif {
             position: absolute;
-            top: -1.2cm;
-            left: 0cm;
-            height: 40px;
+            top: -1.8cm;  /* Logo más abajo */
+            left: 0.5cm;
+            height: 60px;
             z-index: 100;
         }
 
         .header-institucional {
             background: linear-gradient(135deg, #6D0000 0%, #8B0000 100%);
             color: white;
-            padding: 20px;
+            padding: 20px 20px 15px 20px;  /* Más padding superior */
             text-align: center;
-            margin-bottom: 25px;
-            border-bottom: 5px solid #D4AF37;
+            margin-bottom: 15px;
+            border-bottom: 3px solid #D4AF37;
             page-break-after: avoid;
+            margin-top: 50px;  /* Margen superior mucho mayor */
+        }
+
+        .header-institucional h1 {
+            font-size: 20px;
+            margin: 10px 0 5px 0;
+            padding: 0 40px;
+            line-height: 1.2;
+        }
+
+        .header-institucional p {
+            margin-bottom: 0;
+            color: #D4AF37;
+            font-size: 11pt;
         }
 
         .contenedor-principal {
             background-color: white;
-            padding: 28px;
+            padding: 20px 28px 25px 28px;  /* Padding ajustado */
             border-radius: 4px;
             margin: 0 auto;
             max-width: 94%;
@@ -49,12 +63,13 @@
         }
 
         .seccion {
-            margin-bottom: 32px;
+            margin-bottom: 25px;  /* Reducido */
             page-break-inside: avoid;
             border-left: 4px solid #6D0000;
             padding-left: 18px;
         }
 
+        /* Resto de estilos se mantienen igual */
         .seccion h2 {
             color: #6D0000;
             margin-top: 0;
@@ -101,21 +116,6 @@
             background-color: #FFF5F5;
         }
 
-        .badge-imc {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 10.5pt;
-            margin-left: 10px;
-            font-weight: 600;
-            color: white;
-        }
-
-        .imc-bajo { background-color: #3498db; }
-        .imc-normal { background-color: #27ae60; }
-        .imc-sobrepeso { background-color: #f39c12; }
-        .imc-obesidad { background-color: #e74c3c; }
-
         .graficas-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -130,16 +130,10 @@
             border-radius: 4px;
         }
 
-        .leyenda-grafica {
-            font-style: italic;
-            color: #666;
-            margin-top: 8px;
-        }
-
         .footer {
             text-align: center;
-            margin-top: 35px;
-            padding-top: 18px;
+            margin-top: 15px;  /* Margen superior reducido */
+            padding-top: 12px;
             border-top: 1px solid #D4AF37;
             color: #666;
             font-size: 9.5pt;
@@ -159,11 +153,11 @@
     <div class="header-institucional">
         <img class="logo-dif" src="data:image/png;base64,{{ logo_base64 }}" alt="Logo DIF Tabasco">
         <h1>SISTEMA NUTRICIÓN DIF TABASCO</h1>
-        <p style="margin-bottom:0;color:#D4AF37;font-size:12pt">Reporte Nutricional de Paciente</p>
+        <p>Programa de Nutrición</p>
     </div>
 
     <div class="contenedor-principal">
-        <!-- Datos del paciente -->
+        <!-- Contenido del reporte -->
         <div class="seccion">
             <h2><i class="fas fa-user"></i> Datos del Paciente</h2>
             <div class="datos-grid">
@@ -182,7 +176,6 @@
             </div>
         </div>
 
-        <!-- Historial de seguimientos -->
         <div class="seccion">
             <h2><i class="fas fa-history"></i> Historial de Evaluaciones</h2>
             {% if seguimientos %}
@@ -203,7 +196,7 @@
                         <td>{{ seg.peso|floatformat:2 }}</td>
                         <td>{{ seg.talla|floatformat:2|default:"-" }}</td>
                         <td>{{ seg.imc|floatformat:2|default:"-" }}</td>
-                        <td>{{ seg.diagnostico|default:"-" }}</td>
+                        <td>{{ seg.dx|default:"-" }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -213,11 +206,9 @@
             {% endif %}
         </div>
 
-        <!-- Gráficas -->
         {% if grafica_peso_base64 or grafica_talla_base64 or grafica_imc_base64 %}
         <div class="seccion">
             <h2><i class="fas fa-chart-line"></i> Evolución Nutricional</h2>
-            
             <div class="graficas-grid">
                 {% if grafica_peso_base64 %}
                 <div class="grafica-container">

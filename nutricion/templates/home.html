@@ -150,7 +150,7 @@
                     <i class="fas ${esTrabajador ? 'fa-user-tie' : 'fa-child'}"></i>
                     <div class="person-details">
                         <h4>${p.nombre}</h4>
-                        <p>${esTrabajador ? p.cargo : 'Edad: ' + p.edad + ' años'}</p>
+                        ${esTrabajador ? `<p>${p.cargo}</p>` : ``}
                     </div>
                 </div>
             `;

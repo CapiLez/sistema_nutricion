@@ -70,7 +70,7 @@ class HomeView(LoginRequiredMixin, View):
         detalle_cais = {}
         for clave, nombre in cais:
             trabajadores = Trabajador.objects.filter(is_deleted=False, cai=clave).values('id', 'nombre', 'cargo')
-            ninos = Paciente.objects.filter(is_deleted=False, cai=clave).values('id', 'nombre', 'edad')
+            ninos = Paciente.objects.filter(is_deleted=False, cai=clave).values('id', 'nombre')
             detalle_cais[clave] = {
                 'nombre': nombre,
                 'trabajadores': list(trabajadores),
@@ -1129,7 +1129,7 @@ def generar_pdf_paciente(request, paciente_id):
             return None
     
     # Obtener imágenes
-    logo_base64 = get_image_base64('nutricion/images/dofyas.jpg')
+    logo_base64 = get_image_base64('nutricion/images/dofyas.png')
     fondo_base64 = get_image_base64('nutricion/images/fondodif2.png')
     
     # --- Generar gráficas dinámicas ---
@@ -1309,7 +1309,7 @@ def generar_pdf_trabajador(request, trabajador_id):
             return None
     
     # Obtener imágenes
-    logo_base64 = get_image_base64('nutricion/images/dofyas.jpg')
+    logo_base64 = get_image_base64('nutricion/images/dofyas.png')
     fondo_base64 = get_image_base64('nutricion/images/fondodif2.png')
     
     # --- Generar gráficas dinámicas ---

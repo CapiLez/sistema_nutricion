@@ -51,6 +51,14 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="{{ form.sexo.id_for_label }}">{{ form.sexo.label }}</label>
+                    {{ form.sexo }}
+                    {% for error in form.sexo.errors %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
                     <label for="{{ form.cai.id_for_label }}">{{ form.cai.label }}</label>
                     {{ form.cai }}
                     {% for error in form.cai.errors %}
