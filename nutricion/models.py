@@ -154,7 +154,7 @@ class Trabajador(AuditoriaMixin):
             return "Obesidad grado III"
 
 # Seguimiento para Pacientes
-class SeguimientoTrimestral(AuditoriaMixin):
+class SeguimientoTrimestral(models.Model):
     paciente = models.ForeignKey('Paciente', on_delete=models.CASCADE)
     indicador_peso_edad = models.CharField(max_length=50)
     indicador_peso_talla = models.CharField(max_length=50)
@@ -167,7 +167,10 @@ class SeguimientoTrimestral(AuditoriaMixin):
     fecha_valoracion = models.DateField()
     is_deleted = models.BooleanField(default=False)
     deleted_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='seguimientos_nino_eliminados'
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='seguimientos_nino_eliminados'
     )
 
     def __str__(self):
@@ -182,8 +185,14 @@ class SeguimientoTrimestral(AuditoriaMixin):
         return edad_decimal, edad_texto
 
     def save(self, *args, **kwargs):
-        _, edad_texto = self.calcular_edad_completa()
+        edad_decimal, edad_texto = self.calcular_edad_completa()
         self.edad = edad_texto
+
+        # Actualiza también en el paciente con fecha personalizada
+        if self.paciente and self.fecha_valoracion:
+            self.paciente.edad = edad_decimal
+            self.paciente.save(update_fields=['edad'])
+
         super().save(*args, **kwargs)
 
 # Seguimiento para Trabajadores
@@ -208,3 +217,74 @@ class SeguimientoTrabajador(AuditoriaMixin):
 
     def __str__(self):
         return f"{self.trabajador.nombre} - {self.fecha_valoracion}"
+
+# Modelos Indicadores de Salud Peso-Edad, Talla-Edad y Peso-Talla según OMS
+
+# PESO-EDAD
+class OmsPesoEdad(models.Model):
+    SEXO_CHOICES = [('M', 'Masculino'), ('F', 'Femenino')]
+
+    sexo = models.CharField(max_length=1, choices=SEXO_CHOICES)
+    meses = models.PositiveIntegerField()
+    sd_m3 = models.FloatField(null=True, blank=True)
+    sd_m2 = models.FloatField(null=True, blank=True)
+    sd_m1 = models.FloatField(null=True, blank=True)
+    mediana = models.FloatField(null=True, blank=True)
+    sd_1 = models.FloatField(null=True, blank=True)
+    sd_2 = models.FloatField(null=True, blank=True)
+    sd_3 = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'oms_peso_edad'
+        unique_together = ('sexo', 'meses')
+        verbose_name = 'Tabla OMS Peso para Edad'
+        verbose_name_plural = 'Tablas OMS Peso para Edad'
+
+    def __str__(self):
+        return f"{self.get_sexo_display()} - {self.meses} meses"
+
+# TALLA-EDAD
+class OmsTallaEdad(models.Model):
+    SEXO_CHOICES = [('M', 'Masculino'), ('F', 'Femenino')]
+
+    sexo = models.CharField(max_length=1, choices=SEXO_CHOICES)
+    meses = models.PositiveIntegerField()
+    sd_m3 = models.FloatField(null=True, blank=True)
+    sd_m2 = models.FloatField(null=True, blank=True)
+    sd_m1 = models.FloatField(null=True, blank=True)
+    mediana = models.FloatField(null=True, blank=True)
+    sd_1 = models.FloatField(null=True, blank=True)
+    sd_2 = models.FloatField(null=True, blank=True)
+    sd_3 = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'oms_talla_edad'
+        unique_together = ('sexo', 'meses')
+        verbose_name = 'Tabla OMS Talla para Edad'
+        verbose_name_plural = 'Tablas OMS Talla para Edad'
+
+    def __str__(self):
+        return f"{self.get_sexo_display()} - {self.meses} meses"
+
+# PESO-TALLA
+class OmsPesoTalla(models.Model):
+    SEXO_CHOICES = [('M', 'Masculino'), ('F', 'Femenino')]
+
+    sexo = models.CharField(max_length=1, choices=SEXO_CHOICES)
+    talla_cm = models.FloatField()
+    sd_m3 = models.FloatField(null=True, blank=True)
+    sd_m2 = models.FloatField(null=True, blank=True)
+    sd_m1 = models.FloatField(null=True, blank=True)
+    mediana = models.FloatField(null=True, blank=True)
+    sd_1 = models.FloatField(null=True, blank=True)
+    sd_2 = models.FloatField(null=True, blank=True)
+    sd_3 = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'oms_peso_talla'
+        unique_together = ('sexo', 'talla_cm')
+        verbose_name = 'Tabla OMS Peso para Talla'
+        verbose_name_plural = 'Tablas OMS Peso para Talla'
+
+    def __str__(self):
+        return f"{self.get_sexo_display()} - {self.talla_cm} cm"

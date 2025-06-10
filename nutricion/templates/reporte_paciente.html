@@ -88,7 +88,7 @@
     <div class="datos-section">
         <h3><i class="fas fa-info-circle"></i> Datos Básicos</h3>
         <div class="datos-grid">
-            <div class="dato-item"><i class="fas fa-birthday-cake"></i><div><strong>Edad:</strong> {{ paciente.edad_detallada }}</div></div>
+            <div class="dato-item"><i class="fas fa-birthday-cake"></i><div><strong>Edad:</strong> {{ edad_actualizada }}</div></div>
             <div class="dato-item"><i class="fas fa-venus-mars"></i><div><strong>Sexo:</strong> {{ paciente.get_sexo_display }}</div></div>
             <div class="dato-item"><i class="fas fa-home"></i><div><strong>CAI:</strong> {{ paciente.cai }}</div></div>
             <div class="dato-item"><i class="fas fa-graduation-cap"></i><div><strong>Grado/Grupo:</strong> {{ paciente.grado|default:"-" }} / {{ paciente.grupo|default:"-" }}</div></div>

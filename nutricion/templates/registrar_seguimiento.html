@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load widget_tweaks %}
 
 {% block title %}Registrar Seguimiento Trimestral{% endblock %}
 
@@ -12,20 +13,6 @@
     }
     .form-group {
         margin-bottom: 1rem;
-    }
-    .categoria-indicador {
-        font-weight: bold;
-        margin-top: 0.25rem;
-        display: block;
-    }
-    .categoria-normal {
-        color: green;
-    }
-    .categoria-sobrepeso {
-        color: orange;
-    }
-    .categoria-obesidad, .categoria-bajo {
-        color: red;
     }
 </style>
 {% endblock %}
@@ -67,54 +54,54 @@
             {% endif %}
 
             <div class="form-group">
+                {{ form.fecha_valoracion.label_tag }}
+                {{ form.fecha_valoracion|add_class:"form-control" }}
+            </div>
+
+            <div class="form-group">
                 {{ form.edad_mostrar.label_tag }}
-                {{ form.edad_mostrar }}
+                {{ form.edad_mostrar|add_class:"form-control readonly-field"|attr:"readonly" }}
             </div>
 
             <div class="form-group">
                 {{ form.peso.label_tag }}
-                {{ form.peso }}
+                {{ form.peso|add_class:"form-control" }}
             </div>
 
             <div class="form-group">
                 {{ form.talla.label_tag }}
-                {{ form.talla }}
+                {{ form.talla|add_class:"form-control" }}
             </div>
 
             <div class="form-group">
                 {{ form.imc.label_tag }}
-                {{ form.imc }}
+                {{ form.imc|add_class:"form-control readonly-field"|attr:"readonly" }}
             </div>
 
             <div class="form-group">
                 {{ form.indicador_peso_edad.label_tag }}
-                {{ form.indicador_peso_edad }}
-                <small id="categoria_peso_edad" class="categoria-indicador"></small>
+                {{ form.indicador_peso_edad|add_class:"form-control readonly-field"|attr:"readonly" }}
             </div>
 
             <div class="form-group">
                 {{ form.indicador_peso_talla.label_tag }}
-                {{ form.indicador_peso_talla }}
-                <small id="categoria_peso_talla" class="categoria-indicador"></small>
+                {{ form.indicador_peso_talla|add_class:"form-control readonly-field"|attr:"readonly" }}
             </div>
 
             <div class="form-group">
                 {{ form.indicador_talla_edad.label_tag }}
-                {{ form.indicador_talla_edad }}
-                <small id="categoria_talla_edad" class="categoria-indicador"></small>
+                {{ form.indicador_talla_edad|add_class:"form-control readonly-field"|attr:"readonly" }}
             </div>
 
             <div class="form-group">
                 {{ form.dx.label_tag }}
-                {{ form.dx }}
+                {{ form.dx|add_class:"form-control readonly-field"|attr:"readonly" }}
             </div>
 
-            <div class="form-group">
-                {{ form.fecha_valoracion.label_tag }}
-                {{ form.fecha_valoracion }}
+            <!-- Campo oculto -->
+            <div class="form-group d-none">
+                {{ form.edad }}
             </div>
-
-            {{ form.edad }}
 
             <div class="form-buttons mt-3">
                 <button type="submit" class="btn btn-success">
@@ -142,14 +129,88 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function () {
     const form = $('#form-seguimiento-nino');
+    const nacimiento = "{{ paciente_nacimiento|default:'' }}";
+    const sexo = "{{ paciente_sexo|default:'F' }}";
+
+    console.log("🧒 Nacimiento:", nacimiento);
+    console.log("⚧️ Sexo:", sexo);
+
+    function calcularEdadDesdeAPI() {
+        const fechaValoracion = $('#id_fecha_valoracion').val();
+        console.log("📅 Fecha valoración:", fechaValoracion);
+
+        if (fechaValoracion && nacimiento) {
+            $.get('/api/calcular-edad/', {
+                nacimiento: nacimiento,
+                valoracion: fechaValoracion
+            }).done(function (data) {
+                console.log("✅ Edad recibida:", data);
+                $('#id_edad_mostrar').val(data.edad_texto);
+                $('#id_edad').val(data.edad_decimal);
+                calcularIndicadores();
+            }).fail(function (jqXHR) {
+                console.error("❌ Error en edad:", jqXHR.responseText);
+            });
+        } else {
+            console.warn("⚠️ No se puede calcular edad. Datos faltantes.");
+        }
+    }
+
+    function calcularDx(pesoEdad, pesoTalla, tallaEdad) {
+        if ([pesoEdad, pesoTalla, tallaEdad].includes('< -2 SD')) {
+            return 'Desnutrición';
+        }
+        if ([pesoEdad, pesoTalla, tallaEdad].includes('> +3 SD')) {
+            return 'Obesidad';
+        }
+        if ([pesoEdad, pesoTalla, tallaEdad].includes('+2 a +3 SD')) {
+            return 'Sobrepeso';
+        }
+        if ([pesoEdad, pesoTalla, tallaEdad].every(i => i.includes('Mediana') || i === 'Mediana')) {
+            return 'Adecuado';
+        }
+        return 'Evaluación requerida';
+    }
+
+    function calcularIndicadores() {
+        const peso = parseFloat($('#id_peso').val()) || 0;
+        const talla = parseFloat($('#id_talla').val()) || 0;
+        const edad = parseFloat($('#id_edad').val()) || 0;
+
+        if (peso > 0 && talla > 0) {
+            const imc = peso / Math.pow(talla / 100, 2);
+            $('#id_imc').val(imc.toFixed(2));
+        }
+
+        if (peso > 0 && talla > 0 && edad > 0) {
+            $.get("/api/calcular-indicadores/", {
+                peso: peso,
+                talla: talla,
+                edad: edad,
+                sexo: sexo
+            }).done(function (data) {
+                console.log("📊 Indicadores:", data);
+                $('#id_indicador_peso_talla').val(data.peso_talla);
+                $('#id_indicador_peso_edad').val(data.peso_edad);
+                $('#id_indicador_talla_edad').val(data.talla_edad);
+
+                const dx = calcularDx(data.peso_edad, data.peso_talla, data.talla_edad);
+                $('#id_dx').val(dx);
+            }).fail(function (jqXHR) {
+                console.error("❌ Error al calcular indicadores:", jqXHR.responseText);
+            });
+        }
+    }
+
+    $('#id_fecha_valoracion').on('change', calcularEdadDesdeAPI);
+    $('#id_peso, #id_talla').on('input', calcularIndicadores);
 
     $('#limpiar-formulario').on('click', function () {
         form[0].reset();
-        limpiarEtiquetas();
+        $('.readonly-field').val('');
     });
 
     $('#cancelar-formulario').on('click', function (e) {
@@ -162,71 +223,9 @@ $(document).ready(function () {
         }
     });
 
-    function clasificar(valor, tipo) {
-        let clase = '', texto = '';
-
-        if (tipo === 'peso_edad') {
-            if (valor < 80)      { texto = "Bajo peso"; clase = "categoria-bajo"; }
-            else if (valor < 120){ texto = "Normal"; clase = "categoria-normal"; }
-            else if (valor < 140){ texto = "Sobrepeso"; clase = "categoria-sobrepeso"; }
-            else                 { texto = "Obesidad"; clase = "categoria-obesidad"; }
-        }
-
-        if (tipo === 'peso_talla') {
-            if (valor < 85)      { texto = "Bajo peso"; clase = "categoria-bajo"; }
-            else if (valor < 115){ texto = "Normal"; clase = "categoria-normal"; }
-            else if (valor < 130){ texto = "Sobrepeso"; clase = "categoria-sobrepeso"; }
-            else                 { texto = "Obesidad"; clase = "categoria-obesidad"; }
-        }
-
-        if (tipo === 'talla_edad') {
-            if (valor < 90)      { texto = "Baja talla"; clase = "categoria-bajo"; }
-            else if (valor < 110){ texto = "Normal"; clase = "categoria-normal"; }
-            else                 { texto = "Alta talla"; clase = "categoria-sobrepeso"; }
-        }
-
-        return { texto, clase };
+    if ($('#id_fecha_valoracion').val()) {
+        calcularEdadDesdeAPI();
     }
-
-    function limpiarEtiquetas() {
-        $('#categoria_peso_edad, #categoria_peso_talla, #categoria_talla_edad')
-            .text('')
-            .removeClass('categoria-normal categoria-sobrepeso categoria-obesidad categoria-bajo');
-    }
-
-    function actualizarIndicadores() {
-        limpiarEtiquetas();
-
-        const peso = parseFloat($('#id_peso').val()) || 0;
-        const talla = parseFloat($('#id_talla').val()) || 0;
-        const edad = parseFloat($('#id_edad').val()) || 0;
-        const tallaM = talla / 100;
-
-        if (peso > 0 && talla > 0) {
-            $('#id_imc').val((peso / (tallaM * tallaM)).toFixed(2));
-        }
-
-        if (peso > 0 && talla > 0 && edad > 0) {
-            const pesoEdad = (peso / (edad + 0.1)) * 100;
-            const pesoTalla = (peso / talla) * 100;
-            const tallaEdad = (talla / (edad + 0.1)) * 100;
-
-            $('#id_indicador_peso_edad').val(pesoEdad.toFixed(2));
-            $('#id_indicador_peso_talla').val(pesoTalla.toFixed(2));
-            $('#id_indicador_talla_edad').val(tallaEdad.toFixed(2));
-
-            const cat1 = clasificar(pesoEdad, 'peso_edad');
-            const cat2 = clasificar(pesoTalla, 'peso_talla');
-            const cat3 = clasificar(tallaEdad, 'talla_edad');
-
-            $('#categoria_peso_edad').text(cat1.texto).addClass(cat1.clase);
-            $('#categoria_peso_talla').text(cat2.texto).addClass(cat2.clase);
-            $('#categoria_talla_edad').text(cat3.texto).addClass(cat3.clase);
-        }
-    }
-
-    $('#id_peso, #id_talla, #id_fecha_valoracion').on('input change', actualizarIndicadores);
-    actualizarIndicadores();
 });
 </script>
 {% endblock %}

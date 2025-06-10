@@ -1,7 +1,10 @@
 import base64
 from datetime import date
+import datetime
 import io
 import os
+import re
+from venv import logger
 from django.views.generic import DeleteView, ListView, View, TemplateView, UpdateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import permission_required
@@ -14,6 +17,7 @@ from reversion.models import Version
 from django.db.models import OuterRef, Subquery, Max
 from reversion import create_revision, set_user, set_comment
 from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_GET
 from django.utils.dateformat import DateFormat
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
@@ -29,7 +33,7 @@ import matplotlib.pyplot as plt
 
 from sistema_nutricion import settings
 from .utils import BaseDeleteViewConCancel, FiltroCAIMixin
-from .models import CAI_CHOICES, Paciente, Trabajador, SeguimientoTrimestral, SeguimientoTrabajador, Usuario
+from .models import CAI_CHOICES, Paciente, Trabajador, SeguimientoTrimestral, SeguimientoTrabajador, Usuario, OmsPesoEdad, OmsPesoTalla, OmsTallaEdad
 from .forms import (
     PacienteForm, TrabajadorForm,
     SeguimientoTrimestralForm, SeguimientoTrabajadorForm,
@@ -379,7 +383,7 @@ class RegistrarSeguimientoNinoView(FiltroCAIMixin, InitialFromModelMixin, Revisi
     template_name = 'registrar_seguimiento.html'
     success_url = reverse_lazy('lista_seguimientos')
     comment = "Registro de seguimiento trimestral de niño"
-    success_message = "[seguimiento] Seguimiento registrado."
+    success_message = "[seguimiento] Seguimiento registrado correctamente."
     related_model = 'paciente'
     related_model_class = Paciente
     field_map = {
@@ -390,27 +394,206 @@ class RegistrarSeguimientoNinoView(FiltroCAIMixin, InitialFromModelMixin, Revisi
     }
 
     def get_form_kwargs(self):
+        """Añade el usuario actual a los kwargs del formulario"""
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
 
     def form_valid(self, form):
+        """Procesa el formulario cuando es válido"""
         paciente = form.cleaned_data.get('paciente')
+
+        # Validar permisos del usuario
         if self.request.user.is_nutriologo and paciente.cai != self.request.user.cai:
+            logger.warning(f"Intento de acceso no autorizado al paciente {paciente.id} por el usuario {self.request.user.id}")
             return HttpResponseForbidden("No tienes permiso para registrar seguimiento de este paciente.")
-        form.instance.created_by = self.request.user # Auditoría
+
+        # Guardar el seguimiento
+        seguimiento = form.save(commit=False)
+        seguimiento.created_by = self.request.user
+        seguimiento.save()
+
+        # Registrar acción
+        logger.info(f"Seguimiento trimestral registrado para el paciente {paciente.id} por el usuario {self.request.user.id}")
+        messages.success(self.request, self.success_message)
+        
         return super().form_valid(form)
-    
+
+    def form_invalid(self, form):
+        """Maneja los casos cuando el formulario es inválido"""
+        logger.warning(f"Formulario inválido: {form.errors}")
+        messages.error(self.request, "Por favor corrija los errores en el formulario.")
+        return super().form_invalid(form)
+
     def get_context_data(self, **kwargs):
+        """Añade datos adicionales al contexto del template"""
         context = super().get_context_data(**kwargs)
-        paciente = self.get_form().initial.get('paciente')
-        if paciente:
+        paciente_id = self.request.GET.get("paciente_id") or self.request.POST.get("paciente")
+        
+        if paciente_id:
             try:
-                paciente_obj = Paciente.objects.get(id=paciente)
-                context['paciente_nombre'] = paciente_obj.nombre
-            except Paciente.DoesNotExist:
-                context['paciente_nombre'] = ''
+                paciente = get_object_or_404(Paciente, id=paciente_id)
+                context.update({
+                    "paciente_nombre": paciente.nombre,
+                    "paciente_nacimiento": paciente.fecha_nacimiento.strftime('%Y-%m-%d'),
+                    "paciente_sexo": paciente.sexo,
+                    "paciente_edad": paciente.edad_detallada,
+                })
+            except Exception as e:
+                logger.error(f"Error al obtener datos del paciente: {str(e)}")
+                messages.error(self.request, "Error al cargar los datos del paciente.")
+        
         return context
+
+def calcular_edad_api(request):
+    """API para calcular la edad basada en fechas"""
+    nacimiento = request.GET.get('nacimiento')
+    valoracion = request.GET.get('valoracion')
+
+    logger.info(f"Calculando edad: nacimiento={nacimiento}, valoracion={valoracion}")
+
+    try:
+        if not nacimiento or not valoracion:
+            return JsonResponse({'error': 'Fechas incompletas'}, status=400)
+
+        nacimiento_dt = datetime.strptime(nacimiento, "%Y-%m-%d").date()
+        valoracion_dt = datetime.strptime(valoracion, "%Y-%m-%d").date()
+
+        if valoracion_dt < nacimiento_dt:
+            return JsonResponse({'error': 'La fecha de valoración no puede ser anterior al nacimiento'}, status=400)
+
+        diff = relativedelta(valoracion_dt, nacimiento_dt)
+        edad_meses = diff.years * 12 + diff.months
+        edad_anios = diff.years
+        edad_decimal = round(edad_meses / 12, 2)
+        edad_texto = f"{edad_anios} años, {diff.months} meses"
+
+        return JsonResponse({
+            'edad_texto': edad_texto,
+            'edad_decimal': edad_decimal,
+            'edad_meses': edad_meses
+        })
+
+    except ValueError as e:
+        logger.error(f"Error en formato de fecha: {str(e)}")
+        return JsonResponse({'error': 'Formato de fecha inválido. Use YYYY-MM-DD'}, status=400)
+    except Exception as e:
+        logger.error(f"Error al calcular edad: {str(e)}")
+        return JsonResponse({'error': f'Error al calcular edad: {str(e)}'}, status=500)
+
+def calcular_indicadores_api(request):
+    """API para calcular indicadores nutricionales"""
+    try:
+        # Obtener parámetros con valores por defecto
+        peso = float(request.GET.get('peso', 0))
+        talla = float(request.GET.get('talla', 0))
+        edad = float(request.GET.get('edad', 0))  # en años decimales
+        sexo = request.GET.get('sexo', 'F').upper()  # Normalizar a mayúsculas
+
+        # Validar datos básicos
+        if peso <= 0 or talla <= 0 or edad <= 0:
+            return JsonResponse({'error': 'Peso, talla y edad deben ser valores positivos'}, status=400)
+
+        if sexo not in ['M', 'F']:
+            return JsonResponse({'error': 'Sexo debe ser M o F'}, status=400)
+
+        # Preparar datos para búsqueda
+        edad_meses = round(edad * 12)
+        talla_redondeada = round(talla * 2) / 2  # Redondear al 0.5 más cercano
+
+        logger.info(f"Calculando indicadores para: sexo={sexo}, edad={edad_meses}m, peso={peso}kg, talla={talla}cm")
+
+        # Calcular IMC
+        talla_m = talla / 100
+        imc = round(peso / (talla_m ** 2), 2)
+
+        # Función auxiliar para buscar clasificación
+        def buscar_clasificacion(tabla, valor, **filtros):
+            try:
+                fila = tabla.objects.filter(**filtros).first()
+                if not fila:
+                    return None
+
+                if valor < fila.sd_m3:
+                    return "< -3 SD"
+                elif valor < fila.sd_m2:
+                    return "-3 SD a -2 SD"
+                elif valor < fila.sd_m1:
+                    return "-2 SD a -1 SD"
+                elif valor < fila.mediana:
+                    return "-1 SD a Mediana"
+                elif valor == fila.mediana:
+                    return "Mediana"
+                elif valor < fila.sd_1:
+                    return "Mediana a +1 SD"
+                elif valor < fila.sd_2:
+                    return "+1 SD a +2 SD"
+                elif valor < fila.sd_3:
+                    return "+2 SD a +3 SD"
+                else:
+                    return "> +3 SD"
+            except Exception as e:
+                logger.error(f"Error al buscar clasificación: {str(e)}")
+                return None
+
+        # Calcular indicadores
+        peso_talla = buscar_clasificacion(
+            OmsPesoTalla, peso, 
+            sexo=sexo, 
+            talla_cm=talla_redondeada
+        ) or "No disponible"
+
+        peso_edad = buscar_clasificacion(
+            OmsPesoEdad, peso, 
+            sexo=sexo, 
+            meses=edad_meses
+        ) or "No disponible"
+
+        talla_edad = buscar_clasificacion(
+            OmsTallaEdad, talla, 
+            sexo=sexo, 
+            meses=edad_meses
+        ) or "No disponible"
+
+        # Calcular diagnóstico
+        if edad < 5:  # Criterios para menores de 5 años
+            if imc < 14:
+                dx = "Desnutrición"
+            elif imc < 17:
+                dx = "Normal"
+            elif imc < 19:
+                dx = "Sobrepeso"
+            else:
+                dx = "Obesidad"
+        else:  # Criterios para mayores de 5 años
+            if imc < 18.5:
+                dx = "Bajo peso"
+            elif imc < 25:
+                dx = "Normal"
+            elif imc < 30:
+                dx = "Sobrepeso"
+            elif imc < 35:
+                dx = "Obesidad I"
+            elif imc < 40:
+                dx = "Obesidad II"
+            else:
+                dx = "Obesidad III"
+
+        return JsonResponse({
+            "peso_talla": peso_talla,
+            "peso_edad": peso_edad,
+            "talla_edad": talla_edad,
+            "imc": imc,
+            "dx": dx,
+            "status": "success"
+        })
+
+    except ValueError as e:
+        logger.error(f"Error en parámetros numéricos: {str(e)}")
+        return JsonResponse({"error": "Parámetros numéricos inválidos"}, status=400)
+    except Exception as e:
+        logger.error(f"Error al calcular indicadores: {str(e)}")
+        return JsonResponse({"error": f"Error interno: {str(e)}"}, status=500)
 
 
 class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, RevisionCreateView):
@@ -823,6 +1006,18 @@ class ReportesView(LoginRequiredMixin, FiltroCAIMixin, TemplateView):
         pacientes = pacientes.order_by('nombre')
         trabajadores = trabajadores.order_by('nombre')
 
+        # Asignar edad basada en último seguimiento
+        for paciente in pacientes:
+            seguimiento = SeguimientoTrimestral.objects.filter(
+                paciente=paciente,
+                is_deleted=False
+            ).order_by('-fecha_valoracion').first()
+
+            if seguimiento and seguimiento.edad:
+                paciente.edad_seguimiento = seguimiento.edad  # atributo dinámico
+            else:
+                paciente.edad_seguimiento = paciente.edad_detallada  # fallback
+
         paginator_pacientes = Paginator(pacientes, 10)
         paginator_trabajadores = Paginator(trabajadores, 10)
 
@@ -831,20 +1026,19 @@ class ReportesView(LoginRequiredMixin, FiltroCAIMixin, TemplateView):
 
         return context
 
-
 class ReporteBaseView(LoginRequiredMixin, View):
     """Vista base para reportes individuales"""
     template_name = None
     model = None
     seguimiento_model = None
     id_kwarg = 'pk'
-    
+
     def get(self, request, *args, **kwargs):
         obj_id = kwargs.get(self.id_kwarg)
         try:
             obj = self.model.objects.get(pk=obj_id)
             print(f"Objeto encontrado: {obj}")  # Debug
-            
+
             # Determinar el campo de relación
             filter_field = 'paciente' if isinstance(obj, Paciente) else 'trabajador'
             seguimientos = self.seguimiento_model.objects.filter(
@@ -858,20 +1052,20 @@ class ReporteBaseView(LoginRequiredMixin, View):
                 'pesos': [float(s.peso) if s.peso else None for s in seguimientos],
                 'imcs': [float(s.imc) if s.imc else None for s in seguimientos],
             }
-            
+
             # Añadir tallas solo para pacientes
             if hasattr(self.seguimiento_model, 'talla'):
                 datos['tallas'] = [float(s.talla) if s.talla else None for s in seguimientos]
-            
+
             context = {
                 'paciente' if isinstance(obj, Paciente) else 'trabajador': obj,
                 'seguimientos': seguimientos,
                 'datos_json': json.dumps(datos),
                 'debug_mode': True  # Para mostrar info de debug en template
             }
-            
+
             return render(request, self.template_name, context)
-            
+
         except self.model.DoesNotExist:
             raise Http404("El registro solicitado no existe")
         except Exception as e:
@@ -889,11 +1083,19 @@ class ReportePacienteView(ReporteBaseView):
         try:
             obj = self.model.objects.get(pk=obj_id, is_deleted=False)
 
-            # Determinar el campo de relación
+            # Obtener seguimientos ordenados por fecha
             seguimientos = self.seguimiento_model.objects.filter(
                 paciente=obj,
                 is_deleted=False
             ).order_by('fecha_valoracion')
+
+            # Calcular edad basada en el último seguimiento
+            if seguimientos.exists() and obj.fecha_nacimiento:
+                fecha_base = seguimientos.last().fecha_valoracion
+                edad_rd = relativedelta(fecha_base, obj.fecha_nacimiento)
+                edad_actualizada = f"{edad_rd.years} años, {edad_rd.months} meses"
+            else:
+                edad_actualizada = "Edad no disponible"
 
             datos = {
                 'fechas': [s.fecha_valoracion.strftime('%Y-%m-%d') for s in seguimientos],
@@ -905,6 +1107,7 @@ class ReportePacienteView(ReporteBaseView):
             context = {
                 'paciente': obj,
                 'seguimientos': seguimientos,
+                'edad_actualizada': edad_actualizada,
                 'datos_json': json.dumps(datos),
                 'debug_mode': settings.DEBUG
             }
@@ -915,7 +1118,6 @@ class ReportePacienteView(ReporteBaseView):
         except Exception as e:
             print(f"Error en ReportePacienteView: {str(e)}")
             raise
-
 
 class ReporteTrabajadorView(LoginRequiredMixin, DetailView):
     model = Trabajador
@@ -960,6 +1162,9 @@ class ReporteTrabajadorView(LoginRequiredMixin, DetailView):
 #-------------------
     
 def buscar_ninos_ajax(request):
+    from dateutil.relativedelta import relativedelta
+    from datetime import date
+
     term = request.GET.get('term', '')
     page = int(request.GET.get('page', 1))
 
@@ -972,17 +1177,24 @@ def buscar_ninos_ajax(request):
     paginator = Paginator(ninos, 10)
     pagina = paginator.get_page(page)
 
-    resultados = [
-        {
+    resultados = []
+    for n in pagina:
+        seguimiento = SeguimientoTrimestral.objects.filter(paciente=n, is_deleted=False).order_by('-fecha_valoracion').first()
+        if seguimiento:
+            edad_rd = relativedelta(seguimiento.fecha_valoracion, n.fecha_nacimiento)
+            edad_texto = f"{edad_rd.years} años, {edad_rd.months} meses"
+        else:
+            edad_texto = n.edad_detallada  # fallback
+
+        resultados.append({
             'id': n.id,
             'nombre': n.nombre,
-            'edad': n.edad_detallada,
+            'edad': edad_texto,
             'curp': n.curp,
             'grado': n.grado,
             'grupo': n.grupo,
             'cai': str(n.cai),
-        } for n in pagina
-    ]
+        })
 
     return JsonResponse({
         'resultados': resultados,
@@ -1460,3 +1672,57 @@ def generar_pdf_trabajador(request, trabajador_id):
     filename = f"reporte_{trabajador.nombre.replace(' ', '_')}.pdf"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+#-------------------
+# Funciones de desviación estándar OMS
+#-------------------
+
+def obtener_desviacion_oms_peso_edad(sexo, edad, peso):
+    try:
+        fila = OmsPesoEdad.objects.get(sexo=sexo, meses=round(edad * 12))  # ✅ corregido
+        diferencias = {
+            'SD -3': abs(peso - fila.sd_m3),
+            'SD -2': abs(peso - fila.sd_m2),
+            'SD -1': abs(peso - fila.sd_m1),
+            'Mediana': abs(peso - fila.mediana),
+            'SD +1': abs(peso - fila.sd_1),
+            'SD +2': abs(peso - fila.sd_2),
+            'SD +3': abs(peso - fila.sd_3),
+        }
+        return min(diferencias, key=diferencias.get)
+    except OmsPesoEdad.DoesNotExist:
+        return 'No encontrado'
+
+
+def obtener_desviacion_oms_peso_talla(sexo, talla_cm, peso):
+    try:
+        fila = OmsPesoTalla.objects.get(sexo=sexo, talla_cm=round(talla_cm, 1))
+        diferencias = {
+            'SD -3': abs(peso - fila.sd_m3),
+            'SD -2': abs(peso - fila.sd_m2),
+            'SD -1': abs(peso - fila.sd_m1),
+            'Mediana': abs(peso - fila.mediana),
+            'SD +1': abs(peso - fila.sd_1),
+            'SD +2': abs(peso - fila.sd_2),
+            'SD +3': abs(peso - fila.sd_3),
+        }
+        return min(diferencias, key=diferencias.get)
+    except OmsPesoTalla.DoesNotExist:
+        return 'No encontrado'
+
+
+def obtener_desviacion_oms_talla_edad(sexo, edad, talla_cm):
+    try:
+        fila = OmsTallaEdad.objects.get(sexo=sexo, meses=round(edad * 12))  # ✅ corregido
+        diferencias = {
+            'SD -3': abs(talla_cm - fila.sd_m3),
+            'SD -2': abs(talla_cm - fila.sd_m2),
+            'SD -1': abs(talla_cm - fila.sd_m1),
+            'Mediana': abs(talla_cm - fila.mediana),
+            'SD +1': abs(talla_cm - fila.sd_1),
+            'SD +2': abs(talla_cm - fila.sd_2),
+            'SD +3': abs(talla_cm - fila.sd_3),
+        }
+        return min(diferencias, key=diferencias.get)
+    except OmsTallaEdad.DoesNotExist:
+        return 'No encontrado'

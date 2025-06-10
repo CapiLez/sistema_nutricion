@@ -3,7 +3,8 @@ from django import forms
 from matplotlib.dates import relativedelta
 from .models import (
     CAI_CHOICES, Usuario, Paciente, Trabajador,
-    SeguimientoTrimestral, SeguimientoTrabajador
+    SeguimientoTrimestral, SeguimientoTrabajador,
+    OmsPesoTalla, OmsPesoEdad, OmsTallaEdad
 )
 import datetime
 
@@ -230,20 +231,19 @@ class SeguimientoTrimestralForm(forms.ModelForm):
     edad_mostrar = forms.CharField(
         required=False,
         label='Edad (años y meses)',
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'readonly': True
-        })
+        widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': True})
     )
 
     paciente_nombre = forms.CharField(
         required=False,
         label='Niño',
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'readonly': True
-        })
+        widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': True})
     )
+
+    indicador_peso_edad = forms.CharField(required=False)
+    indicador_peso_talla = forms.CharField(required=False)
+    indicador_talla_edad = forms.CharField(required=False)
+    dx = forms.CharField(required=False)
 
     class Meta:
         model = SeguimientoTrimestral
@@ -255,15 +255,52 @@ class SeguimientoTrimestralForm(forms.ModelForm):
         ]
         widgets = {
             'paciente': forms.HiddenInput(),
-            'fecha_valoracion': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'fecha_valoracion': forms.DateInput(attrs={
+                'type': 'date', 
+                'class': 'form-control',
+                'id': 'id_fecha_valoracion'
+            }),
             'edad': forms.HiddenInput(),
-            'imc': forms.NumberInput(attrs={'class': 'form-control', 'readonly': True}),
-            'indicador_peso_edad': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
-            'indicador_peso_talla': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
-            'indicador_talla_edad': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
-            'peso': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
-            'talla': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
-            'dx': forms.TextInput(attrs={'class': 'form-control'}),
+            'imc': forms.NumberInput(attrs={
+                'class': 'form-control', 
+                'readonly': True,
+                'id': 'id_imc'
+            }),
+            'indicador_peso_edad': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'readonly': True,
+                'id': 'id_indicador_peso_edad'
+            }),
+            'indicador_peso_talla': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'readonly': True,
+                'id': 'id_indicador_peso_talla'
+            }),
+            'indicador_talla_edad': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'readonly': True,
+                'id': 'id_indicador_talla_edad'
+            }),
+            'peso': forms.NumberInput(attrs={
+                'class': 'form-control', 
+                'step': '0.1',
+                'id': 'id_peso'
+            }),
+            'talla': forms.NumberInput(attrs={
+                'class': 'form-control', 
+                'step': '0.1',
+                'id': 'id_talla'
+            }),
+            'dx': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'readonly': True,
+                'id': 'id_dx'
+            }),
+        }
+        labels = {
+            'peso': 'Peso (kg)',
+            'talla': 'Talla (cm)',
+            'fecha_valoracion': 'Fecha de valoración'
         }
 
     def __init__(self, *args, **kwargs):
@@ -271,16 +308,19 @@ class SeguimientoTrimestralForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         paciente_id = self.initial.get('paciente') or self.data.get('paciente') or getattr(self.instance, 'paciente_id', None)
+        
         try:
             paciente = Paciente.objects.get(id=paciente_id)
             self.fields['paciente_nombre'].initial = paciente.nombre
             self.fields['edad_mostrar'].initial = paciente.edad_detallada
             self.fields['edad'].initial = paciente.edad
             self.fields['paciente'].initial = paciente.id
+            self.paciente_data = paciente
         except (Paciente.DoesNotExist, TypeError, ValueError):
             self.fields['paciente_nombre'].initial = ''
             self.fields['edad_mostrar'].initial = ''
             self.fields['edad'].initial = 0
+            self.paciente_data = None
 
         self.order_fields([
             'paciente', 'paciente_nombre',
@@ -288,6 +328,18 @@ class SeguimientoTrimestralForm(forms.ModelForm):
             'indicador_peso_edad', 'indicador_peso_talla',
             'indicador_talla_edad', 'dx', 'fecha_valoracion',
         ])
+
+    def clean_peso(self):
+        peso = self.cleaned_data.get('peso')
+        if peso is not None and peso <= 0:
+            raise forms.ValidationError("El peso debe ser un valor positivo")
+        return peso
+
+    def clean_talla(self):
+        talla = self.cleaned_data.get('talla')
+        if talla is not None and talla <= 0:
+            raise forms.ValidationError("La talla debe ser un valor positivo")
+        return talla
 
     def edad_texto_a_decimal(self, texto):
         match = re.match(r"(\d+)\s*años?,\s*(\d+)\s*mes(?:es)?", texto.strip().lower())
@@ -297,8 +349,46 @@ class SeguimientoTrimestralForm(forms.ModelForm):
             return round(anios + meses / 12, 2)
         return 0.0
 
+    def buscar_clasificacion(self, tabla, **filtros):
+        try:
+            return tabla.objects.get(**filtros)
+        except tabla.DoesNotExist:
+            return None
+        except tabla.MultipleObjectsReturned:
+            return tabla.objects.filter(**filtros).first()
+
+    def calcular_z_score(self, valor, fila_oms):
+        if not fila_oms:
+            return "No disponible"
+        
+        try:
+            if valor < fila_oms.sd_m3:
+                return "< -3 SD"
+            elif valor < fila_oms.sd_m2:
+                return "-3 SD a -2 SD"
+            elif valor < fila_oms.sd_m1:
+                return "-2 SD a -1 SD"
+            elif valor < fila_oms.mediana:
+                return "-1 SD a mediana"
+            elif valor == fila_oms.mediana:
+                return "Mediana"
+            elif valor < fila_oms.sd_1:
+                return "Mediana a +1 SD"
+            elif valor < fila_oms.sd_2:
+                return "+1 SD a +2 SD"
+            elif valor < fila_oms.sd_3:
+                return "+2 SD a +3 SD"
+            else:
+                return "> +3 SD"
+        except Exception as e:
+            return f"Error: {str(e)}"
+
     def clean(self):
         cleaned_data = super().clean()
+        
+        if not self.paciente_data:
+            raise forms.ValidationError("No se ha seleccionado un paciente válido")
+
         edad_texto = cleaned_data.get('edad_mostrar', '').strip()
         edad_num = self.edad_texto_a_decimal(edad_texto)
         cleaned_data['edad'] = edad_num
@@ -312,42 +402,21 @@ class SeguimientoTrimestralForm(forms.ModelForm):
             imc = round(peso / (talla_m ** 2), 2)
             cleaned_data['imc'] = imc
         else:
-            cleaned_data['imc'] = 0
+            cleaned_data['imc'] = None
 
-        def clasificar_indicador_peso_edad(valor):
-            if valor < 80:
-                return "Bajo peso"
-            elif valor <= 120:
-                return "Adecuado"
-            elif valor <= 140:
-                return "Sobrepeso"
-            else:
-                return "Obesidad"
-
-        def clasificar_indicador_peso_talla(valor):
-            if valor < 40:
-                return "Bajo peso"
-            elif valor <= 70:
-                return "Normal"
-            else:
-                return "Sobrepeso"
-
-        def clasificar_indicador_talla_edad(valor):
-            if valor < 50:
-                return "Baja talla"
-            elif valor <= 100:
-                return "Adecuada"
-            else:
-                return "Alta talla"
+        sexo = self.paciente_data.sexo if self.paciente_data else 'F'
 
         if peso and talla and edad_num:
-            peso_edad = round((peso / (edad_num + 0.1)) * 100, 2)
-            peso_talla = round((peso / talla) * 100, 2)
-            talla_edad = round((talla / (edad_num + 0.1)) * 100, 2)
+            talla_redondeada = round(talla * 2) / 2
+            edad_meses = round(edad_num * 12)
 
-            cleaned_data['indicador_peso_edad'] = clasificar_indicador_peso_edad(peso_edad)
-            cleaned_data['indicador_peso_talla'] = clasificar_indicador_peso_talla(peso_talla)
-            cleaned_data['indicador_talla_edad'] = clasificar_indicador_talla_edad(talla_edad)
+            peso_talla_fila = self.buscar_clasificacion(OmsPesoTalla, sexo=sexo, talla_cm=talla_redondeada)
+            peso_edad_fila = self.buscar_clasificacion(OmsPesoEdad, sexo=sexo, meses=edad_meses)
+            talla_edad_fila = self.buscar_clasificacion(OmsTallaEdad, sexo=sexo, meses=edad_meses)
+
+            cleaned_data['indicador_peso_talla'] = self.calcular_z_score(peso, peso_talla_fila)
+            cleaned_data['indicador_peso_edad'] = self.calcular_z_score(peso, peso_edad_fila)
+            cleaned_data['indicador_talla_edad'] = self.calcular_z_score(talla, talla_edad_fila)
 
         if imc is not None:
             if edad_num < 5:
@@ -373,6 +442,8 @@ class SeguimientoTrimestralForm(forms.ModelForm):
                 else:
                     dx = "Obesidad III"
             cleaned_data['dx'] = dx
+        else:
+            cleaned_data['dx'] = "No calculado"
 
         return cleaned_data
 

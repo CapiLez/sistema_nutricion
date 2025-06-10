@@ -22,6 +22,9 @@ from nutricion.views import (
     buscar_seguimientos_nino_ajax,
     buscar_seguimientos_trabajador_ajax,
     buscar_trabajadores_ajax,
+    calcular_edad_api,
+    calcular_indicadores_api,
+
     generar_pdf_paciente,
     generar_pdf_trabajador
 )
@@ -82,6 +85,9 @@ urlpatterns = [
     path('ajax/buscar-trabajadores/', buscar_trabajadores_ajax, name='buscar_trabajadores_ajax'),
     path('ajax/seguimientos-nino/', buscar_seguimientos_nino_ajax, name='buscar_seguimientos_nino_ajax'),
     path('ajax/seguimientos-trabajador/', buscar_seguimientos_trabajador_ajax, name='buscar_seguimientos_trabajador_ajax'),
+    path('api/calcular-indicadores/', calcular_indicadores_api, name='calcular_indicadores_api'),
+    path('api/calcular-edad/', calcular_edad_api, name='calcular_edad_api'),
+
 
     # Reportes PDF
     path('reporte/paciente/<int:paciente_id>/pdf/', generar_pdf_paciente, name='generar_pdf_paciente'),

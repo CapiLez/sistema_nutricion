@@ -221,9 +221,8 @@
                 {% for paciente in ninos_page %}
                 <div class="tarjeta" data-search="{{ paciente.nombre|lower }} {{ paciente.cai|lower }} {{ paciente.grado|default:''|lower }} {{ paciente.grupo|default:''|lower }}">
                     <h3>{{ paciente.nombre }}</h3>
-                    <p><strong><i class="fas fa-birthday-cake"></i> Edad:</strong> {{ paciente.edad_detallada }}</p>
+                    <p><strong><i class="fas fa-birthday-cake"></i> Edad:</strong> {{ paciente.edad_seguimiento }}</p>
                     <p><strong><i class="fas fa-home"></i> CAI:</strong> {{ paciente.cai }}</p>
-                    {% if paciente.edad_anios > 5 %}
                     <p>
                         <strong><i class="fas fa-weight"></i> IMC:</strong> 
                         {% if paciente.imc %}
@@ -244,7 +243,7 @@
                             No calculado
                         {% endif %}
                     </p>
-                    {% endif %}
+
 
                     <p><strong><i class="fas fa-school"></i> Grado/Grupo:</strong> 
                        {{ paciente.grado|default:"-" }} / {{ paciente.grupo|default:"-" }}</p>
