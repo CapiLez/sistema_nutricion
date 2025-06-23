@@ -60,6 +60,9 @@
                 <a href="{% url 'gestionar_usuarios' %}" class="{% if request.resolver_match.url_name == 'gestionar_usuarios' %}active{% endif %}">
                     <i class="fas fa-users-cog"></i> <span class="link-text">Gestionar Usuarios</span>
                 </a>
+                <a href="{% url 'pacientes_eliminados' %}" class="{% if request.resolver_match.url_name == 'pacientes_eliminados' %}active{% endif %}">
+                    <i class="fas fa-user-slash"></i> <span class="link-text">Pacientes Eliminados</span>
+                </a>
             </div>
             {% endif %}
             

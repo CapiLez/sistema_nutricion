@@ -1,6 +1,8 @@
 import re
 from django import forms
 from matplotlib.dates import relativedelta
+
+from nutricion.utils import obtener_desviacion_oms_peso_edad, obtener_desviacion_oms_peso_talla, obtener_desviacion_oms_talla_edad
 from .models import (
     CAI_CHOICES, Usuario, Paciente, Trabajador,
     SeguimientoTrimestral, SeguimientoTrabajador,
@@ -173,6 +175,19 @@ class PacienteForm(forms.ModelForm):
             'sexo', 'cai', 'peso', 'talla',
             'imc', 'imc_categoria', 'grado', 'grupo'
         ])
+    def clean_curp(self):
+        curp = self.cleaned_data.get('curp')
+        if not curp:
+            return curp
+
+        # Excluye al mismo paciente si está editando
+        qs = Paciente.objects.filter(curp=curp, is_deleted=False)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+
+        if qs.exists():
+            raise forms.ValidationError("Ya existe un paciente activo con esta CURP.")
+        return curp
 
 ### -------------------- TRABAJADORES --------------------
 
@@ -308,7 +323,7 @@ class SeguimientoTrimestralForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         paciente_id = self.initial.get('paciente') or self.data.get('paciente') or getattr(self.instance, 'paciente_id', None)
-        
+
         try:
             paciente = Paciente.objects.get(id=paciente_id)
             self.fields['paciente_nombre'].initial = paciente.nombre
@@ -349,54 +364,22 @@ class SeguimientoTrimestralForm(forms.ModelForm):
             return round(anios + meses / 12, 2)
         return 0.0
 
-    def buscar_clasificacion(self, tabla, **filtros):
-        try:
-            return tabla.objects.get(**filtros)
-        except tabla.DoesNotExist:
-            return None
-        except tabla.MultipleObjectsReturned:
-            return tabla.objects.filter(**filtros).first()
-
-    def calcular_z_score(self, valor, fila_oms):
-        if not fila_oms:
-            return "No disponible"
-        
-        try:
-            if valor < fila_oms.sd_m3:
-                return "< -3 SD"
-            elif valor < fila_oms.sd_m2:
-                return "-3 SD a -2 SD"
-            elif valor < fila_oms.sd_m1:
-                return "-2 SD a -1 SD"
-            elif valor < fila_oms.mediana:
-                return "-1 SD a mediana"
-            elif valor == fila_oms.mediana:
-                return "Mediana"
-            elif valor < fila_oms.sd_1:
-                return "Mediana a +1 SD"
-            elif valor < fila_oms.sd_2:
-                return "+1 SD a +2 SD"
-            elif valor < fila_oms.sd_3:
-                return "+2 SD a +3 SD"
-            else:
-                return "> +3 SD"
-        except Exception as e:
-            return f"Error: {str(e)}"
-
     def clean(self):
         cleaned_data = super().clean()
-        
+
         if not self.paciente_data:
             raise forms.ValidationError("No se ha seleccionado un paciente válido")
 
+        # Obtener datos base
         edad_texto = cleaned_data.get('edad_mostrar', '').strip()
-        edad_num = self.edad_texto_a_decimal(edad_texto)
+        edad_num = self.edad_texto_a_decimal(edad_texto)  # decimal en años
         cleaned_data['edad'] = edad_num
 
         peso = cleaned_data.get('peso')
         talla = cleaned_data.get('talla')
         imc = None
 
+        # Calcular IMC si hay peso y talla
         if peso and talla:
             talla_m = talla / 100
             imc = round(peso / (talla_m ** 2), 2)
@@ -404,20 +387,26 @@ class SeguimientoTrimestralForm(forms.ModelForm):
         else:
             cleaned_data['imc'] = None
 
-        sexo = self.paciente_data.sexo if self.paciente_data else 'F'
+        # Obtener sexo en formato correcto
+        sexo = getattr(self.paciente_data, 'sexo', 'F').upper()
 
-        if peso and talla and edad_num:
-            talla_redondeada = round(talla * 2) / 2
-            edad_meses = round(edad_num * 12)
+        # Calcular indicadores si todos los datos están presentes
+        try:
+            if peso and talla and edad_num and sexo in ['M', 'F']:
+                cleaned_data['indicador_peso_edad'] = obtener_desviacion_oms_peso_edad(sexo, edad_num, peso)
+                cleaned_data['indicador_peso_talla'] = obtener_desviacion_oms_peso_talla(sexo, talla, peso)
+                cleaned_data['indicador_talla_edad'] = obtener_desviacion_oms_talla_edad(sexo, edad_num, talla)
+            else:
+                cleaned_data['indicador_peso_edad'] = "Sin datos"
+                cleaned_data['indicador_peso_talla'] = "Sin datos"
+                cleaned_data['indicador_talla_edad'] = "Sin datos"
+        except Exception as e:
+            print("⚠️ Error al calcular indicadores:", e)
+            cleaned_data['indicador_peso_edad'] = "Error"
+            cleaned_data['indicador_peso_talla'] = "Error"
+            cleaned_data['indicador_talla_edad'] = "Error"
 
-            peso_talla_fila = self.buscar_clasificacion(OmsPesoTalla, sexo=sexo, talla_cm=talla_redondeada)
-            peso_edad_fila = self.buscar_clasificacion(OmsPesoEdad, sexo=sexo, meses=edad_meses)
-            talla_edad_fila = self.buscar_clasificacion(OmsTallaEdad, sexo=sexo, meses=edad_meses)
-
-            cleaned_data['indicador_peso_talla'] = self.calcular_z_score(peso, peso_talla_fila)
-            cleaned_data['indicador_peso_edad'] = self.calcular_z_score(peso, peso_edad_fila)
-            cleaned_data['indicador_talla_edad'] = self.calcular_z_score(talla, talla_edad_fila)
-
+        # Calcular diagnóstico nutricional en backend si IMC existe
         if imc is not None:
             if edad_num < 5:
                 if imc < 14:
@@ -443,9 +432,10 @@ class SeguimientoTrimestralForm(forms.ModelForm):
                     dx = "Obesidad III"
             cleaned_data['dx'] = dx
         else:
-            cleaned_data['dx'] = "No calculado"
+            cleaned_data['dx'] = "Evaluación requerida"
 
         return cleaned_data
+
 
 ### -------------------- SEGUIMIENTOS TRABAJADORES --------------------
 

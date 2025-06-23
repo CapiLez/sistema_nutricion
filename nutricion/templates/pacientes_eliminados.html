@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-3">Pacientes Eliminados</h2>
+
+  {% if pacientes %}
+  <table class="table table-bordered table-hover">
+    <thead class="thead-light">
+      <tr>
+        <th>Nombre</th>
+        <th>CURP</th>
+        <th>CAI</th>
+        <th>Sexo</th>
+        <th>Grado</th>
+        <th>Grupo</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in pacientes %}
+      <tr>
+        <td>{{ p.nombre }}</td>
+        <td>{{ p.curp }}</td>
+        <td>{{ p.cai }}</td>
+        <td>{{ p.get_sexo_display }}</td>
+        <td>{{ p.grado }}</td>
+        <td>{{ p.grupo }}</td>
+        <td>
+          <a href="{% url 'restaurar_nino' p.pk %}" class="btn btn-sm btn-success">
+            Restaurar
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="alert alert-info">No hay pacientes eliminados.</div>
+  {% endif %}
+</div>
+{% endblock %}

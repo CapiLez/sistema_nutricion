@@ -9,11 +9,13 @@ from nutricion.views import (
     EliminarSeguimientoTrabajadorView,
     HomeView,
     GestionUsuariosView, EliminarUsuarioView,
+    ListaPacientesEliminadosView,
     RegistroNinoView, EditarNinoView, EliminarNinoView, HistorialNinoCambiosView,
     RegistroTrabajadorView, EditarTrabajadorView, EliminarTrabajadorView,
     ReportePacienteView,
     ReporteTrabajadorView,
     ReportesView,
+    RestaurarNinoView,
     SeguimientosNinoView, SeguimientosTrabajadorView,
     ListaSeguimientosView, ListaSeguimientosGeneralView,
     RegistrarSeguimientoNinoView, RegistrarSeguimientoTrabajadorView,
@@ -45,6 +47,8 @@ urlpatterns = [
     path('ninos/editar/<int:pk>/', EditarNinoView.as_view(), name='editar_nino'),
     path('ninos/eliminar/<int:pk>/', EliminarNinoView.as_view(), name='eliminar_nino'),
     path('nino/<int:nino_id>/historial-cambios/', HistorialNinoCambiosView.as_view(), name='historial_nino_cambios'),
+    path('ninos/restaurar/<int:pk>/', RestaurarNinoView.as_view(), name='restaurar_nino'),
+    path('ninos/eliminados/', ListaPacientesEliminadosView.as_view(), name='pacientes_eliminados'),
 
     # Trabajadores
     path('registro_trabajadores/', RegistroTrabajadorView.as_view(), name='registro_trabajadores'),

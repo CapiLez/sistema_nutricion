@@ -1,6 +1,5 @@
 import base64
-from datetime import date
-import datetime
+from datetime import datetime
 import io
 import os
 import re
@@ -60,36 +59,51 @@ class HomeView(LoginRequiredMixin, View):
     ]
 
     def get(self, request):
-        if request.user.is_nutriologo and request.user.cai:
-            total_ninos = Paciente.objects.filter(is_deleted=False, cai=request.user.cai).count()
-            total_trabajadores = Trabajador.objects.filter(is_deleted=False, cai=request.user.cai).count()
-            cais = [(request.user.cai, dict(self.CAI_CHOICES).get(request.user.cai, request.user.cai))]
+        user_cai = request.user.cai if request.user.is_nutriologo else None
+
+        # Filtrado general o por CAI
+        if user_cai:
+            total_ninos = Paciente.objects.filter(is_deleted=False, cai=user_cai).count()
+            total_trabajadores = Trabajador.objects.filter(is_deleted=False, cai=user_cai).count()
+            total_seguimientos = (
+                SeguimientoTrimestral.objects.filter(is_deleted=False, paciente__cai=user_cai).count() +
+                SeguimientoTrabajador.objects.filter(is_deleted=False, trabajador__cai=user_cai).count()
+            )
+            cais = [(user_cai, dict(self.CAI_CHOICES).get(user_cai, user_cai))]
         else:
             total_ninos = Paciente.objects.filter(is_deleted=False).count()
             total_trabajadores = Trabajador.objects.filter(is_deleted=False).count()
+            total_seguimientos = (
+                SeguimientoTrimestral.objects.filter(is_deleted=False).count() +
+                SeguimientoTrabajador.objects.filter(is_deleted=False).count()
+            )
             cais = self.CAI_CHOICES
 
-        total_pacientes = total_ninos + total_trabajadores
-
+        # Detalle por CAI
         detalle_cais = {}
         for clave, nombre in cais:
             trabajadores = Trabajador.objects.filter(is_deleted=False, cai=clave).values('id', 'nombre', 'cargo')
             ninos = Paciente.objects.filter(is_deleted=False, cai=clave).values('id', 'nombre')
+
+            seguimientos_ninos = SeguimientoTrimestral.objects.filter(is_deleted=False, paciente__cai=clave).count()
+            seguimientos_trabajadores = SeguimientoTrabajador.objects.filter(is_deleted=False, trabajador__cai=clave).count()
+
             detalle_cais[clave] = {
                 'nombre': nombre,
                 'trabajadores': list(trabajadores),
                 'ninos': list(ninos),
                 'total_trabajadores': len(trabajadores),
-                'total_ninos': len(ninos)
+                'total_ninos': len(ninos),
+                'total_seguimientos': seguimientos_ninos + seguimientos_trabajadores
             }
 
         return render(request, 'home.html', {
             'usuario': request.user,
             'total_ninos': total_ninos,
             'total_trabajadores': total_trabajadores,
-            'total_pacientes': total_pacientes,
+            'total_seguimientos': total_seguimientos,
             'cais': cais,
-            'detalle_cais': detalle_cais
+            'detalle_cais': detalle_cais,
         })
     
 #-------------------
@@ -261,7 +275,8 @@ class EliminarNinoView(LoginRequiredMixin, View):
             or request.user.is_jefe_departamento
             or (request.user.is_nutriologo and paciente.cai == request.user.cai)
         ):
-            raise PermissionDenied("No tienes permiso para eliminar este paciente.")
+            messages.error(request, '[ninos] No tienes permiso para eliminar este niño.')
+            return redirect('registro_ninos' if 'from' not in request.GET else 'historial')
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -289,6 +304,49 @@ class EliminarNinoView(LoginRequiredMixin, View):
             'cancel_url': 'historial' if 'from' in self.request.GET else 'registro_ninos',
             'nino': self.get_object()
         }
+    
+class RestaurarNinoView(LoginRequiredMixin, View):
+    model = Paciente
+    template_name = 'restaurar_nino.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        paciente = get_object_or_404(Paciente, pk=self.kwargs['pk'], is_deleted=True)
+
+        # Solo admins o jefas de departamento pueden restaurar
+        if not (request.user.is_admin or request.user.is_jefe_departamento):
+            messages.error(request, '[ninos] No tienes permiso para restaurar este niño.')
+            return redirect('registro_ninos' if 'from' not in request.GET else 'historial')
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        paciente = self.get_object()
+        return render(request, self.template_name, {'nino': paciente})
+
+    def post(self, request, *args, **kwargs):
+        paciente = self.get_object()
+        paciente.is_deleted = False
+        paciente.save()
+        messages.success(request, 'Niño restaurado correctamente.')
+        return redirect(self.get_success_url())
+
+    def get_object(self):
+        return get_object_or_404(Paciente, pk=self.kwargs['pk'], is_deleted=True)
+
+    def get_success_url(self):
+        return reverse_lazy('registro_ninos')
+    
+class ListaPacientesEliminadosView(LoginRequiredMixin, ListView):
+    template_name = 'pacientes_eliminados.html'
+    model = Paciente
+    context_object_name = 'pacientes'
+
+    def get_queryset(self):
+        # Solo mostrar eliminados
+        qs = Paciente.objects.filter(is_deleted=True)
+        if self.request.user.is_nutriologo:
+            return qs.filter(cai=self.request.user.cai)
+        return qs
     
 #-------------------
 # Views Trabajadores
@@ -484,79 +542,28 @@ def calcular_edad_api(request):
 def calcular_indicadores_api(request):
     """API para calcular indicadores nutricionales"""
     try:
-        # Obtener parámetros con valores por defecto
         peso = float(request.GET.get('peso', 0))
         talla = float(request.GET.get('talla', 0))
-        edad = float(request.GET.get('edad', 0))  # en años decimales
-        sexo = request.GET.get('sexo', 'F').upper()  # Normalizar a mayúsculas
+        edad = float(request.GET.get('edad', 0))  # en años
+        sexo = request.GET.get('sexo', 'F').upper()
 
-        # Validar datos básicos
         if peso <= 0 or talla <= 0 or edad <= 0:
             return JsonResponse({'error': 'Peso, talla y edad deben ser valores positivos'}, status=400)
 
         if sexo not in ['M', 'F']:
             return JsonResponse({'error': 'Sexo debe ser M o F'}, status=400)
 
-        # Preparar datos para búsqueda
-        edad_meses = round(edad * 12)
-        talla_redondeada = round(talla * 2) / 2  # Redondear al 0.5 más cercano
-
-        logger.info(f"Calculando indicadores para: sexo={sexo}, edad={edad_meses}m, peso={peso}kg, talla={talla}cm")
-
         # Calcular IMC
         talla_m = talla / 100
         imc = round(peso / (talla_m ** 2), 2)
 
-        # Función auxiliar para buscar clasificación
-        def buscar_clasificacion(tabla, valor, **filtros):
-            try:
-                fila = tabla.objects.filter(**filtros).first()
-                if not fila:
-                    return None
+        # Calcular desviaciones estándar más cercanas
+        peso_talla = obtener_desviacion_oms_peso_talla(sexo, talla, peso)
+        peso_edad = obtener_desviacion_oms_peso_edad(sexo, edad, peso)
+        talla_edad = obtener_desviacion_oms_talla_edad(sexo, edad, talla)
 
-                if valor < fila.sd_m3:
-                    return "< -3 SD"
-                elif valor < fila.sd_m2:
-                    return "-3 SD a -2 SD"
-                elif valor < fila.sd_m1:
-                    return "-2 SD a -1 SD"
-                elif valor < fila.mediana:
-                    return "-1 SD a Mediana"
-                elif valor == fila.mediana:
-                    return "Mediana"
-                elif valor < fila.sd_1:
-                    return "Mediana a +1 SD"
-                elif valor < fila.sd_2:
-                    return "+1 SD a +2 SD"
-                elif valor < fila.sd_3:
-                    return "+2 SD a +3 SD"
-                else:
-                    return "> +3 SD"
-            except Exception as e:
-                logger.error(f"Error al buscar clasificación: {str(e)}")
-                return None
-
-        # Calcular indicadores
-        peso_talla = buscar_clasificacion(
-            OmsPesoTalla, peso, 
-            sexo=sexo, 
-            talla_cm=talla_redondeada
-        ) or "No disponible"
-
-        peso_edad = buscar_clasificacion(
-            OmsPesoEdad, peso, 
-            sexo=sexo, 
-            meses=edad_meses
-        ) or "No disponible"
-
-        talla_edad = buscar_clasificacion(
-            OmsTallaEdad, talla, 
-            sexo=sexo, 
-            meses=edad_meses
-        ) or "No disponible"
-
-        # Calcular diagnóstico
-        if edad < 5:  # Criterios para menores de 5 años
+        # Diagnóstico basado en IMC y edad
+        if edad < 5:
             if imc < 14:
                 dx = "Desnutrición"
             elif imc < 17:
@@ -565,7 +572,7 @@ def calcular_indicadores_api(request):
                 dx = "Sobrepeso"
             else:
                 dx = "Obesidad"
-        else:  # Criterios para mayores de 5 años
+        else:
             if imc < 18.5:
                 dx = "Bajo peso"
             elif imc < 25:
@@ -580,20 +587,18 @@ def calcular_indicadores_api(request):
                 dx = "Obesidad III"
 
         return JsonResponse({
-            "peso_talla": peso_talla,
-            "peso_edad": peso_edad,
-            "talla_edad": talla_edad,
-            "imc": imc,
-            "dx": dx,
-            "status": "success"
+            'peso_talla': peso_talla,
+            'peso_edad': peso_edad,
+            'talla_edad': talla_edad,
+            'imc': imc,
+            'dx': dx,
+            'status': 'success'
         })
 
     except ValueError as e:
-        logger.error(f"Error en parámetros numéricos: {str(e)}")
-        return JsonResponse({"error": "Parámetros numéricos inválidos"}, status=400)
+        return JsonResponse({'error': f'Valores inválidos: {str(e)}'}, status=400)
     except Exception as e:
-        logger.error(f"Error al calcular indicadores: {str(e)}")
-        return JsonResponse({"error": f"Error interno: {str(e)}"}, status=500)
+        return JsonResponse({'error': f'Error interno: {str(e)}'}, status=500)
 
 
 class RegistrarSeguimientoTrabajadorView(FiltroCAIMixin, InitialFromModelMixin, RevisionCreateView):
@@ -701,7 +706,10 @@ class SeguimientosNinoView(FiltroCAIMixin, LoginRequiredMixin, View):
         if request.user.is_nutriologo and paciente.cai != request.user.cai:
             raise Http404("No autorizado")
 
-        seguimientos = SeguimientoTrimestral.objects.filter(paciente=paciente).order_by('fecha_valoracion')
+        seguimientos = SeguimientoTrimestral.objects.filter(
+            paciente=paciente,
+            is_deleted=False
+        ).order_by('fecha_valoracion')
 
         datos = {
             'fechas': [s.fecha_valoracion.strftime('%d/%m/%Y') for s in seguimientos if s.fecha_valoracion],
@@ -715,7 +723,6 @@ class SeguimientosNinoView(FiltroCAIMixin, LoginRequiredMixin, View):
             'seguimientos': seguimientos,
             'datos_json': json.dumps(datos),
         })
-
 
 class SeguimientosTrabajadorView(LoginRequiredMixin, View):
     def get(self, request, trabajador_id):
@@ -809,63 +816,66 @@ class EditarSeguimientoTrabajadorView(LoginRequiredMixin, View):
 
 class ListaSeguimientosView(LoginRequiredMixin, View):
     def get(self, request):
-        # Si es una solicitud AJAX, manejarla diferente
+        # Si es AJAX, responder con JSON
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return self.handle_ajax(request)
-        
-        # Cargar datos iniciales para renderizar el template
+
         return render(request, 'seguimientos_general.html', {
             'initial_data': {
                 'ninos': self.get_seguimientos_ninos(request),
                 'trabajadores': self.get_seguimientos_trabajadores(request)
             }
         })
-    
+
     def handle_ajax(self, request):
-        # Determinar si es búsqueda de niños o trabajadores
-        if 'term' in request.GET and 'type' in request.GET:
-            if request.GET['type'] == 'nino':
-                data = self.get_seguimientos_ninos(request, search_term=request.GET['term'])
-            else:
-                data = self.get_seguimientos_trabajadores(request, search_term=request.GET['term'])
-            
-            return JsonResponse({
-                'resultados': data,
-                'has_next': False
-            })
-        return JsonResponse({'error': 'Solicitud inválida'}, status=400)
-    
+        term = request.GET.get('term', '')
+        tipo = request.GET.get('type', '')
+
+        if tipo == 'nino':
+            data = self.get_seguimientos_ninos(request, search_term=term)
+        elif tipo == 'trabajador':
+            data = self.get_seguimientos_trabajadores(request, search_term=term)
+        else:
+            return JsonResponse({'error': 'Tipo inválido'}, status=400)
+
+        return JsonResponse({'resultados': data, 'has_next': False})
+
     def get_seguimientos_ninos(self, request, search_term=None):
-        qs = SeguimientoTrimestral.objects.select_related('paciente').order_by('paciente__id', '-fecha_valoracion')
+        qs = SeguimientoTrimestral.objects.select_related('paciente') \
+            .filter(is_deleted=False, paciente__is_deleted=False) \
+            .order_by('paciente__id', '-fecha_valoracion')
 
         if request.user.is_nutriologo and request.user.cai:
             qs = qs.filter(paciente__cai=request.user.cai)
-        
+
         if search_term:
             qs = qs.filter(paciente__nombre__icontains=search_term)
 
-        # Agrupar por paciente y tomar solo el seguimiento más reciente
-        vistos = {}
+        vistos = set()
         resultados = []
+
         for s in qs:
             if s.paciente.id not in vistos:
-                vistos[s.paciente.id] = True
+                vistos.add(s.paciente.id)
                 resultados.append({
-                    'id': s.paciente.id,
+                    'id': s.id,
+                    'paciente_id': s.paciente.id,
                     'nombre': s.paciente.nombre,
-                    'fecha': s.fecha_valoracion.strftime('%d/%m/%Y'),
+                    'fecha': s.fecha_valoracion.strftime('%d/%m/%Y') if s.fecha_valoracion else '',
                     'edad': calcular_edad_detallada(s.paciente.fecha_nacimiento, s.fecha_valoracion),
                     'peso': s.peso,
                     'talla': s.talla,
                     'imc': f"{s.imc:.2f}" if s.imc else '',
                     'dx': s.dx or '',
-                    'url': reverse('seguimientos_nino', kwargs={'nino_id': s.paciente.id})
+                    'url': reverse('seguimientos_nino', kwargs={'nino_id': s.paciente.id})  # ✅ CORREGIDO
                 })
+
         return resultados
 
-    
     def get_seguimientos_trabajadores(self, request, search_term=None):
-        qs = SeguimientoTrabajador.objects.select_related('trabajador').order_by('trabajador__id', '-fecha_valoracion')
+        qs = SeguimientoTrabajador.objects.select_related('trabajador') \
+            .filter(is_deleted=False, trabajador__is_deleted=False) \
+            .order_by('trabajador__id', '-fecha_valoracion')
 
         if request.user.is_nutriologo and request.user.cai:
             qs = qs.filter(trabajador__cai=request.user.cai)
@@ -873,27 +883,37 @@ class ListaSeguimientosView(LoginRequiredMixin, View):
         if search_term:
             qs = qs.filter(trabajador__nombre__icontains=search_term)
 
-        vistos = {}
+        vistos = set()
         resultados = []
+
         for s in qs:
             if s.trabajador.id not in vistos:
-                vistos[s.trabajador.id] = True
+                vistos.add(s.trabajador.id)
                 resultados.append({
-                    'id': s.trabajador.id,
+                    'id': s.id,
+                    'trabajador_id': s.trabajador.id,
                     'nombre': s.trabajador.nombre,
-                    'fecha': s.fecha_valoracion.strftime('%d/%m/%Y'),
-                    'edad': s.edad,
+                    'fecha': s.fecha_valoracion.strftime('%d/%m/%Y') if s.fecha_valoracion else '',
+                    'edad': s.trabajador.edad or '—',
                     'peso': s.peso,
                     'talla': s.talla,
                     'imc': f"{s.imc:.2f}" if s.imc else '',
                     'dx': s.dx or '',
                     'url': reverse('seguimientos_trabajador', kwargs={'trabajador_id': s.trabajador.id})
                 })
+
         return resultados
 
 class EliminarSeguimientoNinoView(LoginRequiredMixin, View):
+    def get_object(self, pk):
+        return get_object_or_404(SeguimientoTrimestral, pk=pk)
+
     def get(self, request, pk):
-        seguimiento = get_object_or_404(SeguimientoTrimestral.objects.filter(is_deleted=False), pk=pk)
+        seguimiento = self.get_object(pk)
+
+        if seguimiento.is_deleted:
+            messages.warning(request, "Este seguimiento ya fue eliminado.")
+            return redirect('seguimientos_general')
 
         if request.user.is_nutriologo and seguimiento.paciente.cai != request.user.cai:
             return HttpResponseForbidden("No tienes permiso para eliminar este seguimiento.")
@@ -901,12 +921,16 @@ class EliminarSeguimientoNinoView(LoginRequiredMixin, View):
         return render(request, 'eliminar_seguimiento.html', {'seguimiento': seguimiento})
 
     def post(self, request, pk):
-        seguimiento = get_object_or_404(SeguimientoTrimestral.objects.filter(is_deleted=False), pk=pk)
+        seguimiento = self.get_object(pk)
+
+        if seguimiento.is_deleted:
+            messages.warning(request, "Este seguimiento ya fue eliminado.")
+            return redirect('seguimientos_general')
 
         if request.user.is_nutriologo and seguimiento.paciente.cai != request.user.cai:
             return HttpResponseForbidden("No tienes permiso para eliminar este seguimiento.")
 
-        seguimiento.deleted_by = request.user # Auditoría
+        seguimiento.deleted_by = request.user
         seguimiento.is_deleted = True
         seguimiento.save()
         messages.success(request, "Seguimiento eliminado correctamente.")
@@ -1236,39 +1260,39 @@ def calcular_edad_detallada(nacimiento, valoracion):
     diferencia = relativedelta(valoracion, nacimiento)
     return f"{diferencia.years} años, {diferencia.months} meses"
 
-
 def buscar_seguimientos_nino_ajax(request):
     termino = request.GET.get('term', '')
 
-    base_queryset = SeguimientoTrimestral.objects.select_related('paciente').filter(is_deleted=False, paciente__is_deleted=False)
+    qs = SeguimientoTrimestral.objects.select_related('paciente').filter(
+        is_deleted=False,
+        paciente__is_deleted=False
+    ).order_by('paciente__id', '-fecha_valoracion')
 
     if request.user.is_nutriologo and request.user.cai:
-        base_queryset = base_queryset.filter(paciente__cai=request.user.cai)
+        qs = qs.filter(paciente__cai=request.user.cai)
 
-    latest_dates = base_queryset.values('paciente').annotate(
-        max_fecha=Max('fecha_valoracion')
-    ).values('paciente', 'max_fecha')
+    if termino:
+        qs = qs.filter(paciente__nombre__icontains=termino)
 
-    queryset = base_queryset.filter(
-        paciente__nombre__icontains=termino,
-        fecha_valoracion__in=Subquery(
-            latest_dates.filter(paciente=OuterRef('paciente')).values('max_fecha')
-        )
-    ).order_by('paciente__nombre')
+    # Agrupar manualmente por paciente y tomar solo el último válido
+    vistos = set()
+    resultados = []
+    for s in qs:
+        if s.paciente.id not in vistos:
+            vistos.add(s.paciente.id)
+            resultados.append({
+                'id': s.id,
+                'paciente_id': s.paciente.id,
+                'nombre': s.paciente.nombre,
+                'fecha': s.fecha_valoracion.strftime('%d/%m/%Y') if s.fecha_valoracion else '',
+                'edad': calcular_edad_detallada(s.paciente.fecha_nacimiento, s.fecha_valoracion),
+                'peso': s.peso,
+                'talla': s.talla,
+                'imc': s.imc,
+                'dx': s.dx or ''
+            })
 
-    data = [{
-        'id': s.id,
-        'paciente_id': s.paciente.id,
-        'nombre': s.paciente.nombre,
-        'fecha': s.fecha_valoracion.strftime('%d/%m/%Y') if s.fecha_valoracion else '',
-        'edad': calcular_edad_detallada(s.paciente.fecha_nacimiento, s.fecha_valoracion),
-        'peso': s.peso,
-        'talla': s.talla,
-        'imc': s.imc,
-        'dx': s.dx or ''
-    } for s in queryset]
-
-    return JsonResponse({'resultados': data})
+    return JsonResponse({'resultados': resultados})
 
 def buscar_seguimientos_trabajador_ajax(request):
     termino = request.GET.get('term', '')
@@ -1307,7 +1331,10 @@ def buscar_seguimientos_trabajador_ajax(request):
 
 def generar_pdf_paciente(request, paciente_id):
     paciente = get_object_or_404(Paciente, pk=paciente_id)
-    seguimientos = SeguimientoTrimestral.objects.filter(paciente=paciente).order_by('fecha_valoracion')
+    seguimientos = SeguimientoTrimestral.objects.filter(
+        paciente=paciente,
+        is_deleted=False
+    ).order_by('fecha_valoracion')
     
     # Función para manejar imágenes
     def get_image_base64(relative_static_path):
@@ -1672,57 +1699,3 @@ def generar_pdf_trabajador(request, trabajador_id):
     filename = f"reporte_{trabajador.nombre.replace(' ', '_')}.pdf"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
-
-#-------------------
-# Funciones de desviación estándar OMS
-#-------------------
-
-def obtener_desviacion_oms_peso_edad(sexo, edad, peso):
-    try:
-        fila = OmsPesoEdad.objects.get(sexo=sexo, meses=round(edad * 12))  # ✅ corregido
-        diferencias = {
-            'SD -3': abs(peso - fila.sd_m3),
-            'SD -2': abs(peso - fila.sd_m2),
-            'SD -1': abs(peso - fila.sd_m1),
-            'Mediana': abs(peso - fila.mediana),
-            'SD +1': abs(peso - fila.sd_1),
-            'SD +2': abs(peso - fila.sd_2),
-            'SD +3': abs(peso - fila.sd_3),
-        }
-        return min(diferencias, key=diferencias.get)
-    except OmsPesoEdad.DoesNotExist:
-        return 'No encontrado'
-
-
-def obtener_desviacion_oms_peso_talla(sexo, talla_cm, peso):
-    try:
-        fila = OmsPesoTalla.objects.get(sexo=sexo, talla_cm=round(talla_cm, 1))
-        diferencias = {
-            'SD -3': abs(peso - fila.sd_m3),
-            'SD -2': abs(peso - fila.sd_m2),
-            'SD -1': abs(peso - fila.sd_m1),
-            'Mediana': abs(peso - fila.mediana),
-            'SD +1': abs(peso - fila.sd_1),
-            'SD +2': abs(peso - fila.sd_2),
-            'SD +3': abs(peso - fila.sd_3),
-        }
-        return min(diferencias, key=diferencias.get)
-    except OmsPesoTalla.DoesNotExist:
-        return 'No encontrado'
-
-
-def obtener_desviacion_oms_talla_edad(sexo, edad, talla_cm):
-    try:
-        fila = OmsTallaEdad.objects.get(sexo=sexo, meses=round(edad * 12))  # ✅ corregido
-        diferencias = {
-            'SD -3': abs(talla_cm - fila.sd_m3),
-            'SD -2': abs(talla_cm - fila.sd_m2),
-            'SD -1': abs(talla_cm - fila.sd_m1),
-            'Mediana': abs(talla_cm - fila.mediana),
-            'SD +1': abs(talla_cm - fila.sd_1),
-            'SD +2': abs(talla_cm - fila.sd_2),
-            'SD +3': abs(talla_cm - fila.sd_3),
-        }
-        return min(diferencias, key=diferencias.get)
-    except OmsTallaEdad.DoesNotExist:
-        return 'No encontrado'

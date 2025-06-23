@@ -5,6 +5,8 @@ from reversion import create_revision, set_user, set_comment
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ImproperlyConfigured
+from nutricion import models
+from nutricion.models import OmsPesoEdad, OmsPesoTalla, OmsTallaEdad
 
 
 class RevisionMixin:
@@ -163,3 +165,65 @@ class FiltroCAIMixin:
                 return queryset.none()  # Fallback de seguridad
 
         return queryset
+    
+def obtener_desviacion(valor, fila):
+    if valor < fila.sd_m3:
+        return '< -3 SD'
+    elif valor < fila.sd_m2:
+        return '-3 a -2 SD'
+    elif valor < fila.sd_m1:
+        return '-2 a -1 SD'
+    elif valor < fila.mediana:
+        return '-1 a Mediana'
+    elif valor == fila.mediana:
+        return 'Mediana'
+    elif valor < fila.sd_1:
+        return 'Mediana a +1 SD'
+    elif valor < fila.sd_2:
+        return '+1 a +2 SD'
+    elif valor < fila.sd_3:
+        return '+2 a +3 SD'
+    else:
+        return '> +3 SD'
+
+
+def obtener_desviacion_oms_peso_edad(sexo, edad_anios, peso):
+    meses = round(edad_anios * 12)
+    fila = (
+        OmsPesoEdad.objects
+        .filter(sexo=sexo, meses__lte=meses)
+        .order_by('-meses')
+        .first()
+    )
+    if not fila:
+        print(f"⚠️ No se encontró fila para {sexo} y {meses} meses")
+        return "Sin datos"
+    return obtener_desviacion(peso, fila)
+
+
+def obtener_desviacion_oms_talla_edad(sexo, edad_anios, talla):
+    meses = round(edad_anios * 12)
+    fila = (
+        OmsTallaEdad.objects
+        .filter(sexo=sexo, meses__lte=meses)
+        .order_by('-meses')
+        .first()
+    )
+    if not fila:
+        print(f"⚠️ No se encontró fila para {sexo} y {meses} meses")
+        return "Sin datos"
+    return obtener_desviacion(talla, fila)
+
+
+def obtener_desviacion_oms_peso_talla(sexo, talla, peso):
+    talla = round(talla, 1)
+    fila = (
+        OmsPesoTalla.objects
+        .filter(sexo=sexo, talla_cm__lte=talla)
+        .order_by('-talla_cm')
+        .first()
+    )
+    if not fila:
+        print(f"⚠️ No se encontró fila para {sexo} y talla {talla}")
+        return "Sin datos"
+    return obtener_desviacion(peso, fila)

@@ -14,11 +14,30 @@
         color: white;
         display: inline-block;
     }
-    .badge.severe { background-color: #d9534f; }       /* Rojo fuerte */
-    .badge.moderate { background-color: #f0ad4e; }     /* Naranja */
-    .badge.normal { background-color: #5cb85c; }       /* Verde */
-    .badge.overweight { background-color: #0275d8; }   /* Azul */
-    .badge.high { background-color: #6f42c1; }         /* Morado */
+    .badge.severe { background-color: #d9534f; }
+    .badge.moderate { background-color: #f0ad4e; }
+    .badge.normal { background-color: #5cb85c; }
+    .badge.overweight { background-color: #0275d8; }
+    .badge.high { background-color: #6f42c1; }
+
+    .btn-eliminar {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    .btn-eliminar:hover {
+        background-color: #c82333;
+    }
+
+    .btn-eliminar i {
+        margin-right: 4px;
+    }
 </style>
 {% endblock %}
 
@@ -40,6 +59,7 @@
                         <th>P/E</th>
                         <th>T/E</th>
                         <th>P/T</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -54,6 +74,14 @@
                         <td>{{ s.indicador_peso_edad }}</td>
                         <td>{{ s.indicador_talla_edad }}</td>
                         <td>{{ s.indicador_peso_talla }}</td>
+                        <td>
+                            <form action="{% url 'eliminar_seguimiento_nino' s.id %}" method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este seguimiento?');">
+                                    <i class="fas fa-trash-alt"></i> Eliminar
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

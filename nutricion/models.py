@@ -52,7 +52,7 @@ class AuditoriaMixin(models.Model):
 class Paciente(AuditoriaMixin):
     nombre = models.CharField(max_length=255, verbose_name="Nombre completo")
     edad = models.FloatField(verbose_name="Edad (años)")
-    curp = models.CharField(max_length=18, unique=True, blank=True, null=True, verbose_name="CURP")
+    curp = models.CharField(max_length=18, blank=True, null=True, verbose_name="CURP")
     sexo = models.CharField(max_length=1, choices=[('M', 'Masculino'), ('F', 'Femenino')], verbose_name="Sexo")
     cai = models.CharField(max_length=100, choices=CAI_CHOICES, verbose_name="CAI")
     peso = models.FloatField(verbose_name="Peso (kg)", help_text="Peso en kilogramos")
