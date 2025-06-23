@@ -1381,30 +1381,85 @@ def buscar_seguimientos_trabajador_ajax(request):
 #Implemenatción de reportes con weasyprint
 
 def generar_grafica_oms_completa(seguimientos, tipo="peso", sexo="M"):
-    """Genera una gráfica simulada tipo OMS con percentiles y los datos del paciente"""
+    import matplotlib.pyplot as plt
+    from nutricion.models import OmsPesoEdad, OmsTallaEdad, OmsPesoTalla
+    from dateutil.relativedelta import relativedelta
+
     if not seguimientos:
         return None
 
-    edades_meses = [(s.fecha_valoracion - s.paciente.fecha_nacimiento).days // 30 for s in seguimientos]
-    valores = [getattr(s, tipo) for s in seguimientos]
+    # Seleccionar modelo y ejes
+    if tipo == "peso":
+        modelo = OmsPesoEdad
+        campo_x = "meses"
+        campo_y = "peso"
+    elif tipo == "talla":
+        modelo = OmsTallaEdad
+        campo_x = "meses"
+        campo_y = "talla"
+    elif tipo == "peso_talla":
+        modelo = OmsPesoTalla
+        campo_x = "talla_cm"
+        campo_y = "peso"
+    else:
+        return None
 
-    x = list(range(0, 61, 3))  # Edad en meses
-    percentiles = {
-        'P3':  [10 + 0.2*i for i in range(len(x))],
-        'P15': [11 + 0.25*i for i in range(len(x))],
-        'P50': [12 + 0.3*i for i in range(len(x))],
-        'P85': [13 + 0.35*i for i in range(len(x))],
-        'P97': [14 + 0.4*i for i in range(len(x))],
+    registros = modelo.objects.filter(sexo=sexo.upper()).order_by(campo_x)
+    x_vals = [getattr(r, campo_x) for r in registros]
+    curvas = {
+        '-3 SD': [r.sd_m3 for r in registros],
+        '-2 SD': [r.sd_m2 for r in registros],
+        '-1 SD': [r.sd_m1 for r in registros],
+        'Mediana': [r.mediana for r in registros],
+        '+1 SD': [r.sd_1 for r in registros],
+        '+2 SD': [r.sd_2 for r in registros],
+        '+3 SD': [r.sd_3 for r in registros],
     }
 
+    colores = {
+        '-3 SD': '#800000',
+        '-2 SD': '#FF6600',
+        '-1 SD': '#FFD700',
+        'Mediana': '#9ACD32',
+        '+1 SD': '#FFD700',
+        '+2 SD': '#FF6600',
+        '+3 SD': '#800000',
+    }
+
+    # Puntos del paciente
+    puntos_x = []
+    puntos_y = []
+
+    for s in seguimientos:
+        if tipo == "peso":
+            edad = relativedelta(s.fecha_valoracion, s.paciente.fecha_nacimiento)
+            edad_meses = round((edad.years * 12 + edad.months), 2)
+            if s.peso:
+                puntos_x.append(edad_meses)
+                puntos_y.append(s.peso)
+        elif tipo == "talla":
+            edad = relativedelta(s.fecha_valoracion, s.paciente.fecha_nacimiento)
+            edad_meses = round((edad.years * 12 + edad.months), 2)
+            if s.talla:
+                puntos_x.append(edad_meses)
+                puntos_y.append(s.talla)
+        elif tipo == "peso_talla":
+            if s.talla and s.peso:
+                puntos_x.append(round(s.talla, 1))
+                puntos_y.append(s.peso)
+
+    # Dibujar
     plt.figure(figsize=(10, 5))
-    for label, y in percentiles.items():
-        plt.plot(x, y, label=label, linestyle='--')
-    plt.scatter(edades_meses, valores, label='Paciente', color='red', zorder=5)
-    plt.title(f'{tipo.capitalize()} para la Edad (según OMS)', fontsize=14)
-    plt.xlabel("Edad (meses)")
-    plt.ylabel(f"{tipo.capitalize()}")
-    plt.grid(True, linestyle='--', alpha=0.5)
+    for label, y_vals in curvas.items():
+        plt.plot(x_vals, y_vals, label=label, color=colores[label], linewidth=2)
+
+    if puntos_x:
+        plt.plot(puntos_x, puntos_y, 'o-', color='black', label='Paciente')
+
+    plt.title(f'{tipo.replace("_", " ").capitalize()} según OMS')
+    plt.xlabel("Edad (meses)" if "edad" in campo_x else "Talla (cm)")
+    plt.ylabel("Peso (kg)" if tipo in ["peso", "peso_talla"] else "Talla (cm)")
+    plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend()
     plt.tight_layout()
 
@@ -1412,7 +1467,6 @@ def generar_grafica_oms_completa(seguimientos, tipo="peso", sexo="M"):
     plt.savefig(buffer, format='png', dpi=150)
     plt.close()
     return base64.b64encode(buffer.getvalue()).decode('utf-8')
-
 
 def generar_pdf_paciente(request, paciente_id):
     paciente = get_object_or_404(Paciente, pk=paciente_id)
@@ -1432,43 +1486,19 @@ def generar_pdf_paciente(request, paciente_id):
     logo_base64 = get_image_base64('nutricion/images/dofyas.png')
     fondo_base64 = get_image_base64('nutricion/images/fondodif2.png')
 
-    fechas = [s.fecha_valoracion for s in seguimientos]
-    pesos = [s.peso for s in seguimientos]
-    tallas = [s.talla for s in seguimientos]
-    imcs = [s.imc for s in seguimientos]
-
-    def generar_grafica_simple(datos, fechas, titulo, ylabel, color):
-        if not datos or not fechas:
-            return None
-        plt.figure(figsize=(10, 5))
-        plt.plot(fechas, datos, marker='o', color=color, linewidth=2)
-        plt.title(titulo)
-        plt.xlabel("Fecha")
-        plt.ylabel(ylabel)
-        plt.grid(True, linestyle='--', alpha=0.7)
-        plt.xticks(rotation=45)
-        plt.tight_layout()
-        buffer = io.BytesIO()
-        plt.savefig(buffer, format='png', dpi=150)
-        plt.close()
-        return base64.b64encode(buffer.getvalue()).decode('utf-8')
-
-    grafica_peso_base64 = generar_grafica_simple(pesos, fechas, "Evolución de Peso", "Peso (kg)", '#4e73df')
-    grafica_talla_base64 = generar_grafica_simple(tallas, fechas, "Evolución de Talla", "Talla (cm)", '#36b9cc') if any(tallas) else None
-    grafica_imc_base64 = generar_grafica_simple(imcs, fechas, "Evolución del IMC", "IMC", '#1abc9c') if any(imcs) else None
-
-    # Nueva gráfica tipo OMS
+    # Gráficas OMS
     grafica_peso_oms_base64 = generar_grafica_oms_completa(seguimientos, tipo="peso", sexo=paciente.sexo)
+    grafica_talla_oms_base64 = generar_grafica_oms_completa(seguimientos, tipo="talla", sexo=paciente.sexo)
+    grafica_peso_talla_oms_base64 = generar_grafica_oms_completa(seguimientos, tipo="peso_talla", sexo=paciente.sexo)
 
     html_string = render_to_string('reporte_paciente_pdf.html', {
         'paciente': paciente,
         'seguimientos': seguimientos,
         'logo_base64': logo_base64,
         'fondo_base64': fondo_base64,
-        'grafica_peso_base64': grafica_peso_base64,
-        'grafica_talla_base64': grafica_talla_base64,
-        'grafica_imc_base64': grafica_imc_base64,
         'grafica_peso_oms_base64': grafica_peso_oms_base64,
+        'grafica_talla_oms_base64': grafica_talla_oms_base64,
+        'grafica_peso_talla_oms_base64': grafica_peso_talla_oms_base64,
         'pdf_mode': True
     })
 
@@ -1504,6 +1534,7 @@ def generar_pdf_paciente(request, paciente_id):
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="reporte_{paciente.nombre.replace(" ", "_")}.pdf"'
     return response
+
 #------------ Generar PDF para trabajador-------------
 def generar_pdf_trabajador(request, trabajador_id):
     trabajador = get_object_or_404(Trabajador, pk=trabajador_id)

@@ -206,28 +206,28 @@
             {% endif %}
         </div>
 
-        {% if grafica_peso_base64 or grafica_talla_base64 or grafica_imc_base64 %}
+        {% if grafica_peso_oms_base64 or grafica_talla_oms_base64 or grafica_peso_talla_oms_base64 %}
         <div class="seccion">
-            <h2><i class="fas fa-chart-line"></i> Evolución Nutricional</h2>
+            <h2><i class="fas fa-chart-line"></i> Gráficas OMS</h2>
             <div class="graficas-grid">
-                {% if grafica_peso_base64 %}
+                {% if grafica_peso_oms_base64 %}
                 <div class="grafica-container">
-                    <h4>Peso (kg)</h4>
-                    <img src="data:image/png;base64,{{ grafica_peso_base64 }}" alt="Gráfica de evolución de peso">
+                    <h4>Peso para la Edad</h4>
+                    <img src="data:image/png;base64,{{ grafica_peso_oms_base64 }}" alt="Gráfica peso edad OMS">
                 </div>
                 {% endif %}
-                
-                {% if grafica_talla_base64 %}
+
+                {% if grafica_talla_oms_base64 %}
                 <div class="grafica-container">
-                    <h4>Talla (cm)</h4>
-                    <img src="data:image/png;base64,{{ grafica_talla_base64 }}" alt="Gráfica de evolución de talla">
+                    <h4>Talla para la Edad</h4>
+                    <img src="data:image/png;base64,{{ grafica_talla_oms_base64 }}" alt="Gráfica talla edad OMS">
                 </div>
                 {% endif %}
-                
-                {% if grafica_imc_base64 %}
+
+                {% if grafica_peso_talla_oms_base64 %}
                 <div class="grafica-container">
-                    <h4>IMC</h4>
-                    <img src="data:image/png;base64,{{ grafica_imc_base64 }}" alt="Gráfica de evolución de IMC">
+                    <h4>Peso para la Talla</h4>
+                    <img src="data:image/png;base64,{{ grafica_peso_talla_oms_base64 }}" alt="Gráfica peso talla OMS">
                 </div>
                 {% endif %}
             </div>
