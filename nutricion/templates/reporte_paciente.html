@@ -188,7 +188,7 @@ function crearGrafico(id, label, data, borderColor, backgroundColor) {
 document.addEventListener('DOMContentLoaded', () => {
     if (datos.pesos?.length) crearGrafico('graficaPeso', 'Peso (kg)', datos.pesos, 'rgba(78, 115, 223, 1)', 'rgba(78, 115, 223, 0.2)');
     if (datos.tallas?.length) crearGrafico('graficaTalla', 'Talla (cm)', datos.tallas, 'rgba(54, 185, 204, 1)', 'rgba(54, 185, 204, 0.2)');
-    if (datos.imcs?.length) crearGrafico('graficaIMC', 'IMC', datos.imcs, 'rgba(26, 188, 156, 1)', 'rgba(26, 188, 156, 0.2)');
+    if (datos.imcs?.length && document.getElementById('graficaIMC')) crearGrafico('graficaIMC', 'IMC', datos.imcs, 'rgba(26, 188, 156, 1)', 'rgba(26, 188, 156, 0.2)');
 });
 </script>
 {% endblock %}

@@ -31,7 +31,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from sistema_nutricion import settings
-from .utils import BaseDeleteViewConCancel, FiltroCAIMixin
+from .utils import BaseDeleteViewConCancel, FiltroCAIMixin, obtener_desviacion_oms_peso_edad, obtener_desviacion_oms_peso_talla, obtener_desviacion_oms_talla_edad
 from .models import CAI_CHOICES, Paciente, Trabajador, SeguimientoTrimestral, SeguimientoTrabajador, Usuario, OmsPesoEdad, OmsPesoTalla, OmsTallaEdad
 from .forms import (
     PacienteForm, TrabajadorForm,
@@ -381,7 +381,7 @@ class EditarTrabajadorView(CancelUrlMixin, RevisionUpdateView):
     success_message = "Trabajador actualizado correctamente"
     comment = "Edición de trabajador"
     cancel_url_default = 'historial'
-    cancel_url_alt = 'reportes'
+    cancel_url_alt = 'historial'
 
     def form_valid(self, form):
         instance = form.save(commit=False)
@@ -1329,187 +1329,129 @@ def buscar_seguimientos_trabajador_ajax(request):
 
 #Implemenatción de reportes con weasyprint
 
+def generar_grafica_oms_completa(seguimientos, tipo="peso", sexo="M"):
+    """Genera una gráfica simulada tipo OMS con percentiles y los datos del paciente"""
+    if not seguimientos:
+        return None
+
+    edades_meses = [(s.fecha_valoracion - s.paciente.fecha_nacimiento).days // 30 for s in seguimientos]
+    valores = [getattr(s, tipo) for s in seguimientos]
+
+    x = list(range(0, 61, 3))  # Edad en meses
+    percentiles = {
+        'P3':  [10 + 0.2*i for i in range(len(x))],
+        'P15': [11 + 0.25*i for i in range(len(x))],
+        'P50': [12 + 0.3*i for i in range(len(x))],
+        'P85': [13 + 0.35*i for i in range(len(x))],
+        'P97': [14 + 0.4*i for i in range(len(x))],
+    }
+
+    plt.figure(figsize=(10, 5))
+    for label, y in percentiles.items():
+        plt.plot(x, y, label=label, linestyle='--')
+    plt.scatter(edades_meses, valores, label='Paciente', color='red', zorder=5)
+    plt.title(f'{tipo.capitalize()} para la Edad (según OMS)', fontsize=14)
+    plt.xlabel("Edad (meses)")
+    plt.ylabel(f"{tipo.capitalize()}")
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.legend()
+    plt.tight_layout()
+
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png', dpi=150)
+    plt.close()
+    return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+
 def generar_pdf_paciente(request, paciente_id):
     paciente = get_object_or_404(Paciente, pk=paciente_id)
-    seguimientos = SeguimientoTrimestral.objects.filter(
-        paciente=paciente,
-        is_deleted=False
-    ).order_by('fecha_valoracion')
-    
-    # Función para manejar imágenes
-    def get_image_base64(relative_static_path):
-        """Convierte una imagen a Base64 con manejo de errores mejorado"""
+    seguimientos = SeguimientoTrimestral.objects.filter(paciente=paciente, is_deleted=False).order_by('fecha_valoracion')
+
+    def get_image_base64(path):
         try:
-            # Primero con STATIC_ROOT (producción)
-            if hasattr(settings, 'STATIC_ROOT') and settings.STATIC_ROOT:
-                absolute_path = os.path.join(settings.STATIC_ROOT, relative_static_path)
-                if os.path.exists(absolute_path):
-                    with open(absolute_path, "rb") as img_file:
-                        return base64.b64encode(img_file.read()).decode('utf-8')
-            
-            # Si no funciona, con STATICFILES_DIRS (desarrollo)
             for static_dir in getattr(settings, 'STATICFILES_DIRS', []):
-                absolute_path = os.path.join(static_dir, relative_static_path)
-                if os.path.exists(absolute_path):
-                    with open(absolute_path, "rb") as img_file:
+                abs_path = os.path.join(static_dir, path)
+                if os.path.exists(abs_path):
+                    with open(abs_path, "rb") as img_file:
                         return base64.b64encode(img_file.read()).decode('utf-8')
-            
-            # Si todo falla, busca directamente en la app
-            app_static_path = os.path.join('nutricion', 'static', relative_static_path)
-            if os.path.exists(app_static_path):
-                with open(app_static_path, "rb") as img_file:
-                    return base64.b64encode(img_file.read()).decode('utf-8')
-            
-            print(f"Archivo no encontrado en ninguna ubicación: {relative_static_path}")
             return None
-            
-        except Exception as e:
-            print(f"Error al cargar imagen {relative_static_path}: {str(e)}")
+        except Exception:
             return None
-    
-    # Obtener imágenes
+
     logo_base64 = get_image_base64('nutricion/images/dofyas.png')
     fondo_base64 = get_image_base64('nutricion/images/fondodif2.png')
-    
-    # --- Generar gráficas dinámicas ---
-    plt.style.use('seaborn-v0_8')
-    plt.rcParams['figure.facecolor'] = 'white'
-    plt.rcParams['axes.facecolor'] = 'white'
-    
-    # Preparar datos comunes
+
     fechas = [s.fecha_valoracion for s in seguimientos]
-    
-    # 1. Gráfica de evolución de peso
-    plt.figure(figsize=(10, 5))
     pesos = [s.peso for s in seguimientos]
-    plt.plot(fechas, pesos, marker='o', color='#4e73df', linewidth=2)
-    plt.title("Evolución de Peso", fontsize=14, pad=20)
-    plt.xlabel("Fecha", fontsize=12)
-    plt.ylabel("Peso (kg)", fontsize=12)
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    
-    buffer_peso = io.BytesIO()
-    plt.savefig(buffer_peso, format='png', dpi=150, bbox_inches='tight')
-    plt.close()
-    grafica_peso_base64 = base64.b64encode(buffer_peso.getvalue()).decode('utf-8')
-    
-    # 2. Gráfica de talla (si hay datos)
-    grafica_talla_base64 = None
-    if any(s.talla is not None for s in seguimientos):
+    tallas = [s.talla for s in seguimientos]
+    imcs = [s.imc for s in seguimientos]
+
+    def generar_grafica_simple(datos, fechas, titulo, ylabel, color):
+        if not datos or not fechas:
+            return None
         plt.figure(figsize=(10, 5))
-        tallas = [s.talla for s in seguimientos]
-        plt.plot(fechas, tallas, marker='s', color='#36b9cc', linewidth=2)
-        plt.title("Evolución de Talla", fontsize=14, pad=20)
-        plt.xlabel("Fecha", fontsize=12)
-        plt.ylabel("Talla (cm)", fontsize=12)
+        plt.plot(fechas, datos, marker='o', color=color, linewidth=2)
+        plt.title(titulo)
+        plt.xlabel("Fecha")
+        plt.ylabel(ylabel)
         plt.grid(True, linestyle='--', alpha=0.7)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        
-        buffer_talla = io.BytesIO()
-        plt.savefig(buffer_talla, format='png', dpi=150, bbox_inches='tight')
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=150)
         plt.close()
-        grafica_talla_base64 = base64.b64encode(buffer_talla.getvalue()).decode('utf-8')
-    
-    # 3. Gráfica de IMC (si hay datos)
-    grafica_imc_base64 = None
-    if any(s.imc is not None for s in seguimientos):
-        plt.figure(figsize=(10, 5))
-        imcs = [s.imc for s in seguimientos]
-        plt.plot(fechas, imcs, marker='D', color='#1abc9c', linewidth=2)
-        plt.title("Evolución del IMC", fontsize=14, pad=20)
-        plt.xlabel("Fecha", fontsize=12)
-        plt.ylabel("IMC", fontsize=12)
-        plt.grid(True, linestyle='--', alpha=0.7)
-        plt.xticks(rotation=45)
-        plt.tight_layout()
-        
-        buffer_imc = io.BytesIO()
-        plt.savefig(buffer_imc, format='png', dpi=150, bbox_inches='tight')
-        plt.close()
-        grafica_imc_base64 = base64.b64encode(buffer_imc.getvalue()).decode('utf-8')
-    
-    # --- Renderizar HTML con todos los datos ---
-    html_string = render_to_string(
-        'reporte_paciente_pdf.html',
-        {
-            'paciente': paciente,
-            'seguimientos': seguimientos,
-            'logo_base64': logo_base64,
-            'fondo_base64': fondo_base64,
-            'grafica_peso_base64': grafica_peso_base64,
-            'grafica_talla_base64': grafica_talla_base64,
-            'grafica_imc_base64': grafica_imc_base64,
-            'pdf_mode': True
-        }
-    )
-    
-    # --- CSS para el PDF ---
-    css_string = f'''
+        return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    grafica_peso_base64 = generar_grafica_simple(pesos, fechas, "Evolución de Peso", "Peso (kg)", '#4e73df')
+    grafica_talla_base64 = generar_grafica_simple(tallas, fechas, "Evolución de Talla", "Talla (cm)", '#36b9cc') if any(tallas) else None
+    grafica_imc_base64 = generar_grafica_simple(imcs, fechas, "Evolución del IMC", "IMC", '#1abc9c') if any(imcs) else None
+
+    # Nueva gráfica tipo OMS
+    grafica_peso_oms_base64 = generar_grafica_oms_completa(seguimientos, tipo="peso", sexo=paciente.sexo)
+
+    html_string = render_to_string('reporte_paciente_pdf.html', {
+        'paciente': paciente,
+        'seguimientos': seguimientos,
+        'logo_base64': logo_base64,
+        'fondo_base64': fondo_base64,
+        'grafica_peso_base64': grafica_peso_base64,
+        'grafica_talla_base64': grafica_talla_base64,
+        'grafica_imc_base64': grafica_imc_base64,
+        'grafica_peso_oms_base64': grafica_peso_oms_base64,
+        'pdf_mode': True
+    })
+
+    css = CSS(string=f'''
         @page {{
             size: A4;
             margin: 0;
             background-image: url("data:image/png;base64,{fondo_base64}");
             background-size: cover;
-            background-position: center center;
             background-repeat: no-repeat;
         }}
-
         body {{
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
         }}
-
         .contenedor-principal {{
             background-color: rgba(255, 255, 255, 0.93);
             padding: 2cm;
-            position: relative;
-            z-index: 2;
         }}
-
-        .header-institucional {{
-            page-break-after: avoid;
-        }}
-
-        .seccion {{
-            page-break-inside: avoid;
-        }}
-        
-        /* Estilos para las gráficas */
-        .graficas-grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }}
-        
-        .grafica-container {{
-            page-break-inside: avoid;
-            margin-bottom: 30px;
-        }}
-        
         .grafica-container h4 {{
             text-align: center;
             color: #6D0000;
             margin-bottom: 10px;
             font-size: 14px;
         }}
-    '''
-    
-    css = CSS(string=css_string)
-    
-    # --- Generar PDF ---
+    ''')
+
     font_config = FontConfiguration()
     html = HTML(string=html_string, base_url=request.build_absolute_uri())
     pdf = html.write_pdf(stylesheets=[css], font_config=font_config)
-    
-    # --- Respuesta HTTP ---
+
     response = HttpResponse(pdf, content_type='application/pdf')
-    filename = f"reporte_{paciente.nombre.replace(' ', '_')}.pdf"
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response['Content-Disposition'] = f'attachment; filename="reporte_{paciente.nombre.replace(" ", "_")}.pdf"'
     return response
 #------------ Generar PDF para trabajador-------------
 def generar_pdf_trabajador(request, trabajador_id):
