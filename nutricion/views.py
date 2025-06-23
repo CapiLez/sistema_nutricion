@@ -1096,51 +1096,102 @@ class ReporteBaseView(LoginRequiredMixin, View):
             print(f"Error en ReporteBaseView: {str(e)}")  # Debug
             raise
 
-class ReportePacienteView(ReporteBaseView):
+class ReportePacienteView(View):
     template_name = 'reporte_paciente.html'
     model = Paciente
     seguimiento_model = SeguimientoTrimestral
     id_kwarg = 'pk'
 
+    def get_datos_oms(self, modelo, campo_x, sexo):
+        filas = modelo.objects.filter(sexo=sexo).order_by(campo_x)
+        etiquetas = [getattr(f, campo_x) for f in filas]
+        curvas = {
+            '-3 SD': [f.sd_m3 for f in filas],
+            '-2 SD': [f.sd_m2 for f in filas],
+            '-1 SD': [f.sd_m1 for f in filas],
+            'Mediana': [f.mediana for f in filas],
+            '+1 SD': [f.sd_1 for f in filas],
+            '+2 SD': [f.sd_2 for f in filas],
+            '+3 SD': [f.sd_3 for f in filas],
+        }
+        return etiquetas, curvas
+
     def get(self, request, *args, **kwargs):
         obj_id = kwargs.get(self.id_kwarg)
         try:
-            obj = self.model.objects.get(pk=obj_id, is_deleted=False)
-
-            # Obtener seguimientos ordenados por fecha
+            paciente = self.model.objects.get(pk=obj_id, is_deleted=False)
             seguimientos = self.seguimiento_model.objects.filter(
-                paciente=obj,
+                paciente=paciente,
                 is_deleted=False
             ).order_by('fecha_valoracion')
 
-            # Calcular edad basada en el último seguimiento
-            if seguimientos.exists() and obj.fecha_nacimiento:
+            sexo = paciente.sexo.upper()
+
+            # Calcular edad detallada a partir del último seguimiento
+            if seguimientos.exists() and paciente.fecha_nacimiento:
                 fecha_base = seguimientos.last().fecha_valoracion
-                edad_rd = relativedelta(fecha_base, obj.fecha_nacimiento)
+                edad_rd = relativedelta(fecha_base, paciente.fecha_nacimiento)
                 edad_actualizada = f"{edad_rd.years} años, {edad_rd.months} meses"
             else:
                 edad_actualizada = "Edad no disponible"
 
+            # Datos del paciente por seguimiento
+            fechas = []
+            edad_meses = []
+            talla_cm = []
+
+            peso_edad = []
+            talla_edad = []
+            peso_talla = []
+
+            for s in seguimientos:
+                fechas.append(s.fecha_valoracion.strftime('%Y-%m-%d'))
+
+                edad_rd = relativedelta(s.fecha_valoracion, paciente.fecha_nacimiento)
+                edad_num = round((edad_rd.years * 12 + edad_rd.months), 2)
+                edad_meses.append(edad_num)
+
+                peso = float(s.peso) if s.peso else None
+                talla = float(s.talla) if s.talla else None
+                if talla: talla_cm.append(round(talla, 1))
+                else: talla_cm.append(None)
+
+                peso_edad.append(peso)
+                talla_edad.append(talla)
+                peso_talla.append(peso)
+
+            # JSON para Chart.js
             datos = {
-                'fechas': [s.fecha_valoracion.strftime('%Y-%m-%d') for s in seguimientos],
-                'pesos': [float(s.peso) if s.peso else None for s in seguimientos],
-                'imcs': [float(s.imc) if s.imc else None for s in seguimientos],
-                'tallas': [float(s.talla) if s.talla else None for s in seguimientos],
+                'fechas': fechas,
+                'edad_meses': edad_meses,
+                'talla_cm': talla_cm,
+                'peso_edad': peso_edad,
+                'talla_edad': talla_edad,
+                'peso_talla': peso_talla,
             }
 
+            etiquetas_pe, curvas_pe = self.get_datos_oms(OmsPesoEdad, 'meses', sexo)
+            etiquetas_te, curvas_te = self.get_datos_oms(OmsTallaEdad, 'meses', sexo)
+            etiquetas_pt, curvas_pt = self.get_datos_oms(OmsPesoTalla, 'talla_cm', sexo)
+
             context = {
-                'paciente': obj,
+                'paciente': paciente,
                 'seguimientos': seguimientos,
                 'edad_actualizada': edad_actualizada,
                 'datos_json': json.dumps(datos),
-                'debug_mode': settings.DEBUG
+                'oms_data': json.dumps({
+                    'peso_edad': {'etiquetas': etiquetas_pe, 'curvas': curvas_pe},
+                    'talla_edad': {'etiquetas': etiquetas_te, 'curvas': curvas_te},
+                    'peso_talla': {'etiquetas': etiquetas_pt, 'curvas': curvas_pt},
+                }),
+                'debug_mode': settings.DEBUG,
             }
             return render(request, self.template_name, context)
 
         except self.model.DoesNotExist:
-            raise Http404("El registro solicitado no existe")
+            raise Http404("El paciente no existe")
         except Exception as e:
-            print(f"Error en ReportePacienteView: {str(e)}")
+            print(f" Error en ReportePacienteView: {str(e)}")
             raise
 
 class ReporteTrabajadorView(LoginRequiredMixin, DetailView):

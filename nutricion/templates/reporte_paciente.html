@@ -8,47 +8,15 @@
 <link rel="stylesheet" href="{% static 'nutricion/css/reportes_paciente.css' %}">
 <style>
 @media print {
-    body * {
-        visibility: hidden;
-    }
-    #reporte, #reporte * {
-        visibility: visible;
-    }
+    body * { visibility: hidden; }
+    #reporte, #reporte * { visibility: visible; }
     #reporte {
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
+        top: 0; left: 0; width: 100%;
         background: white;
     }
-    .no-print {
-        display: none !important;
-    }
+    .no-print { display: none !important; }
 }
-
-.print-mode {
-    position: static !important;
-    visibility: visible !important;
-    width: 100% !important;
-    background: white;
-    padding: 0 !important;
-}
-.print-mode * {
-    visibility: visible !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-}
-.print-mode .no-print,
-.print-mode .excluir-de-pdf {
-    display: none !important;
-}
-.graficas-grid,
-.datos-grid,
-.table-responsive {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-}
-
 .action-buttons {
     margin-top: 30px;
     display: flex;
@@ -92,21 +60,16 @@
             <div class="dato-item"><i class="fas fa-venus-mars"></i><div><strong>Sexo:</strong> {{ paciente.get_sexo_display }}</div></div>
             <div class="dato-item"><i class="fas fa-home"></i><div><strong>CAI:</strong> {{ paciente.cai }}</div></div>
             <div class="dato-item"><i class="fas fa-graduation-cap"></i><div><strong>Grado/Grupo:</strong> {{ paciente.grado|default:"-" }} / {{ paciente.grupo|default:"-" }}</div></div>
-            {% if paciente.mostrar_imc %}
-            <div class="dato-item"><i class="fas fa-weight"></i><div><strong>Último IMC:</strong> {{ paciente.imc|floatformat:2|default:"No calculado" }}</div></div>
-            {% endif %}
             <div class="dato-item"><i class="fas fa-calendar-alt"></i><div><strong>Fecha Registro:</strong> {{ paciente.fecha_registro|date:"d/m/Y"|default:"-" }}</div></div>
         </div>
     </div>
 
     <div class="graficas-section">
-        <h3><i class="fas fa-chart-line"></i> Evolución Nutricional</h3>
+        <h3><i class="fas fa-chart-line"></i> Evolución Nutricional OMS</h3>
         <div class="graficas-grid">
-            <div class="grafica-container"><h4>Peso (kg)</h4><canvas id="graficaPeso" height="250"></canvas></div>
-            <div class="grafica-container"><h4>Talla (cm)</h4><canvas id="graficaTalla" height="250"></canvas></div>
-            {% if paciente.edad >= 5 %}
-            <div class="grafica-container"><h4>IMC</h4><canvas id="graficaIMC" height="250"></canvas></div>
-            {% endif %}
+            <div class="grafica-container"><h4>Peso para la Edad</h4><canvas id="graficaPesoEdad" height="250"></canvas></div>
+            <div class="grafica-container"><h4>Talla para la Edad</h4><canvas id="graficaTallaEdad" height="250"></canvas></div>
+            <div class="grafica-container"><h4>Peso para la Talla</h4><canvas id="graficaPesoTalla" height="250"></canvas></div>
         </div>
     </div>
 
@@ -155,40 +118,85 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const datos = JSON.parse('{{ datos_json|escapejs }}');
+const oms = JSON.parse('{{ oms_data|escapejs }}');
 
-function crearGrafico(id, label, data, borderColor, backgroundColor) {
-    const ctx = document.getElementById(id).getContext('2d');
+function crearGraficoOMS(idCanvas, titulo, dataOMS, colorPaciente, datosY = [], datosX = []) {
+    const ctx = document.getElementById(idCanvas).getContext('2d');
+
+    const coloresOMS = {
+        '-3 SD': '#800000',
+        '-2 SD': '#FF6600',
+        '-1 SD': '#FFD700',
+        'Mediana': '#9ACD32',
+        '+1 SD': '#FFD700',
+        '+2 SD': '#FF6600',
+        '+3 SD': '#800000',
+    };
+
+    const curvas = Object.entries(dataOMS.curvas).map(([label, data]) => ({
+        label: label,
+        data: data.map((y, i) => ({ x: dataOMS.etiquetas[i], y: y })),
+        borderColor: coloresOMS[label] || 'gray',
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false,
+        tension: 0.3
+    }));
+
+    const puntosPaciente = datosX.map((x, i) => {
+        const y = datosY[i];
+        return (y !== null && y !== undefined) ? { x: x, y: y } : null;
+    }).filter(p => p !== null);
+
+    curvas.push({
+        label: 'Paciente',
+        type: 'line',                  // ← esto dibuja la línea
+        data: puntosPaciente,
+        borderColor: colorPaciente,
+        backgroundColor: colorPaciente,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        fill: false,
+        tension: 0.2,                  // ← suaviza la línea
+        borderWidth: 3,
+        showLine: true
+    });
+
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: datos.fechas,
-            datasets: [{
-                label: label,
-                data: data,
-                borderColor: borderColor,
-                backgroundColor: backgroundColor,
-                borderWidth: 2,
-                tension: 0.1,
-                fill: false
-            }]
+            datasets: curvas
         },
         options: {
             responsive: true,
             plugins: {
                 legend: { position: 'top' },
-                tooltip: { mode: 'index', intersect: false }
+                tooltip: { mode: 'nearest', intersect: true }
             },
             scales: {
-                y: { beginAtZero: false }
+                x: {
+                    title: {
+                        display: true,
+                        text: titulo.includes("Talla") ? "Talla (cm)" : "Edad (meses)"
+                    },
+                    type: 'linear',
+                    position: 'bottom'
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: "Z-score / Desviación Estándar"
+                    }
+                }
             }
         }
     });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (datos.pesos?.length) crearGrafico('graficaPeso', 'Peso (kg)', datos.pesos, 'rgba(78, 115, 223, 1)', 'rgba(78, 115, 223, 0.2)');
-    if (datos.tallas?.length) crearGrafico('graficaTalla', 'Talla (cm)', datos.tallas, 'rgba(54, 185, 204, 1)', 'rgba(54, 185, 204, 0.2)');
-    if (datos.imcs?.length && document.getElementById('graficaIMC')) crearGrafico('graficaIMC', 'IMC', datos.imcs, 'rgba(26, 188, 156, 1)', 'rgba(26, 188, 156, 0.2)');
+    crearGraficoOMS('graficaPesoEdad', 'Peso para Edad', oms.peso_edad, 'rgba(78, 115, 223, 1)', datos.peso_edad, datos.edad_meses);
+    crearGraficoOMS('graficaTallaEdad', 'Talla para Edad', oms.talla_edad, 'rgba(54, 185, 204, 1)', datos.talla_edad, datos.edad_meses);
+    crearGraficoOMS('graficaPesoTalla', 'Peso para Talla', oms.peso_talla, 'rgba(231, 74, 59, 1)', datos.peso_talla, datos.talla_cm);
 });
 </script>
 {% endblock %}

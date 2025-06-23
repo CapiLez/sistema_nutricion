@@ -166,28 +166,37 @@ class FiltroCAIMixin:
 
         return queryset
     
-def obtener_desviacion(valor, fila):
-    if valor < fila.sd_m3:
-        return '< -3 SD'
-    elif valor < fila.sd_m2:
-        return '-3 a -2 SD'
-    elif valor < fila.sd_m1:
-        return '-2 a -1 SD'
-    elif valor < fila.mediana:
-        return '-1 a Mediana'
-    elif valor == fila.mediana:
-        return 'Mediana'
-    elif valor < fila.sd_1:
-        return 'Mediana a +1 SD'
-    elif valor < fila.sd_2:
-        return '+1 a +2 SD'
-    elif valor < fila.sd_3:
-        return '+2 a +3 SD'
-    else:
-        return '> +3 SD'
+def obtener_desviacion(valor, fila, return_numeric=False):
+    """
+    Si return_numeric=True, devuelve el valor Z-score estimado.
+    Si False, devuelve la etiqueta textual ('Mediana', '-2 a -1 SD', etc.)
+    """
+    if not fila or valor is None:
+        return None if return_numeric else "Sin datos"
 
+    try:
+        if valor < fila.sd_m3:
+            return -3 if return_numeric else '< -3 SD'
+        elif valor < fila.sd_m2:
+            return -2.5 if return_numeric else '-3 a -2 SD'
+        elif valor < fila.sd_m1:
+            return -1.5 if return_numeric else '-2 a -1 SD'
+        elif valor < fila.mediana:
+            return -0.5 if return_numeric else '-1 a Mediana'
+        elif valor == fila.mediana:
+            return 0 if return_numeric else 'Mediana'
+        elif valor < fila.sd_1:
+            return 0.5 if return_numeric else 'Mediana a +1 SD'
+        elif valor < fila.sd_2:
+            return 1.5 if return_numeric else '+1 a +2 SD'
+        elif valor < fila.sd_3:
+            return 2.5 if return_numeric else '+2 a +3 SD'
+        else:
+            return 3 if return_numeric else '> +3 SD'
+    except Exception as e:
+        return None if return_numeric else "Error"
 
-def obtener_desviacion_oms_peso_edad(sexo, edad_anios, peso):
+def obtener_desviacion_oms_peso_edad(sexo, edad_anios, peso, return_numeric=False):
     meses = round(edad_anios * 12)
     fila = (
         OmsPesoEdad.objects
@@ -196,12 +205,12 @@ def obtener_desviacion_oms_peso_edad(sexo, edad_anios, peso):
         .first()
     )
     if not fila:
-        print(f"⚠️ No se encontró fila para {sexo} y {meses} meses")
-        return "Sin datos"
-    return obtener_desviacion(peso, fila)
+        print(f"No se encontró fila para {sexo} y {meses} meses")
+        return None if return_numeric else "Sin datos"
+    return obtener_desviacion(peso, fila, return_numeric=return_numeric)
 
 
-def obtener_desviacion_oms_talla_edad(sexo, edad_anios, talla):
+def obtener_desviacion_oms_talla_edad(sexo, edad_anios, talla, return_numeric=False):
     meses = round(edad_anios * 12)
     fila = (
         OmsTallaEdad.objects
@@ -210,12 +219,12 @@ def obtener_desviacion_oms_talla_edad(sexo, edad_anios, talla):
         .first()
     )
     if not fila:
-        print(f"⚠️ No se encontró fila para {sexo} y {meses} meses")
-        return "Sin datos"
-    return obtener_desviacion(talla, fila)
+        print(f"No se encontró fila para {sexo} y {meses} meses")
+        return None if return_numeric else "Sin datos"
+    return obtener_desviacion(talla, fila, return_numeric=return_numeric)
 
 
-def obtener_desviacion_oms_peso_talla(sexo, talla, peso):
+def obtener_desviacion_oms_peso_talla(sexo, talla, peso, return_numeric=False):
     talla = round(talla, 1)
     fila = (
         OmsPesoTalla.objects
@@ -224,6 +233,6 @@ def obtener_desviacion_oms_peso_talla(sexo, talla, peso):
         .first()
     )
     if not fila:
-        print(f"⚠️ No se encontró fila para {sexo} y talla {talla}")
-        return "Sin datos"
-    return obtener_desviacion(peso, fila)
+        print(f"No se encontró fila para {sexo} y talla {talla}")
+        return None if return_numeric else "Sin datos"
+    return obtener_desviacion(peso, fila, return_numeric=return_numeric)
