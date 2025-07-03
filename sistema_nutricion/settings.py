@@ -75,7 +75,16 @@ DATABASES = {
         'PORT': '5432',
     }
 }
-
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'nutri5',
+#         'USER': 'postgres',
+#         'PASSWORD': 'D1f@2025',
+#         'HOST': '10.39.3.117',
+#         'PORT': '5434',
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

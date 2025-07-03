@@ -25,7 +25,6 @@ from django.http import HttpResponse
 from weasyprint import CSS, HTML
 from weasyprint.text.fonts import FontConfiguration
 import json
-import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -1472,25 +1471,45 @@ def generar_pdf_paciente(request, paciente_id):
     paciente = get_object_or_404(Paciente, pk=paciente_id)
     seguimientos = SeguimientoTrimestral.objects.filter(paciente=paciente, is_deleted=False).order_by('fecha_valoracion')
 
-    def get_image_base64(path):
+    # Función robusta para obtener imágenes como base64
+    def get_image_base64(relative_static_path):
         try:
-            for static_dir in getattr(settings, 'STATICFILES_DIRS', []):
-                abs_path = os.path.join(static_dir, path)
+            # Producción: buscar en STATIC_ROOT
+            if hasattr(settings, 'STATIC_ROOT') and settings.STATIC_ROOT:
+                abs_path = os.path.join(settings.STATIC_ROOT, relative_static_path)
                 if os.path.exists(abs_path):
-                    with open(abs_path, "rb") as img_file:
-                        return base64.b64encode(img_file.read()).decode('utf-8')
+                    with open(abs_path, "rb") as img:
+                        return base64.b64encode(img.read()).decode('utf-8')
+
+            # Desarrollo: buscar en STATICFILES_DIRS
+            for static_dir in getattr(settings, 'STATICFILES_DIRS', []):
+                abs_path = os.path.join(static_dir, relative_static_path)
+                if os.path.exists(abs_path):
+                    with open(abs_path, "rb") as img:
+                        return base64.b64encode(img.read()).decode('utf-8')
+
+            # Fallback: intentar en la app directamente
+            fallback_path = os.path.join('nutricion', 'static', relative_static_path)
+            if os.path.exists(fallback_path):
+                with open(fallback_path, "rb") as img:
+                    return base64.b64encode(img.read()).decode('utf-8')
+
+            print(f"[WARN] Imagen no encontrada: {relative_static_path}")
             return None
-        except Exception:
+        except Exception as e:
+            print(f"[ERROR] al cargar imagen {relative_static_path}: {str(e)}")
             return None
 
+    # Cargar imágenes institucionales
     logo_base64 = get_image_base64('nutricion/images/dofyas.png')
     fondo_base64 = get_image_base64('nutricion/images/fondodif2.png')
 
-    # Gráficas OMS
+    # Gráficas tipo OMS
     grafica_peso_oms_base64 = generar_grafica_oms_completa(seguimientos, tipo="peso", sexo=paciente.sexo)
     grafica_talla_oms_base64 = generar_grafica_oms_completa(seguimientos, tipo="talla", sexo=paciente.sexo)
     grafica_peso_talla_oms_base64 = generar_grafica_oms_completa(seguimientos, tipo="peso_talla", sexo=paciente.sexo)
 
+    # Render HTML del reporte
     html_string = render_to_string('reporte_paciente_pdf.html', {
         'paciente': paciente,
         'seguimientos': seguimientos,
@@ -1502,35 +1521,73 @@ def generar_pdf_paciente(request, paciente_id):
         'pdf_mode': True
     })
 
-    css = CSS(string=f'''
+    # Estilos CSS
+    css_string = f'''
         @page {{
             size: A4;
             margin: 0;
             background-image: url("data:image/png;base64,{fondo_base64}");
             background-size: cover;
+            background-position: center center;
             background-repeat: no-repeat;
         }}
+
         body {{
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
         }}
+
         .contenedor-principal {{
             background-color: rgba(255, 255, 255, 0.93);
             padding: 2cm;
+            position: relative;
+            z-index: 2;
         }}
+
+        .header-institucional {{
+            page-break-after: avoid;
+        }}
+
+        .seccion {{
+            page-break-inside: avoid;
+        }}
+
+        .graficas-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }}
+
+        .grafica-container {{
+            page-break-inside: avoid;
+            margin-bottom: 30px;
+        }}
+
         .grafica-container h4 {{
             text-align: center;
             color: #6D0000;
             margin-bottom: 10px;
             font-size: 14px;
         }}
-    ''')
 
+        .logo-dif {{
+            position: absolute;
+            top: -1.8cm;
+            left: 0.5cm;
+            height: 60px;
+            z-index: 100;
+        }}
+    '''
+
+    # Generar PDF
     font_config = FontConfiguration()
     html = HTML(string=html_string, base_url=request.build_absolute_uri())
+    css = CSS(string=css_string)
     pdf = html.write_pdf(stylesheets=[css], font_config=font_config)
 
+    # Enviar PDF como archivo descargable
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="reporte_{paciente.nombre.replace(" ", "_")}.pdf"'
     return response
@@ -1723,3 +1780,4 @@ def generar_pdf_trabajador(request, trabajador_id):
     filename = f"reporte_{trabajador.nombre.replace(' ', '_')}.pdf"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+

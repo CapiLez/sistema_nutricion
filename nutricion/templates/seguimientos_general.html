@@ -61,7 +61,6 @@
                             <th>Edad</th>
                             <th>Peso (kg)</th>
                             <th>Talla (cm)</th>
-                            <th style="width: 160px;">IMC</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -148,12 +147,7 @@ $(document).ready(function() {
                                 <td>${s.edad}</td>
                                 <td>${s.peso}</td>
                                 <td>${s.talla}</td>
-                                <td class="text-center">
-                                    <div class="imc-wrapper">
-                                        <span>${imc}</span>
-                                        <span class="${clase}">${label}</span>
-                                    </div>
-                                </td>
+                               
                                 <td>
                                     <div class="btn-group-mobile">
                                         <a href="/seguimiento/nino/editar/${s.id}/" class="btn-accion btn-editar">

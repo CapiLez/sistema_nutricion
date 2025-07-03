@@ -133,8 +133,6 @@
                     <tr>
                         <th>Nombre</th>
                         <th>Edad</th>
-                        <th>IMC</th>
-                        <th>Categoría IMC</th>
                         <th>CURP</th>
                         <th>Grado</th>
                         <th>Grupo</th>
@@ -146,20 +144,6 @@
                         <tr>
                             <td>{{ nino.nombre }}</td>
                             <td>{{ nino.edad_detallada }}</td>
-                            <td>{{ nino.imc|floatformat:2|default:"-" }}</td>
-                            <td>
-                                {% with cat=nino.imc_categoria|default:"" %}
-                                    <span class="badge 
-                                        {% if "Bajo" in cat %}badge-bajo
-                                        {% elif "Normal" in cat %}badge-normal
-                                        {% elif "Sobrepeso" in cat %}badge-sobrepeso
-                                        {% elif "Obesidad" in cat %}badge-obesidad
-                                        {% else %}badge-secondary
-                                        {% endif %}">
-                                        {{ cat }}
-                                    </span>
-                                {% endwith %}
-                            </td>
                             <td>{{ nino.curp|upper|default:"-" }}</td>
                             <td>{{ nino.grado|default:"-" }}</td>
                             <td>{{ nino.grupo|default:"-" }}</td>
@@ -207,7 +191,13 @@ $(document).ready(function () {
     const $btnMostrar = $("#mostrar-formulario");
     const $btnCancelar = $("#cancelar-formulario");
 
-    $formulario.hide();
+    // Mostrar el formulario si hay errores
+    if ($("#formulario-nino .alert-danger").length > 0) {
+        $formulario.show();
+        $btnMostrar.hide();
+    } else {
+        $formulario.hide();
+    }
 
     $btnMostrar.on("click", function () {
         $formulario.slideDown();
@@ -228,6 +218,10 @@ $(document).ready(function () {
 
     $('input[name="curp"]').on('input', function () {
         this.value = this.value.toUpperCase();
+    });
+
+    $('input[name="nombre"]').on('input', function () {
+    this.value = this.value.toUpperCase();
     });
 
     function calcularEdad() {

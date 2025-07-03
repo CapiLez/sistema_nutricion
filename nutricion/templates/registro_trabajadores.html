@@ -122,7 +122,13 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function () {
-        $("#formulario-trabajador").hide();
+        // Mostrar el formulario si hay errores ya renderizados
+        if ($("#formulario-trabajador .alert-danger").length > 0) {
+            $("#formulario-trabajador").show();
+            $("#mostrar-formulario").hide();
+        } else {
+            $("#formulario-trabajador").hide();
+        }
 
         $("#mostrar-formulario").on("click", function () {
             $("#formulario-trabajador").slideDown();
@@ -137,6 +143,10 @@
         });
 
         $('input[name="curp"]').on('input', function () {
+            this.value = this.value.toUpperCase();
+        });
+
+        $('input[name="nombre"]').on('input', function () {
             this.value = this.value.toUpperCase();
         });
 

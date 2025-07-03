@@ -39,6 +39,28 @@
 .btn-primary { background: #3e95cd; }
 .btn-secondary { background: #6c757d; }
 .btn-danger { background: #dc3545; }
+
+/* Estilos por diagnóstico */
+.dx-bajo {
+    color: #007bff;
+    font-weight: bold;
+}
+.dx-normal {
+    color: #28a745;
+    font-weight: bold;
+}
+.dx-sobrepeso {
+    color: #fd7e14;
+    font-weight: bold;
+}
+.dx-obesidad {
+    color: #dc3545;
+    font-weight: bold;
+}
+.dx-desconocido {
+    color: #6c757d;
+    font-style: italic;
+}
 </style>
 {% endblock %}
 
@@ -84,7 +106,6 @@
                         <th>Edad</th>
                         <th>Peso (kg)</th>
                         <th>Talla (cm)</th>
-                        <th>IMC</th>
                         <th>Diagnóstico</th>
                     </tr>
                 </thead>
@@ -95,8 +116,17 @@
                         <td>{{ seg.edad|default:"-" }}</td>
                         <td>{{ seg.peso|floatformat:2 }}</td>
                         <td>{{ seg.talla|floatformat:2 }}</td>
-                        <td>{{ seg.imc|floatformat:2 }}</td>
-                        <td>{{ seg.dx|default:"-" }}</td>
+                        <td>
+                            <span class="
+                                {% if "Bajo" in seg.dx %}dx-bajo
+                                {% elif "Normal" in seg.dx %}dx-normal
+                                {% elif "Sobrepeso" in seg.dx %}dx-sobrepeso
+                                {% elif "Obesidad" in seg.dx %}dx-obesidad
+                                {% else %}dx-desconocido{% endif %}
+                            ">
+                                {{ seg.dx|default:"-" }}
+                            </span>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -150,14 +180,14 @@ function crearGraficoOMS(idCanvas, titulo, dataOMS, colorPaciente, datosY = [], 
 
     curvas.push({
         label: 'Paciente',
-        type: 'line',                  // ← esto dibuja la línea
+        type: 'line',
         data: puntosPaciente,
         borderColor: colorPaciente,
         backgroundColor: colorPaciente,
         pointRadius: 5,
         pointHoverRadius: 7,
         fill: false,
-        tension: 0.2,                  // ← suaviza la línea
+        tension: 0.2,
         borderWidth: 3,
         showLine: true
     });

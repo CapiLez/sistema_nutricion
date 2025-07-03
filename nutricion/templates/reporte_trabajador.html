@@ -72,6 +72,28 @@
 .btn-primary { background: #3e95cd; }
 .btn-secondary { background: #6c757d; }
 .btn-danger { background: #dc3545; }
+
+/* Colores para diagnóstico */
+.dx-bajo {
+    color: #007bff;
+    font-weight: bold;
+}
+.dx-normal {
+    color: #28a745;
+    font-weight: bold;
+}
+.dx-sobrepeso {
+    color: #fd7e14;
+    font-weight: bold;
+}
+.dx-obesidad {
+    color: #dc3545;
+    font-weight: bold;
+}
+.dx-desconocido {
+    color: #6c757d;
+    font-style: italic;
+}
 </style>
 {% endblock %}
 
@@ -155,7 +177,17 @@
                         <td>{{ seg.peso|floatformat:2 }}</td>
                         <td>{{ seg.imc|floatformat:2 }}</td>
                         <td>{{ seg.circunferencia_abdominal|floatformat:2|default:"-" }}</td>
-                        <td>{{ seg.dx|default:"-" }}</td>
+                        <td>
+                            <span class="
+                                {% if "Bajo" in seg.dx %}dx-bajo
+                                {% elif "Normal" in seg.dx %}dx-normal
+                                {% elif "Sobrepeso" in seg.dx %}dx-sobrepeso
+                                {% elif "Obesidad" in seg.dx %}dx-obesidad
+                                {% else %}dx-desconocido{% endif %}
+                            ">
+                                {{ seg.dx|default:"-" }}
+                            </span>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

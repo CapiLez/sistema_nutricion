@@ -22,7 +22,6 @@
                         <th>Talla (cm)</th>
                         <th>IMC</th>
                         <th>Circunf. Abdominal (cm)</th>
-                        <th>Dx Nutricional</th>
                         <th>Clasificación IMC</th>
                     </tr>
                 </thead>
@@ -35,7 +34,6 @@
                         <td>{{ s.talla|floatformat:1 }}</td>
                         <td>{{ s.imc|floatformat:1 }}</td>
                         <td>{{ s.circunferencia_abdominal|default:"—" }}</td>
-                        <td>{{ s.dx }}</td>
                         <td>
                             <span class="badge 
                                 {% if s.imc < 18.5 %}imc-low

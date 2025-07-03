@@ -188,6 +188,10 @@ class PacienteForm(forms.ModelForm):
         if qs.exists():
             raise forms.ValidationError("Ya existe un paciente activo con esta CURP.")
         return curp
+    
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        return nombre.upper() if nombre else nombre
 
 ### -------------------- TRABAJADORES --------------------
 
@@ -199,6 +203,10 @@ class TrabajadorForm(forms.ModelForm):
             'sexo': forms.Select(),
         }
 
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        return nombre.upper() if nombre else nombre
+    
     def clean_curp(self):
         curp = self.cleaned_data.get('curp')
         if curp and len(curp) != 18:
