@@ -61,6 +61,39 @@
     color: #6c757d;
     font-style: italic;
 }
+
+/* Estilos para gráficas verticales */
+.graficas-section {
+    margin: 30px 0;
+}
+
+.graficas-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    margin-top: 20px;
+}
+
+.grafica-container {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    height: 350px;
+}
+
+.grafica-container h4 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 18px;
+    text-align: center;
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
 </style>
 {% endblock %}
 
@@ -89,9 +122,24 @@
     <div class="graficas-section">
         <h3><i class="fas fa-chart-line"></i> Evolución Nutricional OMS</h3>
         <div class="graficas-grid">
-            <div class="grafica-container"><h4>Peso para la Edad</h4><canvas id="graficaPesoEdad" height="250"></canvas></div>
-            <div class="grafica-container"><h4>Talla para la Edad</h4><canvas id="graficaTallaEdad" height="250"></canvas></div>
-            <div class="grafica-container"><h4>Peso para la Talla</h4><canvas id="graficaPesoTalla" height="250"></canvas></div>
+            <div class="grafica-container">
+                <h4>Peso para la Edad</h4>
+                <div class="chart-wrapper">
+                    <canvas id="graficaPesoEdad"></canvas>
+                </div>
+            </div>
+            <div class="grafica-container">
+                <h4>Talla para la Edad</h4>
+                <div class="chart-wrapper">
+                    <canvas id="graficaTallaEdad"></canvas>
+                </div>
+            </div>
+            <div class="grafica-container">
+                <h4>Peso para la Talla</h4>
+                <div class="chart-wrapper">
+                    <canvas id="graficaPesoTalla"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -167,7 +215,7 @@ function crearGraficoOMS(idCanvas, titulo, dataOMS, colorPaciente, datosY = [], 
         label: label,
         data: data.map((y, i) => ({ x: dataOMS.etiquetas[i], y: y })),
         borderColor: coloresOMS[label] || 'gray',
-        borderWidth: 2,
+        borderWidth: 1.5,
         pointRadius: 0,
         fill: false,
         tension: 0.3
@@ -184,11 +232,13 @@ function crearGraficoOMS(idCanvas, titulo, dataOMS, colorPaciente, datosY = [], 
         data: puntosPaciente,
         borderColor: colorPaciente,
         backgroundColor: colorPaciente,
-        pointRadius: 5,
-        pointHoverRadius: 7,
+        pointRadius: 4,  // Puntos más pequeños
+        pointHoverRadius: 6,
+        pointBorderWidth: 1,
+        pointBorderColor: '#fff',
         fill: false,
         tension: 0.2,
-        borderWidth: 3,
+        borderWidth: 2,
         showLine: true
     });
 
@@ -199,23 +249,58 @@ function crearGraficoOMS(idCanvas, titulo, dataOMS, colorPaciente, datosY = [], 
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'top' },
-                tooltip: { mode: 'nearest', intersect: true }
+                legend: { 
+                    position: 'top',
+                    labels: {
+                        boxWidth: 12,
+                        padding: 15,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: { 
+                    mode: 'nearest', 
+                    intersect: true,
+                    bodyFont: {
+                        size: 12
+                    },
+                    titleFont: {
+                        size: 14
+                    }
+                }
             },
             scales: {
                 x: {
                     title: {
                         display: true,
-                        text: titulo.includes("Talla") ? "Talla (cm)" : "Edad (meses)"
+                        text: titulo.includes("Talla") ? "Talla (cm)" : "Edad (meses)",
+                        font: {
+                            size: 12
+                        }
                     },
                     type: 'linear',
-                    position: 'bottom'
+                    position: 'bottom',
+                    ticks: {
+                        font: {
+                            size: 11
+                        }
+                    }
                 },
                 y: {
                     title: {
                         display: true,
-                        text: "Z-score / Desviación Estándar"
+                        text: "Z-score / Desviación Estándar",
+                        font: {
+                            size: 12
+                        }
+                    },
+                    ticks: {
+                        font: {
+                            size: 11
+                        }
                     }
                 }
             }
