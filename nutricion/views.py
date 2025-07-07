@@ -1019,6 +1019,10 @@ class ReportesView(LoginRequiredMixin, FiltroCAIMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
 
+        # Verificar si es nutriólogo (puedes ajustar según tu lógica de roles)
+        es_nutriologo = hasattr(user, 'cai') and not (user.is_admin or user.is_jefe_departamento)
+        cai_usuario = user.cai if es_nutriologo else ''
+
         if user.is_admin or user.is_jefe_departamento:
             pacientes = Paciente.objects.filter(is_deleted=False)
             trabajadores = Trabajador.objects.filter(is_deleted=False)
@@ -1029,23 +1033,21 @@ class ReportesView(LoginRequiredMixin, FiltroCAIMixin, TemplateView):
         pacientes = pacientes.order_by('nombre')
         trabajadores = trabajadores.order_by('nombre')
 
-        # Asignar edad basada en último seguimiento
         for paciente in pacientes:
             seguimiento = SeguimientoTrimestral.objects.filter(
                 paciente=paciente,
                 is_deleted=False
             ).order_by('-fecha_valoracion').first()
 
-            if seguimiento and seguimiento.edad:
-                paciente.edad_seguimiento = seguimiento.edad  # atributo dinámico
-            else:
-                paciente.edad_seguimiento = paciente.edad_detallada  # fallback
+            paciente.edad_seguimiento = seguimiento.edad if seguimiento and seguimiento.edad else paciente.edad_detallada
 
         paginator_pacientes = Paginator(pacientes, 10)
         paginator_trabajadores = Paginator(trabajadores, 10)
 
         context['ninos_page'] = paginator_pacientes.get_page(self.request.GET.get('page_pacientes', 1))
         context['trabajadores_page'] = paginator_trabajadores.get_page(self.request.GET.get('page_trabajadores', 1))
+        context['es_nutriologo'] = es_nutriologo
+        context['mi_cai'] = cai_usuario
 
         return context
 

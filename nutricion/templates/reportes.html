@@ -28,15 +28,19 @@
                 <input type="text" id="search-ninos" placeholder="Buscar niños" onkeyup="filtrarNinos()">
             </div>
             <div class="filter-container">
-                <select id="filter-cai-ninos" onchange="filtrarNinos()">
-                    <option value="">Todos los CAI</option>
-                    <option value="ESTEFANÍA CASTAÑEDA NUÑEZ">ESTEFANÍA CASTAÑEDA NUÑEZ</option>
-                    <option value="JOSEFINA VICENS">JOSEFINA VICENS</option>
-                    <option value="JULIETA CAMPOS DE GONZÁLEZ PEDRERO">JULIETA CAMPOS DE GONZÁLEZ PEDRERO</option>
-                    <option value="JOSÉ MARÍA PINO SUÁREZ">JOSÉ MARÍA PINO SUÁREZ</option>
-                    <option value="MARINA CORTAZAR VDA. DE ESCOBAR">MARINA CORTAZAR VDA. DE ESCOBAR</option>
-                    <option value="EVA SÁMANO DE LÓPEZ MATEOS">EVA SÁMANO DE LÓPEZ MATEOS</option>
-                </select>
+                {% if not es_nutriologo %}
+                    <select id="filter-cai-ninos" onchange="filtrarNinos()">
+                        <option value="">Todos los CAI</option>
+                        <option value="ESTEFANÍA CASTAÑEDA NUÑEZ">ESTEFANÍA CASTAÑEDA NUÑEZ</option>
+                        <option value="JOSEFINA VICENS">JOSEFINA VICENS</option>
+                        <option value="JULIETA CAMPOS DE GONZÁLEZ PEDRERO">JULIETA CAMPOS DE GONZÁLEZ PEDRERO</option>
+                        <option value="JOSÉ MARÍA PINO SUÁREZ">JOSÉ MARÍA PINO SUÁREZ</option>
+                        <option value="MARINA CORTAZAR VDA. DE ESCOBAR">MARINA CORTAZAR VDA. DE ESCOBAR</option>
+                        <option value="EVA SÁMANO DE LÓPEZ MATEOS">EVA SÁMANO DE LÓPEZ MATEOS</option>
+                    </select>
+                {% else %}
+                    <input type="hidden" id="filter-cai-ninos" value="{{ mi_cai }}">
+                {% endif %}
                 <select id="filter-edad-ninos" onchange="filtrarNinos()">
                     <option value="">Todas las edades</option>
                     <option value="0-2">0-2 años</option>
@@ -131,16 +135,21 @@
                 <input type="text" id="search-trabajadores" placeholder="Buscar trabajadores" onkeyup="filtrarTrabajadores()">
             </div>
             <div class="filter-container">
-                <select id="filter-cai-trabajadores" onchange="filtrarTrabajadores()">
-                    <option value="">Todos los CAI</option>
-                    <option value="ESTEFANÍA CASTAÑEDA NUÑEZ">ESTEFANÍA CASTAÑEDA NUÑEZ</option>
-                    <option value="JOSEFINA VICENS">JOSEFINA VICENS</option>
-                    <option value="JULIETA CAMPOS DE GONZÁLEZ PEDRERO">JULIETA CAMPOS DE GONZÁLEZ PEDRERO</option>
-                    <option value="JOSÉ MARÍA PINO SUÁREZ">JOSÉ MARÍA PINO SUÁREZ</option>
-                    <option value="MARINA CORTAZAR VDA. DE ESCOBAR">MARINA CORTAZAR VDA. DE ESCOBAR</option>
-                    <option value="EVA SÁMANO DE LÓPEZ MATEOS">EVA SÁMANO DE LÓPEZ MATEOS</option>
-                </select>
+                {% if not es_nutriologo %}
+                    <select id="filter-cai-trabajadores" onchange="filtrarTrabajadores()">
+                        <option value="">Todos los CAI</option>
+                        <option value="ESTEFANÍA CASTAÑEDA NUÑEZ">ESTEFANÍA CASTAÑEDA NUÑEZ</option>
+                        <option value="JOSEFINA VICENS">JOSEFINA VICENS</option>
+                        <option value="JULIETA CAMPOS DE GONZÁLEZ PEDRERO">JULIETA CAMPOS DE GONZÁLEZ PEDRERO</option>
+                        <option value="JOSÉ MARÍA PINO SUÁREZ">JOSÉ MARÍA PINO SUÁREZ</option>
+                        <option value="MARINA CORTAZAR VDA. DE ESCOBAR">MARINA CORTAZAR VDA. DE ESCOBAR</option>
+                        <option value="EVA SÁMANO DE LÓPEZ MATEOS">EVA SÁMANO DE LÓPEZ MATEOS</option>
+                    </select>
+                {% else %}
+                    <input type="hidden" id="filter-cai-trabajadores" value="{{ mi_cai }}">
+                {% endif %}
             </div>
+
             <div class="result-count" id="contador-trabajadores">
                 Mostrando {{ trabajadores_page.paginator.count }} trabajadores
             </div>
