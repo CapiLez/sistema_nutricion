@@ -1240,12 +1240,34 @@ def buscar_ninos_ajax(request):
     from datetime import date
 
     term = request.GET.get('term', '')
+    cai_filter = request.GET.get('cai', '')
+    edad_filter = request.GET.get('edad', '')
     page = int(request.GET.get('page', 1))
 
     ninos = Paciente.objects.filter(nombre__icontains=term, is_deleted=False)
 
-    if request.user.is_nutriologo and request.user.cai:
+    if cai_filter:
+        ninos = ninos.filter(cai=cai_filter)
+    elif request.user.is_nutriologo and request.user.cai:
         ninos = ninos.filter(cai=request.user.cai)
+
+    # Filtro por edad
+    if edad_filter:
+        hoy = date.today()
+        if edad_filter == "0-2":
+            min_date = hoy.replace(year=hoy.year - 2)
+            max_date = hoy
+        elif edad_filter == "3-5":
+            min_date = hoy.replace(year=hoy.year - 5)
+            max_date = hoy.replace(year=hoy.year - 3)
+        elif edad_filter == "6-12":
+            min_date = hoy.replace(year=hoy.year - 12)
+            max_date = hoy.replace(year=hoy.year - 6)
+        elif edad_filter == "13-18":
+            min_date = hoy.replace(year=hoy.year - 18)
+            max_date = hoy.replace(year=hoy.year - 13)
+        
+        ninos = ninos.filter(fecha_nacimiento__gte=min_date, fecha_nacimiento__lte=max_date)
 
     ninos = ninos.order_by('-id')
     paginator = Paginator(ninos, 10)
@@ -1257,13 +1279,17 @@ def buscar_ninos_ajax(request):
         if seguimiento:
             edad_rd = relativedelta(seguimiento.fecha_valoracion, n.fecha_nacimiento)
             edad_texto = f"{edad_rd.years} años, {edad_rd.months} meses"
+            edad_anios = edad_rd.years
         else:
             edad_texto = n.edad_detallada  # fallback
+            edad_rd = relativedelta(date.today(), n.fecha_nacimiento)
+            edad_anios = edad_rd.years
 
         resultados.append({
             'id': n.id,
             'nombre': n.nombre,
             'edad': edad_texto,
+            'edad_anios': edad_anios,
             'curp': n.curp,
             'grado': n.grado,
             'grupo': n.grupo,
@@ -1277,11 +1303,14 @@ def buscar_ninos_ajax(request):
 
 def buscar_trabajadores_ajax(request):
     term = request.GET.get('term', '')
+    cai_filter = request.GET.get('cai', '')
     page = request.GET.get('page', 1)
 
     trabajadores = Trabajador.objects.filter(nombre__icontains=term, is_deleted=False)
 
-    if request.user.is_nutriologo and request.user.cai:
+    if cai_filter:
+        trabajadores = trabajadores.filter(cai=cai_filter)
+    elif request.user.is_nutriologo and request.user.cai:
         trabajadores = trabajadores.filter(cai=request.user.cai)
 
     trabajadores = trabajadores.order_by('nombre')
@@ -1295,7 +1324,7 @@ def buscar_trabajadores_ajax(request):
             'curp': t.curp,
             'cargo': t.cargo,
             'departamento': t.departamento,
-            'cai': t.cai,
+            'cai': str(t.cai),
         } for t in pagina
     ]
 

@@ -5,187 +5,6 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'nutricion/css/reportes.css' %}">
-<style>
-    .reportes-page {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-    .seccion {
-        margin-bottom: 40px;
-        padding: 25px;
-        background: #f9f9f9;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .seccion h2 {
-        border-bottom: 2px solid #3e95cd;
-        padding-bottom: 10px;
-        margin-bottom: 25px;
-        color: #2a6496;
-    }
-    .switch-seccion {
-        margin-bottom: 25px;
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
-    }
-    .switch-seccion button {
-        padding: 12px 20px;
-        background: #3e95cd;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.3s;
-        font-size: 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .switch-seccion button:hover {
-        background: #2a6496;
-        transform: translateY(-2px);
-    }
-    .switch-seccion button.active {
-        background: #2a6496;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    .lista-tarjetas {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 25px;
-    }
-    .tarjeta {
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-        transition: transform 0.3s, box-shadow 0.3s;
-        border-left: 4px solid #3e95cd;
-    }
-    .tarjeta:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    .tarjeta h3 {
-        color: #2a6496;
-        margin-top: 0;
-        margin-bottom: 15px;
-    }
-    .tarjeta p {
-        margin-bottom: 10px;
-        color: #555;
-    }
-    .btn-ver {
-        display: inline-block;
-        padding: 8px 15px;
-        background: #3e95cd;
-        color: white;
-        border-radius: 4px;
-        text-decoration: none;
-        margin-top: 10px;
-        transition: background 0.3s;
-    }
-    .btn-ver:hover {
-        background: #2a6496;
-    }
-    .paginacion {
-        margin-top: 30px;
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-    .paginacion a {
-        padding: 8px 15px;
-        background: #3e95cd;
-        color: white;
-        text-decoration: none;
-        border-radius: 4px;
-        transition: background 0.3s;
-    }
-    .paginacion a:hover {
-        background: #2a6496;
-    }
-    .paginacion a.active {
-        background: #2a6496;
-        font-weight: bold;
-    }
-    .no-data {
-        text-align: center;
-        padding: 30px;
-        color: #666;
-        font-size: 18px;
-    }
-    .badge-imc {
-        display: inline-block;
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: bold;
-        margin-left: 5px;
-    }
-    .imc-bajo { background-color: #ffc107; color: #333; }
-    .imc-normal { background-color: #28a745; color: white; }
-    .imc-sobrepeso { background-color: #fd7e14; color: white; }
-    .imc-obesidad { background-color: #dc3545; color: white; }
-    
-    /* Estilos para el buscador */
-    .search-container {
-        margin-bottom: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 15px;
-    }
-    
-    .search-box {
-        position: relative;
-        flex-grow: 1;
-        max-width: 400px;
-    }
-    
-    .search-box i {
-        position: absolute;
-        left: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #6c757d;
-    }
-    
-    .search-box input {
-        width: 100%;
-        padding: 10px 15px 10px 40px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        font-size: 16px;
-        transition: all 0.3s;
-    }
-    
-    .search-box input:focus {
-        outline: none;
-        border-color: #3e95cd;
-        box-shadow: 0 0 0 2px rgba(62, 149, 205, 0.2);
-    }
-    
-    .result-count {
-        color: #6c757d;
-        font-size: 14px;
-    }
-    
-    @media (max-width: 768px) {
-        .search-container {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        
-        .search-box {
-            max-width: 100%;
-        }
-    }
-</style>
 {% endblock %}
 
 {% block content %}
@@ -206,7 +25,25 @@
         <div class="search-container">
             <div class="search-box">
                 <i class="fas fa-search"></i>
-                <input type="text" id="search-ninos" placeholder="Buscar niños por nombre, CAI o grado..." onkeyup="filtrarNinos()">
+                <input type="text" id="search-ninos" placeholder="Buscar niños" onkeyup="filtrarNinos()">
+            </div>
+            <div class="filter-container">
+                <select id="filter-cai-ninos" onchange="filtrarNinos()">
+                    <option value="">Todos los CAI</option>
+                    <option value="ESTEFANÍA CASTAÑEDA NUÑEZ">ESTEFANÍA CASTAÑEDA NUÑEZ</option>
+                    <option value="JOSEFINA VICENS">JOSEFINA VICENS</option>
+                    <option value="JULIETA CAMPOS DE GONZÁLEZ PEDRERO">JULIETA CAMPOS DE GONZÁLEZ PEDRERO</option>
+                    <option value="JOSÉ MARÍA PINO SUÁREZ">JOSÉ MARÍA PINO SUÁREZ</option>
+                    <option value="MARINA CORTAZAR VDA. DE ESCOBAR">MARINA CORTAZAR VDA. DE ESCOBAR</option>
+                    <option value="EVA SÁMANO DE LÓPEZ MATEOS">EVA SÁMANO DE LÓPEZ MATEOS</option>
+                </select>
+                <select id="filter-edad-ninos" onchange="filtrarNinos()">
+                    <option value="">Todas las edades</option>
+                    <option value="0-2">0-2 años</option>
+                    <option value="3-5">3-5 años</option>
+                    <option value="6-12">6-12 años</option>
+                    <option value="13-18">13-18 años</option>
+                </select>
             </div>
             <div class="result-count" id="contador-ninos">
                 Mostrando {{ ninos_page.paginator.count }} niños
@@ -220,12 +57,14 @@
             <div class="lista-tarjetas" id="lista-ninos">
                 {% for paciente in ninos_page %}
                 <div class="tarjeta" 
-                     data-search="{{ paciente.nombre|lower }} {{ paciente.cai|lower }} {{ paciente.grado|default:''|lower }} {{ paciente.grupo|default:''|lower }} {{ paciente.imc|default:''|stringformat:'f'|lower }}"
-                     data-imc="{{ paciente.imc|default:0 }}">
+                     data-search="{{ paciente.nombre|lower }} {{ paciente.cai|lower }} {{ paciente.grado|default:''|lower }} {{ paciente.grupo|default:''|lower }}"
+                     data-cai="{{ paciente.cai }}"
+                     data-edad="{{ paciente.edad_anios }}">
                     <h3>{{ paciente.nombre }}</h3>
-                    <p><strong><i class="fas fa-birthday-cake"></i> Edad:</strong> {{ paciente.edad_seguimiento }}</p>
+                    <p><strong><i class="fas fa-birthday-cake"></i> Edad:</strong> {{ paciente.edad_detallada }}</p>
                     <p><strong><i class="fas fa-home"></i> CAI:</strong> {{ paciente.cai }}</p>
-                    <p class="imc-info">
+                    {% if paciente.edad_anios > 5 %}
+                    <p>
                         <strong><i class="fas fa-weight"></i> IMC:</strong> 
                         {% if paciente.imc %}
                             {{ paciente.imc|floatformat:2 }}
@@ -234,8 +73,7 @@
                                 {% elif paciente.imc < 25 %}imc-normal
                                 {% elif paciente.imc < 30 %}imc-sobrepeso
                                 {% else %}imc-obesidad
-                                {% endif %}"
-                                title="Clasificación según OMS">
+                                {% endif %}">
                                 {% if paciente.imc < 18.5 %}Bajo peso
                                 {% elif paciente.imc < 25 %}Normal
                                 {% elif paciente.imc < 30 %}Sobrepeso
@@ -246,6 +84,8 @@
                             No calculado
                         {% endif %}
                     </p>
+                    {% endif %}
+
                     <p><strong><i class="fas fa-school"></i> Grado/Grupo:</strong> 
                        {{ paciente.grado|default:"-" }} / {{ paciente.grupo|default:"-" }}</p>
                     <a href="{% url 'reporte_paciente' paciente.id %}" class="btn-ver">
@@ -288,7 +128,18 @@
         <div class="search-container">
             <div class="search-box">
                 <i class="fas fa-search"></i>
-                <input type="text" id="search-trabajadores" placeholder="Buscar trabajadores por nombre, departamento o cargo..." onkeyup="filtrarTrabajadores()">
+                <input type="text" id="search-trabajadores" placeholder="Buscar trabajadores" onkeyup="filtrarTrabajadores()">
+            </div>
+            <div class="filter-container">
+                <select id="filter-cai-trabajadores" onchange="filtrarTrabajadores()">
+                    <option value="">Todos los CAI</option>
+                    <option value="ESTEFANÍA CASTAÑEDA NUÑEZ">ESTEFANÍA CASTAÑEDA NUÑEZ</option>
+                    <option value="JOSEFINA VICENS">JOSEFINA VICENS</option>
+                    <option value="JULIETA CAMPOS DE GONZÁLEZ PEDRERO">JULIETA CAMPOS DE GONZÁLEZ PEDRERO</option>
+                    <option value="JOSÉ MARÍA PINO SUÁREZ">JOSÉ MARÍA PINO SUÁREZ</option>
+                    <option value="MARINA CORTAZAR VDA. DE ESCOBAR">MARINA CORTAZAR VDA. DE ESCOBAR</option>
+                    <option value="EVA SÁMANO DE LÓPEZ MATEOS">EVA SÁMANO DE LÓPEZ MATEOS</option>
+                </select>
             </div>
             <div class="result-count" id="contador-trabajadores">
                 Mostrando {{ trabajadores_page.paginator.count }} trabajadores
@@ -302,12 +153,12 @@
             <div class="lista-tarjetas" id="lista-trabajadores">
                 {% for trabajador in trabajadores_page %}
                 <div class="tarjeta" 
-                     data-search="{{ trabajador.nombre|lower }} {{ trabajador.cargo|default:''|lower }} {{ trabajador.departamento|default:''|lower }} {{ trabajador.imc|default:''|stringformat:'f'|lower }}"
-                     data-imc="{{ trabajador.imc|default:0 }}">
+                     data-search="{{ trabajador.nombre|lower }} {{ trabajador.cargo|default:''|lower }} {{ trabajador.departamento|default:''|lower }}"
+                     data-cai="{{ trabajador.cai }}">
                     <h3>{{ trabajador.nombre }}</h3>
                     <p><strong><i class="fas fa-id-badge"></i> Puesto:</strong> {{ trabajador.cargo }}</p>
                     <p><strong><i class="fas fa-building"></i> Departamento:</strong> {{ trabajador.departamento|default:"-" }}</p>
-                    <p class="imc-info">
+                    <p>
                         <strong><i class="fas fa-weight"></i> IMC:</strong> 
                         {% if trabajador.imc %}
                             {{ trabajador.imc|floatformat:2 }}
@@ -316,8 +167,7 @@
                                 {% elif trabajador.imc < 25 %}imc-normal
                                 {% elif trabajador.imc < 30 %}imc-sobrepeso
                                 {% else %}imc-obesidad
-                                {% endif %}"
-                                title="Clasificación según OMS">
+                                {% endif %}">
                                 {% if trabajador.imc < 18.5 %}Bajo peso
                                 {% elif trabajador.imc < 25 %}Normal
                                 {% elif trabajador.imc < 30 %}Sobrepeso
@@ -369,111 +219,118 @@
         document.querySelectorAll('.seccion').forEach(sec => {
             sec.style.display = 'none';
         });
-
+    
         document.getElementById(`seccion-${seccion}`).style.display = 'block';
-
+    
         document.querySelectorAll('.switch-seccion button').forEach(btn => {
             btn.classList.remove('active');
         });
         event.target.classList.add('active');
-
-        // Guardar preferencia en localStorage
+    
+        history.pushState(null, null, `#${seccion}`);
         localStorage.setItem('ultimaSeccionReportes', seccion);
-
-        // Resetear búsquedas y actualizar filtros al cambiar de sección
-        if(seccion === 'ninos') {
-            document.getElementById('search-ninos').value = '';
-            filtrarNinos();
-        } else if (seccion === 'trabajadores') {
-            document.getElementById('search-trabajadores').value = '';
-            filtrarTrabajadores();
-        }
     }
-
-    // Filtrar niños por texto en data-search
+    
+    // Buscar niños con AJAX
     function filtrarNinos() {
         const input = document.getElementById('search-ninos');
-        const term = input.value.trim().toLowerCase();
-        const tarjetas = document.querySelectorAll('#lista-ninos .tarjeta');
-        let visibleCount = 0;
-
-        tarjetas.forEach(tarjeta => {
-            const searchText = tarjeta.getAttribute('data-search').toLowerCase();
-            if(term === '' || searchText.includes(term)) {
-                tarjeta.style.display = '';
-                visibleCount++;
-            } else {
-                tarjeta.style.display = 'none';
-            }
-        });
-
+        const term = input.value.trim();
+        const caiFilter = document.getElementById('filter-cai-ninos').value;
+        const edadFilter = document.getElementById('filter-edad-ninos').value;
+        const contenedor = document.getElementById('lista-ninos');
         const contador = document.getElementById('contador-ninos');
-        if(term === '') {
-            contador.textContent = `Mostrando ${tarjetas.length} niños`;
-        } else {
-            contador.textContent = `Mostrando ${visibleCount} de ${tarjetas.length} niños`;
-        }
+    
+        contenedor.innerHTML = '<p>Buscando...</p>';
+    
+        fetch(`/ajax/buscar-ninos/?term=${encodeURIComponent(term)}&cai=${encodeURIComponent(caiFilter)}&edad=${encodeURIComponent(edadFilter)}`)
+            .then(res => res.json())
+            .then(data => {
+                contenedor.innerHTML = '';
+    
+                if (data.resultados.length === 0) {
+                    contenedor.innerHTML = '<p>No se encontraron niños.</p>';
+                    contador.textContent = 'Mostrando 0 niños';
+                    return;
+                }
+    
+                data.resultados.forEach(n => {
+                    const div = document.createElement('div');
+                    div.className = 'tarjeta';
+                    div.innerHTML = `
+                        <h3>${n.nombre}</h3>
+                        <p><strong><i class="fas fa-birthday-cake"></i> Edad:</strong> ${n.edad}</p>
+                        <p><strong><i class="fas fa-home"></i> CAI:</strong> ${n.cai}</p>
+                        <p><strong><i class="fas fa-school"></i> Grado/Grupo:</strong> ${n.grado || '-'} / ${n.grupo || '-'}</p>
+                        <a href="/reporte/paciente/${n.id}/" class="btn-ver"><i class="fas fa-file-alt"></i> Ver Reporte Completo</a>
+                    `;
+                    contenedor.appendChild(div);
+                });
+    
+                contador.textContent = `Mostrando ${data.resultados.length} niños`;
+            })
+            .catch(err => {
+                console.error(err);
+                contenedor.innerHTML = '<p>Error al cargar resultados.</p>';
+                contador.textContent = 'Mostrando 0 niños';
+            });
     }
-
-    // Filtrar trabajadores por texto en data-search
+    
+    // Buscar trabajadores con AJAX
     function filtrarTrabajadores() {
         const input = document.getElementById('search-trabajadores');
-        const term = input.value.trim().toLowerCase();
-        const tarjetas = document.querySelectorAll('#lista-trabajadores .tarjeta');
-        let visibleCount = 0;
-
-        tarjetas.forEach(tarjeta => {
-            const searchText = tarjeta.getAttribute('data-search').toLowerCase();
-            if(term === '' || searchText.includes(term)) {
-                tarjeta.style.display = '';
-                visibleCount++;
-            } else {
-                tarjeta.style.display = 'none';
-            }
-        });
-
+        const term = input.value.trim();
+        const caiFilter = document.getElementById('filter-cai-trabajadores').value;
+        const contenedor = document.getElementById('lista-trabajadores');
         const contador = document.getElementById('contador-trabajadores');
-        if(term === '') {
-            contador.textContent = `Mostrando ${tarjetas.length} trabajadores`;
-        } else {
-            contador.textContent = `Mostrando ${visibleCount} de ${tarjetas.length} trabajadores`;
-        }
+    
+        contenedor.innerHTML = '<p>Buscando...</p>';
+    
+        fetch(`/ajax/buscar-trabajadores/?term=${encodeURIComponent(term)}&cai=${encodeURIComponent(caiFilter)}`)
+            .then(res => res.json())
+            .then(data => {
+                contenedor.innerHTML = '';
+    
+                if (data.resultados.length === 0) {
+                    contenedor.innerHTML = '<p>No se encontraron trabajadores.</p>';
+                    contador.textContent = 'Mostrando 0 trabajadores';
+                    return;
+                }
+    
+                data.resultados.forEach(t => {
+                    const div = document.createElement('div');
+                    div.className = 'tarjeta';
+                    div.innerHTML = `
+                        <h3>${t.nombre}</h3>
+                        <p><strong><i class="fas fa-id-badge"></i> Puesto:</strong> ${t.cargo || '-'}</p>
+                        <p><strong><i class="fas fa-building"></i> Departamento:</strong> ${t.departamento || '-'}</p>
+                        <p><strong>CURP:</strong> ${t.curp || '-'}</p>
+                        <a href="/reporte/trabajador/${t.id}/" class="btn-ver"><i class="fas fa-file-alt"></i> Ver Reporte Completo</a>
+                    `;
+                    contenedor.appendChild(div);
+                });
+    
+                contador.textContent = `Mostrando ${data.resultados.length} trabajadores`;
+            })
+            .catch(err => {
+                console.error(err);
+                contenedor.innerHTML = '<p>Error al cargar resultados.</p>';
+                contador.textContent = 'Mostrando 0 trabajadores';
+            });
     }
-
-    // Inicializar estado al cargar la página
-    document.addEventListener('DOMContentLoaded', function() {
-        const seccionGuardada = localStorage.getItem('ultimaSeccionReportes');
+    
+    // Cargar la sección según hash/localStorage
+    window.addEventListener('DOMContentLoaded', () => {
         const hash = window.location.hash.substring(1);
-
-        // Priorizar hash sobre localStorage
-        if(hash === 'trabajadores' || seccionGuardada === 'trabajadores') {
+        const seccionGuardada = localStorage.getItem('ultimaSeccionReportes');
+    
+        if (hash === 'trabajadores' || seccionGuardada === 'trabajadores') {
             document.querySelector('.switch-seccion button:nth-child(2)').click();
-        } else {
-            // Mostrar la sección guardada o la de niños por defecto
-            const seccion = hash || seccionGuardada || 'ninos';
-            const boton = Array.from(document.querySelectorAll('.switch-seccion button'))
-                                .find(btn => btn.textContent.toLowerCase().includes(seccion));
-            if (boton) {
-                boton.click();
-            } else {
-                // Si no encuentra botón, muestra la primera sección y activa su botón
-                document.querySelectorAll('.seccion')[0].style.display = 'block';
-                document.querySelectorAll('.switch-seccion button')[0].classList.add('active');
-            }
         }
-
-        // Inicializar tooltips para badges IMC
+    
         const badges = document.querySelectorAll('.badge-imc');
         badges.forEach(badge => {
-            if (!badge.hasAttribute('title')) {
-                badge.setAttribute('title', 'Clasificación según OMS');
-            }
+            badge.title = 'Clasificación según OMS';
         });
-
-        // Inicializar filtros para mostrar correctamente la lista visible
-        filtrarNinos();
-        filtrarTrabajadores();
     });
-</script>
-
+</script> 
 {% endblock %}
