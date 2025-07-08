@@ -73,38 +73,18 @@
 .btn-secondary { background: #6c757d; }
 .btn-danger { background: #dc3545; }
 
-/* Colores para diagnóstico */
-.dx-bajo {
-    color: #007bff;
-    font-weight: bold;
-}
-.dx-normal {
-    color: #28a745;
-    font-weight: bold;
-}
-.dx-sobrepeso {
-    color: #fd7e14;
-    font-weight: bold;
-}
-.dx-obesidad {
-    color: #dc3545;
-    font-weight: bold;
-}
-.dx-desconocido {
-    color: #6c757d;
-    font-style: italic;
-}
+.dx-bajo { color: #007bff; font-weight: bold; }
+.dx-normal { color: #28a745; font-weight: bold; }
+.dx-sobrepeso { color: #fd7e14; font-weight: bold; }
+.dx-obesidad { color: #dc3545; font-weight: bold; }
+.dx-desconocido { color: #6c757d; font-style: italic; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container reporte-container" id="reporte">
     <div class="worker-icon {% if trabajador.sexo == 'M' %}male{% elif trabajador.sexo == 'F' %}female{% else %}default{% endif %}">
-        {% if trabajador.sexo == 'F' %}
-            <i class="fas fa-female"></i>
-        {% else %}
-            <i class="fas fa-user-tie"></i>
-        {% endif %}
+        {% if trabajador.sexo == 'F' %}<i class="fas fa-female"></i>{% else %}<i class="fas fa-user-tie"></i>{% endif %}
     </div>
 
     <div class="header-section">
@@ -121,11 +101,7 @@
             <div class="dato-item"><i class="fas fa-building"></i><div><strong>Departamento:</strong> {{ trabajador.departamento|default:"No especificado" }}</div></div>
             <div class="dato-item"><i class="fas fa-weight"></i><div><strong>Último IMC:</strong> {{ trabajador.imc|floatformat:2|default:"No calculado" }}
                 {% if trabajador.imc %}
-                <span class="badge-imc 
-                    {% if trabajador.imc < 18.5 %}imc-bajo
-                    {% elif trabajador.imc < 25 %}imc-normal
-                    {% elif trabajador.imc < 30 %}imc-sobrepeso
-                    {% else %}imc-obesidad{% endif %}">
+                <span class="badge-imc {% if trabajador.imc < 18.5 %}imc-bajo{% elif trabajador.imc < 25 %}imc-normal{% elif trabajador.imc < 30 %}imc-sobrepeso{% else %}imc-obesidad{% endif %}">
                     {{ trabajador.get_clasificacion_imc }}
                 </span>
                 {% endif %}
@@ -133,6 +109,7 @@
             <div class="dato-item"><i class="fas fa-ruler"></i><div><strong>Circunferencia Abdominal:</strong> {{ trabajador.circunferencia_abdominal|floatformat:2|default:"No medida" }} cm</div></div>
             <div class="dato-item"><i class="fas fa-calendar-alt"></i><div><strong>Fecha Registro:</strong> {{ trabajador.fecha_registro|date:"d/m/Y H:i" }}</div></div>
         </div>
+
     </div>
 
     <div class="salud-section">
@@ -178,13 +155,7 @@
                         <td>{{ seg.imc|floatformat:2 }}</td>
                         <td>{{ seg.circunferencia_abdominal|floatformat:2|default:"-" }}</td>
                         <td>
-                            <span class="
-                                {% if "Bajo" in seg.dx %}dx-bajo
-                                {% elif "Normal" in seg.dx %}dx-normal
-                                {% elif "Sobrepeso" in seg.dx %}dx-sobrepeso
-                                {% elif "Obesidad" in seg.dx %}dx-obesidad
-                                {% else %}dx-desconocido{% endif %}
-                            ">
+                            <span class="{% if "Bajo" in seg.dx %}dx-bajo{% elif "Normal" in seg.dx %}dx-normal{% elif "Sobrepeso" in seg.dx %}dx-sobrepeso{% elif "Obesidad" in seg.dx %}dx-obesidad{% else %}dx-desconocido{% endif %}">
                                 {{ seg.dx|default:"-" }}
                             </span>
                         </td>
@@ -210,21 +181,41 @@
 <script>
 const datos = JSON.parse('{{ datos_json|escapejs }}');
 
-function crearGrafico(id, label, data, borderColor, backgroundColor) {
+function crearGrafico(id, label, data, borderColor, backgroundColor, referencia, referenciaLabel) {
     const ctx = document.getElementById(id).getContext('2d');
+    const datasets = [
+        {
+            label: label,
+            data: data,
+            borderColor: borderColor,
+            backgroundColor: backgroundColor,
+            borderWidth: 2,
+            tension: 0.1,
+            fill: false,
+            pointStyle: 'circle',
+            pointRadius: 5,
+            pointHoverRadius: 7
+        }
+    ];
+
+    if (referencia !== null) {
+        const refData = new Array(data.length).fill(referencia);
+        datasets.push({
+            label: referenciaLabel,
+            data: refData,
+            borderColor: 'green',
+            borderDash: [6, 6],
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: false
+        });
+    }
+
     new Chart(ctx, {
         type: 'line',
         data: {
             labels: datos.fechas,
-            datasets: [{
-                label: label,
-                data: data,
-                borderColor: borderColor,
-                backgroundColor: backgroundColor,
-                borderWidth: 2,
-                tension: 0.1,
-                fill: false
-            }]
+            datasets: datasets
         },
         options: {
             responsive: true,
@@ -240,9 +231,9 @@ function crearGrafico(id, label, data, borderColor, backgroundColor) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (datos.pesos?.length) crearGrafico('graficaPeso', 'Peso (kg)', datos.pesos, 'rgba(78, 115, 223, 1)', 'rgba(78, 115, 223, 0.2)');
-    if (datos.imcs?.length) crearGrafico('graficaIMC', 'IMC', datos.imcs, 'rgba(54, 185, 204, 1)', 'rgba(54, 185, 204, 0.2)');
-    if (datos.circ_abdominal?.length) crearGrafico('graficaCircAbdominal', 'Circ. Abdominal (cm)', datos.circ_abdominal, 'rgba(155, 89, 182, 1)', 'rgba(155, 89, 182, 0.2)');
+    if (datos.pesos?.length) crearGrafico('graficaPeso', 'Peso (kg)', datos.pesos, 'rgba(78, 115, 223, 1)', 'rgba(78, 115, 223, 0.2)', datos.peso_ideal, `Ideal: ${datos.peso_ideal} kg`);
+    if (datos.imcs?.length) crearGrafico('graficaIMC', 'IMC', datos.imcs, 'rgba(54, 185, 204, 1)', 'rgba(54, 185, 204, 0.2)', datos.imc_ideal, `Ideal: ${datos.imc_ideal}`);
+    if (datos.circ_abdominal?.length) crearGrafico('graficaCircAbdominal', 'Circ. Abdominal (cm)', datos.circ_abdominal, 'rgba(155, 89, 182, 1)', 'rgba(155, 89, 182, 0.2)', datos.circ_ideal, `Ideal: ${datos.circ_ideal} cm`);
 });
 </script>
 {% endblock %}

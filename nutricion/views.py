@@ -1215,6 +1215,27 @@ class ReporteTrabajadorView(LoginRequiredMixin, DetailView):
 
         ultimo_seguimiento = seguimientos.last() if seguimientos.exists() else None
 
+        # Cálculo de valores ideales:
+        peso_ideal = None
+        imc_ideal = None
+        circ_abd_ideal = None
+
+        if trabajador.talla:  # Suponemos talla en cm
+            talla_m = trabajador.talla / 100  # convertir a metros
+
+            # IMC ideal: promedio 22 (puedes ajustar si lo deseas)
+            imc_ideal = 22  
+            peso_ideal = round(imc_ideal * (talla_m ** 2), 2)
+
+            # Circunferencia abdominal recomendada OMS:
+            if trabajador.sexo == 'M':
+                circ_abd_ideal = 'Menos de 94 cm'
+            elif trabajador.sexo == 'F':
+                circ_abd_ideal = 'Menos de 80 cm'
+            else:
+                circ_abd_ideal = 'No especificado'
+
+        # Preparar datos para gráficas
         datos = {
             'fechas': [s.fecha_valoracion.strftime('%Y-%m-%d') for s in seguimientos],
             'pesos': [float(s.peso) if s.peso else None for s in seguimientos],
@@ -1223,14 +1244,21 @@ class ReporteTrabajadorView(LoginRequiredMixin, DetailView):
                 float(s.circunferencia_abdominal) if s.circunferencia_abdominal is not None else None
                 for s in seguimientos
             ],
+            'peso_ideal': peso_ideal,
+            'imc_ideal': imc_ideal,
+            'circ_abd_ideal': circ_abd_ideal,
         }
 
         context.update({
             'seguimientos': seguimientos,
             'ultimo_seguimiento': ultimo_seguimiento,
             'datos_json': json.dumps(datos),
+            'peso_ideal': peso_ideal,
+            'imc_ideal': imc_ideal,
+            'circ_abd_ideal': circ_abd_ideal,
             'debug_mode': settings.DEBUG
         })
+
         return context
  
 #-------------------
@@ -1627,103 +1655,98 @@ def generar_pdf_paciente(request, paciente_id):
 def generar_pdf_trabajador(request, trabajador_id):
     trabajador = get_object_or_404(Trabajador, pk=trabajador_id)
     seguimientos = SeguimientoTrabajador.objects.filter(trabajador=trabajador).order_by('fecha_valoracion')
-    
-    # --- Función para manejar imágenes ---
+
+    # --- Función para cargar imágenes como base64 ---
     def get_image_base64(relative_static_path):
-        """Convierte una imagen a Base64 con manejo de errores mejorado"""
         try:
-            # Primero intenta con STATIC_ROOT (producción)
             if hasattr(settings, 'STATIC_ROOT') and settings.STATIC_ROOT:
                 absolute_path = os.path.join(settings.STATIC_ROOT, relative_static_path)
                 if os.path.exists(absolute_path):
                     with open(absolute_path, "rb") as img_file:
                         return base64.b64encode(img_file.read()).decode('utf-8')
-            
-            # Si no funciona, intenta con STATICFILES_DIRS (desarrollo)
             for static_dir in getattr(settings, 'STATICFILES_DIRS', []):
                 absolute_path = os.path.join(static_dir, relative_static_path)
                 if os.path.exists(absolute_path):
                     with open(absolute_path, "rb") as img_file:
                         return base64.b64encode(img_file.read()).decode('utf-8')
-            
-            # Si todo falla, busca directamente en la app
-            app_static_path = os.path.join('nutricion', 'static', relative_static_path)
-            if os.path.exists(app_static_path):
-                with open(app_static_path, "rb") as img_file:
-                    return base64.b64encode(img_file.read()).decode('utf-8')
-            
-            print(f"Archivo no encontrado en ninguna ubicación: {relative_static_path}")
             return None
-            
         except Exception as e:
             print(f"Error al cargar imagen {relative_static_path}: {str(e)}")
             return None
-    
-    # Obtener imágenes
+
     logo_base64 = get_image_base64('nutricion/images/dofyas.png')
     fondo_base64 = get_image_base64('nutricion/images/fondodif2.png')
-    
-    # --- Generar gráficas dinámicas ---
+
     plt.style.use('seaborn-v0_8')
     plt.rcParams['figure.facecolor'] = 'white'
     plt.rcParams['axes.facecolor'] = 'white'
-    
-    # Preparar datos comunes
+
     fechas = [s.fecha_valoracion for s in seguimientos]
-    
-    # 1. Gráfica de evolución de peso
-    plt.figure(figsize=(10, 5))
-    pesos = [s.peso for s in seguimientos]
-    plt.plot(fechas, pesos, marker='o', color='#8B0000', linewidth=2)
-    plt.title("Evolución de Peso", fontsize=14, pad=20)
-    plt.xlabel("Fecha", fontsize=12)
-    plt.ylabel("Peso (kg)", fontsize=12)
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    
-    buffer_peso = io.BytesIO()
-    plt.savefig(buffer_peso, format='png', dpi=150, bbox_inches='tight')
-    plt.close()
-    grafica_peso_base64 = base64.b64encode(buffer_peso.getvalue()).decode('utf-8')
-    
-    # 2. Gráfica de IMC (si hay datos)
+
+    # --- Valores de referencia ---
+    peso_ideal = round((trabajador.talla / 100) ** 2 * 22, 1) if trabajador.talla else None
+    imc_ideal = 22
+    circ_ideal = 94 if trabajador.sexo == 'M' else 80
+
+    # --- Gráfica Peso ---
+    grafica_peso_base64 = None
+    if any(s.peso is not None for s in seguimientos):
+        plt.figure(figsize=(10, 5))
+        pesos = [s.peso for s in seguimientos]
+        plt.plot(fechas, pesos, marker='o', color='#8B0000', linewidth=2, label='Peso')
+        if peso_ideal:
+            plt.axhline(y=peso_ideal, color='green', linestyle='--', linewidth=2, label=f'Ideal: {peso_ideal} kg')
+        plt.title("Evolución de Peso", fontsize=14, pad=20)
+        plt.xlabel("Fecha", fontsize=12)
+        plt.ylabel("Peso (kg)", fontsize=12)
+        plt.grid(True, linestyle='--', alpha=0.7)
+        plt.legend()
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        buffer_peso = io.BytesIO()
+        plt.savefig(buffer_peso, format='png', dpi=150, bbox_inches='tight')
+        plt.close()
+        grafica_peso_base64 = base64.b64encode(buffer_peso.getvalue()).decode('utf-8')
+
+    # --- Gráfica IMC ---
     grafica_imc_base64 = None
     if any(s.imc is not None for s in seguimientos):
         plt.figure(figsize=(10, 5))
         imcs = [s.imc for s in seguimientos]
-        plt.plot(fechas, imcs, marker='s', color='#6D0000', linewidth=2)
+        plt.plot(fechas, imcs, marker='s', color='#6D0000', linewidth=2, label='IMC')
+        plt.axhline(y=imc_ideal, color='green', linestyle='--', linewidth=2, label=f'Ideal: {imc_ideal}')
         plt.title("Evolución del IMC", fontsize=14, pad=20)
         plt.xlabel("Fecha", fontsize=12)
         plt.ylabel("IMC", fontsize=12)
         plt.grid(True, linestyle='--', alpha=0.7)
+        plt.legend()
         plt.xticks(rotation=45)
         plt.tight_layout()
-        
         buffer_imc = io.BytesIO()
         plt.savefig(buffer_imc, format='png', dpi=150, bbox_inches='tight')
         plt.close()
         grafica_imc_base64 = base64.b64encode(buffer_imc.getvalue()).decode('utf-8')
-    
-    # 3. NUEVA Gráfica de Circunferencia Abdominal (si hay datos)
+
+    # --- Gráfica Circunferencia Abdominal ---
     grafica_circ_abdominal_base64 = None
     if any(s.circunferencia_abdominal is not None for s in seguimientos):
         plt.figure(figsize=(10, 5))
         circ_abdominal = [s.circunferencia_abdominal for s in seguimientos]
-        plt.plot(fechas, circ_abdominal, marker='D', color='#A52A2A', linewidth=2)
+        plt.plot(fechas, circ_abdominal, marker='D', color='#A52A2A', linewidth=2, label='Circunferencia')
+        plt.axhline(y=circ_ideal, color='green', linestyle='--', linewidth=2, label=f'Ideal: {circ_ideal} cm')
         plt.title("Evolución de Circunferencia Abdominal", fontsize=14, pad=20)
         plt.xlabel("Fecha", fontsize=12)
-        plt.ylabel("Circ. Abdominal (cm)", fontsize=12)
+        plt.ylabel("Circunferencia (cm)", fontsize=12)
         plt.grid(True, linestyle='--', alpha=0.7)
+        plt.legend()
         plt.xticks(rotation=45)
         plt.tight_layout()
-        
         buffer_circ = io.BytesIO()
         plt.savefig(buffer_circ, format='png', dpi=150, bbox_inches='tight')
         plt.close()
         grafica_circ_abdominal_base64 = base64.b64encode(buffer_circ.getvalue()).decode('utf-8')
-    
-    # --- Renderizar HTML con todos los datos ---
+
+    # --- Render HTML ---
     html_string = render_to_string(
         'reporte_trabajador_pdf.html',
         {
@@ -1737,8 +1760,7 @@ def generar_pdf_trabajador(request, trabajador_id):
             'pdf_mode': True
         }
     )
-    
-    # --- CSS para el PDF ---
+
     css_string = f'''
         @page {{
             size: A4;
@@ -1758,57 +1780,15 @@ def generar_pdf_trabajador(request, trabajador_id):
         .contenedor-principal {{
             background-color: rgba(255, 255, 255, 0.93);
             padding: 2cm;
-            position: relative;
-            z-index: 2;
-        }}
-
-        .header-institucional {{
-            page-break-after: avoid;
-        }}
-
-        .seccion {{
-            page-break-inside: avoid;
-        }}
-        
-        /* Estilos para las gráficas */
-        .graficas-grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }}
-        
-        .grafica-container {{
-            page-break-inside: avoid;
-            margin-bottom: 30px;
-        }}
-        
-        .grafica-container h4 {{
-            text-align: center;
-            color: #6D0000;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }}
-        
-        /* Estilos específicos para trabajadores */
-        .dato-item-trabajador {{
-            background-color: #f8f9fa;
-            border-left: 4px solid #8B0000;
-            padding: 12px;
-            margin-bottom: 10px;
         }}
     '''
-    
+
     css = CSS(string=css_string)
-    
-    # --- Generar PDF ---
     font_config = FontConfiguration()
     html = HTML(string=html_string, base_url=request.build_absolute_uri())
     pdf = html.write_pdf(stylesheets=[css], font_config=font_config)
-    
-    # --- Respuesta HTTP ---
+
     response = HttpResponse(pdf, content_type='application/pdf')
     filename = f"reporte_{trabajador.nombre.replace(' ', '_')}.pdf"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
-
