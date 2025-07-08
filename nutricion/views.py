@@ -1,8 +1,8 @@
 import base64
-from datetime import datetime
+from datetime import date, datetime
 import io
 import os
-import re
+import pyexcel as pe
 from venv import logger
 from django.views.generic import DeleteView, ListView, View, TemplateView, UpdateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -1791,4 +1791,63 @@ def generar_pdf_trabajador(request, trabajador_id):
     response = HttpResponse(pdf, content_type='application/pdf')
     filename = f"reporte_{trabajador.nombre.replace(' ', '_')}.pdf"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+def exportar_datos_excel(request):
+    # 1. Obtener datos de Pacientes
+    pacientes_qs = Paciente.objects.filter(is_deleted=False).values(
+        'nombre', 'curp', 'cai', 'fecha_nacimiento', 'grado', 'grupo', 'imc'
+    )
+
+    pacientes_data = [["Nombre", "CURP", "CAI", "Edad (Años)", "Grado", "Grupo", "IMC"]]
+
+    for p in pacientes_qs:
+        fecha_nac = p.get('fecha_nacimiento')
+        edad = ''
+        if fecha_nac:
+            hoy = date.today()
+            edad = hoy.year - fecha_nac.year - ((hoy.month, hoy.day) < (fecha_nac.month, fecha_nac.day))
+
+        pacientes_data.append([
+            p.get('nombre', ''),
+            p.get('curp', ''),
+            p.get('cai', ''),
+            edad,
+            p.get('grado', ''),
+            p.get('grupo', ''),
+            round(p.get('imc', 2)) if p.get('imc') else ''
+        ])
+
+    # 2. Obtener datos de Trabajadores
+    trabajadores_qs = Trabajador.objects.filter(is_deleted=False).values(
+        'nombre', 'curp', 'cai', 'cargo', 'departamento', 'imc'
+    )
+
+    trabajadores_data = [["Nombre", "CURP", "CAI", "Puesto", "Departamento", "IMC"]]
+
+    for t in trabajadores_qs:
+        trabajadores_data.append([
+            t.get('nombre', ''),
+            t.get('curp', ''),
+            t.get('cai', ''),
+            t.get('cargo', ''),
+            t.get('departamento', ''),
+            round(t.get('imc', 2)) if t.get('imc') else ''
+        ])
+
+    # 3. Crear libro de Excel con múltiples hojas
+    data = {
+        "Pacientes": pacientes_data,
+        "Trabajadores": trabajadores_data
+    }
+
+    book = pe.Book(data)
+
+    # 4. Preparar respuesta HTTP
+    output = io.BytesIO()
+    book.save_to_memory("xlsx", output)
+    output.seek(0)
+
+    response = HttpResponse(output.getvalue(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response['Content-Disposition'] = 'attachment; filename="reporte_general.xlsx"'
     return response

@@ -1,3 +1,4 @@
+from django import views
 from django.urls import path
 from django.contrib.auth.views import LoginView, LogoutView
 
@@ -26,7 +27,7 @@ from nutricion.views import (
     buscar_trabajadores_ajax,
     calcular_edad_api,
     calcular_indicadores_api,
-
+    exportar_datos_excel,
     generar_pdf_paciente,
     generar_pdf_trabajador
 )
@@ -91,7 +92,7 @@ urlpatterns = [
     path('ajax/seguimientos-trabajador/', buscar_seguimientos_trabajador_ajax, name='buscar_seguimientos_trabajador_ajax'),
     path('api/calcular-indicadores/', calcular_indicadores_api, name='calcular_indicadores_api'),
     path('api/calcular-edad/', calcular_edad_api, name='calcular_edad_api'),
-
+    path('exportar/excel/', exportar_datos_excel, name='exportar_excel'),
 
     # Reportes PDF
     path('reporte/paciente/<int:paciente_id>/pdf/', generar_pdf_paciente, name='generar_pdf_paciente'),

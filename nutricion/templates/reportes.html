@@ -9,7 +9,12 @@
 
 {% block content %}
 <div class="reportes-page">
-    <h1><i class="fas fa-chart-line"></i> Reportes Nutricionales</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1><i class="fas fa-chart-line"></i> Reportes Nutricionales</h1>
+        <a href="{% url 'exportar_excel' %}" class="btn btn-secondary" style="padding: 8px 15px; font-size: 14px;">
+            <i class="fas fa-file-excel"></i> Exportar a Excel
+        </a>
+    </div>
 
     <div class="switch-seccion">
         <button class="active" onclick="mostrarSeccion('ninos')">
