@@ -2,6 +2,7 @@ import base64
 from datetime import date, datetime
 import io
 import os
+import unicodedata
 import pyexcel as pe
 from venv import logger
 from django.views.generic import DeleteView, ListView, View, TemplateView, UpdateView, DetailView
@@ -1264,24 +1265,28 @@ class ReporteTrabajadorView(LoginRequiredMixin, DetailView):
 #-------------------
 # Extras
 #-------------------
+
+def remover_tildes(texto):
+    return ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
     
 def buscar_ninos_ajax(request):
-    from dateutil.relativedelta import relativedelta
-    from datetime import date
-
-    term = request.GET.get('term', '')
-    cai_filter = request.GET.get('cai', '')
-    edad_filter = request.GET.get('edad', '')
+    term = request.GET.get('term', '').strip()
+    cai_filter = request.GET.get('cai', '').strip()
+    edad_filter = request.GET.get('edad', '').strip()
     page = int(request.GET.get('page', 1))
 
-    ninos = Paciente.objects.filter(nombre__icontains=term, is_deleted=False)
+    # 1. Filtra por nombre y elimina marcados como eliminados
+    ninos_qs = Paciente.objects.filter(nombre__icontains=term, is_deleted=False).order_by('-id')
 
+    # 2. Convertimos a lista si necesitamos filtrar por CAI sin tildes
     if cai_filter:
-        ninos = ninos.filter(cai=cai_filter)
+        ninos = [n for n in ninos_qs if remover_tildes(n.cai.upper()) == cai_filter.upper()]
     elif request.user.is_nutriologo and request.user.cai:
-        ninos = ninos.filter(cai=request.user.cai)
+        ninos = [n for n in ninos_qs if remover_tildes(n.cai.upper()) == remover_tildes(request.user.cai.upper())]
+    else:
+        ninos = list(ninos_qs)
 
-    # Filtro por edad
+    # 3. Filtro por edad (aplicado sobre la lista)
     if edad_filter:
         hoy = date.today()
         if edad_filter == "0-2":
@@ -1296,13 +1301,17 @@ def buscar_ninos_ajax(request):
         elif edad_filter == "13-18":
             min_date = hoy.replace(year=hoy.year - 18)
             max_date = hoy.replace(year=hoy.year - 13)
-        
-        ninos = ninos.filter(fecha_nacimiento__gte=min_date, fecha_nacimiento__lte=max_date)
+        else:
+            min_date = max_date = None
 
-    ninos = ninos.order_by('-id')
+        if min_date and max_date:
+            ninos = [n for n in ninos if n.fecha_nacimiento >= min_date and n.fecha_nacimiento <= max_date]
+
+    # 4. Paginación
     paginator = Paginator(ninos, 10)
     pagina = paginator.get_page(page)
 
+    # 5. Preparar respuesta
     resultados = []
     for n in pagina:
         seguimiento = SeguimientoTrimestral.objects.filter(paciente=n, is_deleted=False).order_by('-fecha_valoracion').first()
@@ -1311,8 +1320,8 @@ def buscar_ninos_ajax(request):
             edad_texto = f"{edad_rd.years} años, {edad_rd.months} meses"
             edad_anios = edad_rd.years
         else:
-            edad_texto = n.edad_detallada  # fallback
             edad_rd = relativedelta(date.today(), n.fecha_nacimiento)
+            edad_texto = f"{edad_rd.years} años, {edad_rd.months} meses"
             edad_anios = edad_rd.years
 
         resultados.append({
@@ -1323,7 +1332,7 @@ def buscar_ninos_ajax(request):
             'curp': n.curp,
             'grado': n.grado,
             'grupo': n.grupo,
-            'cai': str(n.cai),
+            'cai': n.cai,
         })
 
     return JsonResponse({
@@ -1451,14 +1460,23 @@ def generar_grafica_oms_completa(seguimientos, tipo="peso", sexo="M"):
         modelo = OmsPesoEdad
         campo_x = "meses"
         campo_y = "peso"
+        x_label = "Edad (meses)"
+        y_label = "z-score/desviación estándar"
+        titulo = "Peso para la Edad según OMS"
     elif tipo == "talla":
         modelo = OmsTallaEdad
         campo_x = "meses"
         campo_y = "talla"
+        x_label = "Talla (cm)"
+        y_label = "z-score/desviación estándar"
+        titulo = "Talla para la Edad según OMS"
     elif tipo == "peso_talla":
         modelo = OmsPesoTalla
         campo_x = "talla_cm"
         campo_y = "peso"
+        x_label = "Talla (cm)"
+        y_label = "z-score/desviación estándar"
+        titulo = "Peso para la Talla según OMS"
     else:
         return None
 
@@ -1514,9 +1532,9 @@ def generar_grafica_oms_completa(seguimientos, tipo="peso", sexo="M"):
     if puntos_x:
         plt.plot(puntos_x, puntos_y, 'o-', color='black', label='Paciente')
 
-    plt.title(f'{tipo.replace("_", " ").capitalize()} según OMS')
-    plt.xlabel("Edad (meses)" if "edad" in campo_x else "Talla (cm)")
-    plt.ylabel("Peso (kg)" if tipo in ["peso", "peso_talla"] else "Talla (cm)")
+    plt.title(titulo)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend()
     plt.tight_layout()
@@ -1794,12 +1812,16 @@ def generar_pdf_trabajador(request, trabajador_id):
     return response
 
 def exportar_datos_excel(request):
-    # 1. Obtener datos de Pacientes
+    # Pacientes
     pacientes_qs = Paciente.objects.filter(is_deleted=False).values(
         'nombre', 'curp', 'cai', 'fecha_nacimiento', 'grado', 'grupo', 'imc'
     )
 
-    pacientes_data = [["Nombre", "CURP", "CAI", "Edad (Años)", "Grado", "Grupo", "IMC"]]
+    pacientes_data = [
+        ["REPORTE DE PACIENTES"],  # Título
+        [],  # Fila en blanco
+        ["Nombre", "CURP", "CAI", "Edad (Años)", "Grado", "Grupo", "IMC"]  # Cabecera
+    ]
 
     for p in pacientes_qs:
         fecha_nac = p.get('fecha_nacimiento')
@@ -1818,12 +1840,16 @@ def exportar_datos_excel(request):
             round(p.get('imc', 2)) if p.get('imc') else ''
         ])
 
-    # 2. Obtener datos de Trabajadores
+    # Trabajadores
     trabajadores_qs = Trabajador.objects.filter(is_deleted=False).values(
         'nombre', 'curp', 'cai', 'cargo', 'departamento', 'imc'
     )
 
-    trabajadores_data = [["Nombre", "CURP", "CAI", "Puesto", "Departamento", "IMC"]]
+    trabajadores_data = [
+        ["REPORTE DE TRABAJADORES"],
+        [],
+        ["Nombre", "CURP", "CAI", "Puesto", "Departamento", "IMC"]
+    ]
 
     for t in trabajadores_qs:
         trabajadores_data.append([
@@ -1835,15 +1861,12 @@ def exportar_datos_excel(request):
             round(t.get('imc', 2)) if t.get('imc') else ''
         ])
 
-    # 3. Crear libro de Excel con múltiples hojas
     data = {
         "Pacientes": pacientes_data,
         "Trabajadores": trabajadores_data
     }
 
     book = pe.Book(data)
-
-    # 4. Preparar respuesta HTTP
     output = io.BytesIO()
     book.save_to_memory("xlsx", output)
     output.seek(0)

@@ -214,6 +214,45 @@
     font-size: 18px;
 }
 
+/* Estilo para el botón de exportar a Excel */
+a.btn.btn-secondary {
+    background-color: #1d6f42;  /* Verde similar al de Excel */
+    color: white !important;
+    text-decoration: none !important;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-weight: 500;
+}
+
+a.btn.btn-secondary:hover, 
+a.btn.btn-secondary:focus {
+    background-color: #165a36;  /* Verde más oscuro al hover */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    color: white !important;
+    text-decoration: none !important;
+}
+
+a.btn.btn-secondary i {
+    font-size: 16px;
+    margin-right: 5px;
+}
+
+/* Eliminar cualquier estilo de link por defecto */
+a.btn.btn-secondary:link,
+a.btn.btn-secondary:visited {
+    color: white;
+    text-decoration: none;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .search-container {
