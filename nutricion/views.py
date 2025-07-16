@@ -4,6 +4,9 @@ import io
 import os
 import unicodedata
 import pyexcel as pe
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from openpyxl.utils import get_column_letter
 from venv import logger
 from django.views.generic import DeleteView, ListView, View, TemplateView, UpdateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -50,43 +53,78 @@ class AdminRequiredMixin(UserPassesTestMixin):
 
 class HomeView(LoginRequiredMixin, View):
     CAI_CHOICES = [
-        ("ESTEFANÍA CASTAÑEDA NUÑEZ", "CAI Estefanía Castañeda Núñez"),
+        ("ESTEFANIA CASTANEDA NUNEZ", "CAI Estefanía Castañeda Núñez"),
         ("JOSEFINA VICENS", "CAI Josefina Vicens"),
-        ("JULIETA CAMPOS DE GONZÁLEZ PEDRERO", "CAI Julieta Campos de González Pedrero"),
-        ("JOSÉ MARÍA PINO SUÁREZ", "CAI José María Pino Suárez"),
+        ("JULIETA CAMPOS DE GONZALEZ PEDRERO", "CAI Julieta Campos de González Pedrero"),
+        ("JOSE MARIA PINO SUAREZ", "CAI José María Pino Suárez"),
         ("MARINA CORTAZAR VDA. DE ESCOBAR", "CAI Marina Cortázar Viuda de Escobar"),
-        ("EVA SÁMANO DE LÓPEZ MATEOS", "CAI Eva Sámano de López Mateos"),
+        ("EVA SAMANO DE LOPEZ MATEOS", "CAI Eva Sámano de López Mateos"),
     ]
+
+    def normalizar(self, texto):
+        return ''.join(c for c in unicodedata.normalize('NFD', texto or '') if unicodedata.category(c) != 'Mn').upper().strip()
 
     def get(self, request):
         user_cai = request.user.cai if request.user.is_nutriologo else None
+        cai_dict = {self.normalizar(k): v for k, v in self.CAI_CHOICES}
 
-        # Filtrado general o por CAI
         if user_cai:
-            total_ninos = Paciente.objects.filter(is_deleted=False, cai=user_cai).count()
-            total_trabajadores = Trabajador.objects.filter(is_deleted=False, cai=user_cai).count()
+            user_cai_norm = self.normalizar(user_cai)
+            clave_oficial = next((k for k in cai_dict if self.normalizar(k) == user_cai_norm), user_cai)
+
+            total_ninos = Paciente.objects.filter(is_deleted=False, cai__iexact=clave_oficial).count()
+            total_trabajadores = Trabajador.objects.filter(is_deleted=False, cai__iexact=clave_oficial).count()
             total_seguimientos = (
-                SeguimientoTrimestral.objects.filter(is_deleted=False, paciente__cai=user_cai).count() +
-                SeguimientoTrabajador.objects.filter(is_deleted=False, trabajador__cai=user_cai).count()
+                SeguimientoTrimestral.objects.filter(
+                    is_deleted=False,
+                    paciente__is_deleted=False,
+                    paciente__cai__iexact=clave_oficial
+                ).count() +
+                SeguimientoTrabajador.objects.filter(
+                    is_deleted=False,
+                    trabajador__is_deleted=False,
+                    trabajador__cai__iexact=clave_oficial
+                ).count()
             )
-            cais = [(user_cai, dict(self.CAI_CHOICES).get(user_cai, user_cai))]
+            cais = [(clave_oficial, cai_dict.get(self.normalizar(clave_oficial), clave_oficial))]
         else:
             total_ninos = Paciente.objects.filter(is_deleted=False).count()
             total_trabajadores = Trabajador.objects.filter(is_deleted=False).count()
             total_seguimientos = (
-                SeguimientoTrimestral.objects.filter(is_deleted=False).count() +
-                SeguimientoTrabajador.objects.filter(is_deleted=False).count()
+                SeguimientoTrimestral.objects.filter(
+                    is_deleted=False,
+                    paciente__is_deleted=False
+                ).count() +
+                SeguimientoTrabajador.objects.filter(
+                    is_deleted=False,
+                    trabajador__is_deleted=False
+                ).count()
             )
             cais = self.CAI_CHOICES
 
-        # Detalle por CAI
         detalle_cais = {}
         for clave, nombre in cais:
-            trabajadores = Trabajador.objects.filter(is_deleted=False, cai=clave).values('id', 'nombre', 'cargo')
-            ninos = Paciente.objects.filter(is_deleted=False, cai=clave).values('id', 'nombre')
+            clave_norm = self.normalizar(clave)
 
-            seguimientos_ninos = SeguimientoTrimestral.objects.filter(is_deleted=False, paciente__cai=clave).count()
-            seguimientos_trabajadores = SeguimientoTrabajador.objects.filter(is_deleted=False, trabajador__cai=clave).count()
+            trabajadores = Trabajador.objects.filter(
+                is_deleted=False, cai__iexact=clave
+            ).values('id', 'nombre', 'cargo')
+
+            ninos = Paciente.objects.filter(
+                is_deleted=False, cai__iexact=clave
+            ).values('id', 'nombre')
+
+            seguimientos_ninos = SeguimientoTrimestral.objects.filter(
+                is_deleted=False,
+                paciente__is_deleted=False,
+                paciente__cai__iexact=clave
+            ).count()
+
+            seguimientos_trabajadores = SeguimientoTrabajador.objects.filter(
+                is_deleted=False,
+                trabajador__is_deleted=False,
+                trabajador__cai__iexact=clave
+            ).count()
 
             detalle_cais[clave] = {
                 'nombre': nombre,
@@ -1812,65 +1850,164 @@ def generar_pdf_trabajador(request, trabajador_id):
     return response
 
 def exportar_datos_excel(request):
-    # Pacientes
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from datetime import date
+    from django.http import HttpResponse
+    import io
+
+    # Crear el libro de Excel
+    wb = Workbook()
+
+    # ===== ESTILOS =====
+    header_font = Font(bold=True, color="FFFFFF", size=12)
+    header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    data_font = Font(size=11)
+    data_alignment = Alignment(horizontal="left", vertical="center")
+    data_fill_even = PatternFill(start_color="DCE6F1", end_color="DCE6F1", fill_type="solid")
+    data_fill_odd = PatternFill(start_color="E6E6E6", end_color="E6E6E6", fill_type="solid")
+
+    # ===== HOJA DE PACIENTES =====
+    ws_pacientes = wb.active
+    ws_pacientes.title = "Pacientes"
+
     pacientes_qs = Paciente.objects.filter(is_deleted=False).values(
-        'nombre', 'curp', 'cai', 'fecha_nacimiento', 'grado', 'grupo', 'imc'
+        'nombre', 'curp', 'cai', 'fecha_nacimiento', 'grado', 'grupo', 'peso', 'talla'
     )
 
-    pacientes_data = [
-        ["REPORTE DE PACIENTES"],  # Título
-        [],  # Fila en blanco
-        ["Nombre", "CURP", "CAI", "Edad (Años)", "Grado", "Grupo", "IMC"]  # Cabecera
-    ]
+    # Encabezados
+    headers = ["Nombre", "CURP", "CAI", "Edad (Años)", "Grado", "Grupo", "Peso (kg)", "Talla (cm)", "Peso para Edad", "Talla para Edad", "Peso para Talla"]
+    ws_pacientes.append(headers)
 
+    for col in range(1, len(headers) + 1):
+        cell = ws_pacientes.cell(row=1, column=col)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = thin_border
+
+    # Lógica para calcular edad y aplicar valores
+    row_num = 2
     for p in pacientes_qs:
         fecha_nac = p.get('fecha_nacimiento')
+        hoy = date.today()
         edad = ''
         if fecha_nac:
-            hoy = date.today()
             edad = hoy.year - fecha_nac.year - ((hoy.month, hoy.day) < (fecha_nac.month, fecha_nac.day))
 
-        pacientes_data.append([
+        peso = p.get('peso', '')
+        talla = p.get('talla', '')
+
+        # Placeholder para indicadores, cámbialos por cálculo real si lo deseas
+        peso_edad = "ND"
+        talla_edad = "ND"
+        peso_talla = "ND"
+
+        row = [
             p.get('nombre', ''),
             p.get('curp', ''),
             p.get('cai', ''),
             edad,
             p.get('grado', ''),
             p.get('grupo', ''),
-            round(p.get('imc', 2)) if p.get('imc') else ''
-        ])
+            peso,
+            talla,
+            peso_edad,
+            talla_edad,
+            peso_talla
+        ]
+        ws_pacientes.append(row)
 
-    # Trabajadores
+        for col in range(1, len(row) + 1):
+            cell = ws_pacientes.cell(row=row_num, column=col)
+            cell.font = data_font
+            cell.alignment = data_alignment
+            cell.border = thin_border
+            cell.fill = data_fill_even if row_num % 2 == 0 else data_fill_odd
+        row_num += 1
+
+    # Ajustar ancho de columnas
+    for col in ws_pacientes.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if cell.value and len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 2) * 1.2
+        ws_pacientes.column_dimensions[column].width = adjusted_width
+
+    ws_pacientes.freeze_panes = "A2"
+
+    # ===== HOJA DE TRABAJADORES =====
+    ws_trabajadores = wb.create_sheet(title="Trabajadores")
+
     trabajadores_qs = Trabajador.objects.filter(is_deleted=False).values(
         'nombre', 'curp', 'cai', 'cargo', 'departamento', 'imc'
     )
 
-    trabajadores_data = [
-        ["REPORTE DE TRABAJADORES"],
-        [],
-        ["Nombre", "CURP", "CAI", "Puesto", "Departamento", "IMC"]
-    ]
+    headers = ["Nombre", "CURP", "CAI", "Puesto", "Departamento", "IMC"]
+    ws_trabajadores.append(headers)
 
+    for col in range(1, len(headers) + 1):
+        cell = ws_trabajadores.cell(row=1, column=col)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = thin_border
+
+    row_num = 2
     for t in trabajadores_qs:
-        trabajadores_data.append([
+        row = [
             t.get('nombre', ''),
             t.get('curp', ''),
             t.get('cai', ''),
             t.get('cargo', ''),
             t.get('departamento', ''),
             round(t.get('imc', 2)) if t.get('imc') else ''
-        ])
+        ]
+        ws_trabajadores.append(row)
 
-    data = {
-        "Pacientes": pacientes_data,
-        "Trabajadores": trabajadores_data
-    }
+        for col in range(1, len(row) + 1):
+            cell = ws_trabajadores.cell(row=row_num, column=col)
+            cell.font = data_font
+            cell.alignment = data_alignment
+            cell.border = thin_border
+            cell.fill = data_fill_even if row_num % 2 == 0 else data_fill_odd
+        row_num += 1
 
-    book = pe.Book(data)
+    for col in ws_trabajadores.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if cell.value and len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 2) * 1.2
+        ws_trabajadores.column_dimensions[column].width = adjusted_width
+
+    ws_trabajadores.freeze_panes = "A2"
+
+    # ===== RESPUESTA =====
     output = io.BytesIO()
-    book.save_to_memory("xlsx", output)
+    wb.save(output)
     output.seek(0)
 
-    response = HttpResponse(output.getvalue(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response = HttpResponse(
+        output.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
     response['Content-Disposition'] = 'attachment; filename="reporte_general.xlsx"'
+
     return response

@@ -40,7 +40,7 @@
                         <option value="JOSEFINA VICENS">CAI Josefina Vicens</option>
                         <option value="JULIETA CAMPOS DE GONZALEZ PEDRERO">CAI Julieta Campos de González Pedrero</option>
                         <option value="JOSE MARIA PINO SUAREZ">CAI José María Pino Suárez</option>
-                        <option value="MARINA CORTAZAR VDA. DE ESCOBAR">CAI Marina Cortázar Viuda de Escobar</option>
+                        <option value="MARINA CORTAZAR VDA DE ESCOBAR">CAI Marina Cortázar Viuda de Escobar</option>
                         <option value="EVA SAMANO DE LOPEZ MATEOS">CAI Eva Sámano de López Mateos</option>
                         </select>
                 {% else %}
@@ -143,12 +143,12 @@
                 {% if not es_nutriologo %}
                     <select id="filter-cai-trabajadores" onchange="filtrarTrabajadores()">
                         <option value="">Todos los CAI</option>
-                        <option value="ESTEFANÍA CASTAÑEDA NUÑEZ">ESTEFANÍA CASTAÑEDA NUÑEZ</option>
-                        <option value="JOSEFINA VICENS">JOSEFINA VICENS</option>
-                        <option value="JULIETA CAMPOS DE GONZÁLEZ PEDRERO">JULIETA CAMPOS DE GONZÁLEZ PEDRERO</option>
-                        <option value="JOSÉ MARÍA PINO SUÁREZ">JOSÉ MARÍA PINO SUÁREZ</option>
-                        <option value="MARINA CORTAZAR VDA. DE ESCOBAR">MARINA CORTAZAR VDA. DE ESCOBAR</option>
-                        <option value="EVA SÁMANO DE LÓPEZ MATEOS">EVA SÁMANO DE LÓPEZ MATEOS</option>
+                        <option value="ESTEFANIA CASTANEDA NUNEZ">CAI Estefanía Castañeda Núñez</option>
+                        <option value="JOSEFINA VICENS">CAI Josefina Vicens</option>
+                        <option value="JULIETA CAMPOS DE GONZALEZ PEDRERO">CAI Julieta Campos de González Pedrero</option>
+                        <option value="JOSE MARIA PINO SUAREZ">CAI José María Pino Suárez</option>
+                        <option value="MARINA CORTAZAR VDA DE ESCOBAR">CAI Marina Cortázar Viuda de Escobar</option>
+                        <option value="EVA SAMANO DE LOPEZ MATEOS">CAI Eva Sámano de López Mateos</option>
                     </select>
                 {% else %}
                     <input type="hidden" id="filter-cai-trabajadores" value="{{ mi_cai }}">

@@ -106,15 +106,18 @@
 
 {% block extra_js %}
 <script>
-    const seguimientosUrl = "{% url 'seguimientos_general' %}";
-    const historialUrl = "{% url 'historial' %}";
+    const detalleCais = JSON.parse(document.getElementById('detalle-cais-data').textContent);
+
     const trabajadoresUrl = "{% url 'historial' %}?tipo=trabajador";
     const ninosUrl = "{% url 'historial' %}?tipo=nino";
 
-    const detalleCais = JSON.parse(document.getElementById('detalle-cais-data').textContent);
-
     function mostrarDetalleCAI(caiKey) {
         const data = detalleCais[caiKey];
+        if (!data) {
+            alert("No hay datos para este CAI.");
+            return;
+        }
+
         document.getElementById('cai-detail-title').textContent = data.nombre;
         document.getElementById('cai-followups-count').textContent = data.total_seguimientos || '0';
         document.getElementById('cai-workers-count').textContent = data.total_trabajadores || '0';
@@ -162,7 +165,7 @@
                     <i class="fas ${esTrabajador ? 'fa-user-tie' : 'fa-child'}"></i>
                     <div class="person-details">
                         <h4>${p.nombre || 'Sin nombre'}</h4>
-                        ${esTrabajador && p.cargo ? '<p>' + p.cargo + '</p>' : ''}
+                        ${esTrabajador && p.cargo ? `<p>${p.cargo}</p>` : ''}
                     </div>
                 </div>
             `;
