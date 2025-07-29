@@ -32,6 +32,8 @@ import json
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from django.db.models import Exists, OuterRef
+
 
 from sistema_nutricion import settings
 from .utils import BaseDeleteViewConCancel, FiltroCAIMixin, obtener_desviacion_oms_peso_edad, obtener_desviacion_oms_peso_talla, obtener_desviacion_oms_talla_edad
@@ -1058,10 +1060,21 @@ class ReportesView(LoginRequiredMixin, FiltroCAIMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
 
-        # Verificar si es nutriólogo (puedes ajustar según tu lógica de roles)
+        # Verificar si es nutriólogo
         es_nutriologo = hasattr(user, 'cai') and not (user.is_admin or user.is_jefe_departamento)
         cai_usuario = user.cai if es_nutriologo else ''
 
+        # Subqueries para verificar existencia de seguimientos
+        subq_pacientes = SeguimientoTrimestral.objects.filter(
+            paciente=OuterRef('pk'),
+            is_deleted=False
+        )
+        subq_trabajadores = SeguimientoTrabajador.objects.filter(
+            trabajador=OuterRef('pk'),
+            is_deleted=False
+        )
+
+        # Filtrar según tipo de usuario
         if user.is_admin or user.is_jefe_departamento:
             pacientes = Paciente.objects.filter(is_deleted=False)
             trabajadores = Trabajador.objects.filter(is_deleted=False)
@@ -1069,9 +1082,11 @@ class ReportesView(LoginRequiredMixin, FiltroCAIMixin, TemplateView):
             pacientes = Paciente.objects.filter(is_deleted=False, cai=user.cai)
             trabajadores = Trabajador.objects.filter(is_deleted=False, cai=user.cai)
 
-        pacientes = pacientes.order_by('nombre')
-        trabajadores = trabajadores.order_by('nombre')
+        # Anotar si tienen seguimiento
+        pacientes = pacientes.annotate(tiene_seguimiento=Exists(subq_pacientes)).order_by('nombre')
+        trabajadores = trabajadores.annotate(tiene_seguimiento=Exists(subq_trabajadores)).order_by('nombre')
 
+        # Asignar edad actualizada si hay seguimiento
         for paciente in pacientes:
             seguimiento = SeguimientoTrimestral.objects.filter(
                 paciente=paciente,
@@ -1079,7 +1094,17 @@ class ReportesView(LoginRequiredMixin, FiltroCAIMixin, TemplateView):
             ).order_by('-fecha_valoracion').first()
 
             paciente.edad_seguimiento = seguimiento.edad if seguimiento and seguimiento.edad else paciente.edad_detallada
+            paciente.tiene_seguimiento = seguimiento is not None
 
+        for trabajador in trabajadores:
+            seguimiento = SeguimientoTrabajador.objects.filter(
+                trabajador=trabajador,
+                is_deleted=False
+            ).order_by('-fecha_valoracion').first()
+
+            trabajador.tiene_seguimiento = seguimiento is not None
+
+        # Paginación
         paginator_pacientes = Paginator(pacientes, 10)
         paginator_trabajadores = Paginator(trabajadores, 10)
 
@@ -1313,10 +1338,10 @@ def buscar_ninos_ajax(request):
     edad_filter = request.GET.get('edad', '').strip()
     page = int(request.GET.get('page', 1))
 
-    # 1. Filtra por nombre y elimina marcados como eliminados
+    # Filtrar por nombre y que no estén eliminados
     ninos_qs = Paciente.objects.filter(nombre__icontains=term, is_deleted=False).order_by('-id')
 
-    # 2. Convertimos a lista si necesitamos filtrar por CAI sin tildes
+    # Filtrar por CAI
     if cai_filter:
         ninos = [n for n in ninos_qs if remover_tildes(n.cai.upper()) == cai_filter.upper()]
     elif request.user.is_nutriologo and request.user.cai:
@@ -1324,7 +1349,7 @@ def buscar_ninos_ajax(request):
     else:
         ninos = list(ninos_qs)
 
-    # 3. Filtro por edad (aplicado sobre la lista)
+    # Filtro por edad
     if edad_filter:
         hoy = date.today()
         if edad_filter == "0-2":
@@ -1343,24 +1368,27 @@ def buscar_ninos_ajax(request):
             min_date = max_date = None
 
         if min_date and max_date:
-            ninos = [n for n in ninos if n.fecha_nacimiento >= min_date and n.fecha_nacimiento <= max_date]
+            ninos = [n for n in ninos if min_date <= n.fecha_nacimiento <= max_date]
 
-    # 4. Paginación
+    # Paginación
     paginator = Paginator(ninos, 10)
     pagina = paginator.get_page(page)
 
-    # 5. Preparar respuesta
     resultados = []
     for n in pagina:
+        # Buscar último seguimiento
         seguimiento = SeguimientoTrimestral.objects.filter(paciente=n, is_deleted=False).order_by('-fecha_valoracion').first()
+
         if seguimiento:
             edad_rd = relativedelta(seguimiento.fecha_valoracion, n.fecha_nacimiento)
             edad_texto = f"{edad_rd.years} años, {edad_rd.months} meses"
             edad_anios = edad_rd.years
+            tiene_seguimiento = True
         else:
             edad_rd = relativedelta(date.today(), n.fecha_nacimiento)
             edad_texto = f"{edad_rd.years} años, {edad_rd.months} meses"
             edad_anios = edad_rd.years
+            tiene_seguimiento = False
 
         resultados.append({
             'id': n.id,
@@ -1371,6 +1399,7 @@ def buscar_ninos_ajax(request):
             'grado': n.grado,
             'grupo': n.grupo,
             'cai': n.cai,
+            'tiene_seguimiento': tiene_seguimiento
         })
 
     return JsonResponse({
