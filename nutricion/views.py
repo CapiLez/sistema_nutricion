@@ -64,7 +64,19 @@ class HomeView(LoginRequiredMixin, View):
     ]
 
     def normalizar(self, texto):
-        return ''.join(c for c in unicodedata.normalize('NFD', texto or '') if unicodedata.category(c) != 'Mn').upper().strip()
+        texto = ''.join(c for c in unicodedata.normalize('NFD', texto or '') if unicodedata.category(c) != 'Mn')
+        return texto.replace('.', '').upper().strip()
+
+    def filtrar_por_cai_normalizado(self, modelo, clave_norm):
+        return modelo.objects.filter(
+            is_deleted=False,
+            cai__isnull=False
+        ).filter(
+            cai__in=[
+                cai for cai in modelo.objects.values_list('cai', flat=True)
+                if self.normalizar(cai) == clave_norm
+            ]
+        )
 
     def get(self, request):
         user_cai = request.user.cai if request.user.is_nutriologo else None
@@ -73,19 +85,26 @@ class HomeView(LoginRequiredMixin, View):
         if user_cai:
             user_cai_norm = self.normalizar(user_cai)
             clave_oficial = next((k for k in cai_dict if self.normalizar(k) == user_cai_norm), user_cai)
+            clave_norm = self.normalizar(clave_oficial)
 
-            total_ninos = Paciente.objects.filter(is_deleted=False, cai__iexact=clave_oficial).count()
-            total_trabajadores = Trabajador.objects.filter(is_deleted=False, cai__iexact=clave_oficial).count()
+            total_ninos = self.filtrar_por_cai_normalizado(Paciente, clave_norm).count()
+            total_trabajadores = self.filtrar_por_cai_normalizado(Trabajador, clave_norm).count()
             total_seguimientos = (
                 SeguimientoTrimestral.objects.filter(
                     is_deleted=False,
                     paciente__is_deleted=False,
-                    paciente__cai__iexact=clave_oficial
+                    paciente__cai__in=[
+                        cai for cai in Paciente.objects.values_list('cai', flat=True)
+                        if self.normalizar(cai) == clave_norm
+                    ]
                 ).count() +
                 SeguimientoTrabajador.objects.filter(
                     is_deleted=False,
                     trabajador__is_deleted=False,
-                    trabajador__cai__iexact=clave_oficial
+                    trabajador__cai__in=[
+                        cai for cai in Trabajador.objects.values_list('cai', flat=True)
+                        if self.normalizar(cai) == clave_norm
+                    ]
                 ).count()
             )
             cais = [(clave_oficial, cai_dict.get(self.normalizar(clave_oficial), clave_oficial))]
@@ -108,24 +127,25 @@ class HomeView(LoginRequiredMixin, View):
         for clave, nombre in cais:
             clave_norm = self.normalizar(clave)
 
-            trabajadores = Trabajador.objects.filter(
-                is_deleted=False, cai__iexact=clave
-            ).values('id', 'nombre', 'cargo')
-
-            ninos = Paciente.objects.filter(
-                is_deleted=False, cai__iexact=clave
-            ).values('id', 'nombre')
+            trabajadores = self.filtrar_por_cai_normalizado(Trabajador, clave_norm).values('id', 'nombre', 'cargo')
+            ninos = self.filtrar_por_cai_normalizado(Paciente, clave_norm).values('id', 'nombre')
 
             seguimientos_ninos = SeguimientoTrimestral.objects.filter(
                 is_deleted=False,
                 paciente__is_deleted=False,
-                paciente__cai__iexact=clave
+                paciente__cai__in=[
+                    cai for cai in Paciente.objects.values_list('cai', flat=True)
+                    if self.normalizar(cai) == clave_norm
+                ]
             ).count()
 
             seguimientos_trabajadores = SeguimientoTrabajador.objects.filter(
                 is_deleted=False,
                 trabajador__is_deleted=False,
-                trabajador__cai__iexact=clave
+                trabajador__cai__in=[
+                    cai for cai in Trabajador.objects.values_list('cai', flat=True)
+                    if self.normalizar(cai) == clave_norm
+                ]
             ).count()
 
             detalle_cais[clave] = {
@@ -1885,7 +1905,12 @@ def exportar_datos_excel(request):
     from django.http import HttpResponse
     import io
 
-    # Crear el libro de Excel
+    from .utils import (
+        obtener_desviacion_oms_peso_talla,
+        obtener_desviacion_oms_peso_edad,
+        obtener_desviacion_oms_talla_edad
+    )
+
     wb = Workbook()
 
     # ===== ESTILOS =====
@@ -1908,11 +1933,11 @@ def exportar_datos_excel(request):
     ws_pacientes.title = "Pacientes"
 
     pacientes_qs = Paciente.objects.filter(is_deleted=False).values(
-        'nombre', 'curp', 'cai', 'fecha_nacimiento', 'grado', 'grupo', 'peso', 'talla'
+        'nombre', 'curp', 'cai', 'fecha_nacimiento', 'grado', 'grupo', 'peso', 'talla', 'sexo'
     )
 
-    # Encabezados
-    headers = ["Nombre", "CURP", "CAI", "Edad (Años)", "Grado", "Grupo", "Peso (kg)", "Talla (cm)", "Peso para Edad", "Talla para Edad", "Peso para Talla"]
+    headers = ["Nombre", "CURP", "CAI", "Edad (Años)", "Grado", "Grupo", "Peso (kg)", "Talla (cm)",
+               "Peso para Edad", "Talla para Edad", "Peso para Talla"]
     ws_pacientes.append(headers)
 
     for col in range(1, len(headers) + 1):
@@ -1922,28 +1947,33 @@ def exportar_datos_excel(request):
         cell.alignment = header_alignment
         cell.border = thin_border
 
-    # Lógica para calcular edad y aplicar valores
     row_num = 2
     for p in pacientes_qs:
         fecha_nac = p.get('fecha_nacimiento')
         hoy = date.today()
         edad = ''
         if fecha_nac:
-            edad = hoy.year - fecha_nac.year - ((hoy.month, hoy.day) < (fecha_nac.month, fecha_nac.day))
+            edad = (hoy - fecha_nac).days / 365.25  # años decimales
 
-        peso = p.get('peso', '')
-        talla = p.get('talla', '')
+        peso = p.get('peso') or 0
+        talla = p.get('talla') or 0
+        sexo = (p.get('sexo') or 'F').upper()
 
-        # Placeholder para indicadores, cámbialos por cálculo real si lo deseas
-        peso_edad = "ND"
-        talla_edad = "ND"
-        peso_talla = "ND"
+        peso_edad = talla_edad = peso_talla = "ND"
+
+        if peso > 0 and talla > 0 and edad > 0 and sexo in ['M', 'F']:
+            try:
+                peso_edad = obtener_desviacion_oms_peso_edad(sexo, edad, peso) or "ND"
+                talla_edad = obtener_desviacion_oms_talla_edad(sexo, edad, talla) or "ND"
+                peso_talla = obtener_desviacion_oms_peso_talla(sexo, talla, peso) or "ND"
+            except:
+                peso_edad = talla_edad = peso_talla = "Error"
 
         row = [
             p.get('nombre', ''),
             p.get('curp', ''),
             p.get('cai', ''),
-            edad,
+            round(edad, 1) if edad else '',
             p.get('grado', ''),
             p.get('grupo', ''),
             peso,
@@ -1962,7 +1992,6 @@ def exportar_datos_excel(request):
             cell.fill = data_fill_even if row_num % 2 == 0 else data_fill_odd
         row_num += 1
 
-    # Ajustar ancho de columnas
     for col in ws_pacientes.columns:
         max_length = 0
         column = col[0].column_letter
